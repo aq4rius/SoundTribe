@@ -3,8 +3,10 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import authRoutes from "./routes/authRoutes";
 import { connectToDatabase } from "./database";
+import authRoutes from "./routes/authRoutes";
+import userRoutes from './routes/userRoutes';
+import genreRoutes from './routes/genreRoutes';
 
 dotenv.config();
 
@@ -13,7 +15,10 @@ const app: Express = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/api/auth", authRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/genres', genreRoutes);
+
 
 const uri: string =
 	process.env.MONGODB_URI || "mongodb://localhost:27017/soundtribe";

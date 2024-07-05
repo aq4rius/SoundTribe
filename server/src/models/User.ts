@@ -1,15 +1,25 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Types, Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
-interface IUser extends Document {
+export enum UserRole {
+  USER = 'user',
+  ARTIST = 'artist',
+  RECRUITER = 'recruiter',
+  ADMIN = 'admin'
+}
+
+export interface IUser extends Document {
+  _id: Types.ObjectId;
   email: string;
   password: string;
+  role: UserRole;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
 
 const UserSchema: Schema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  role: { type: String, enum: Object.values(UserRole), default: UserRole.USER }
 });
 
 UserSchema.pre<IUser>('save', async function (next) {
