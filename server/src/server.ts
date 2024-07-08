@@ -7,6 +7,8 @@ import { connectToDatabase } from "./database";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from './routes/userRoutes';
 import genreRoutes from './routes/genreRoutes';
+import artistProfileRoutes from './routes/artistProfileRoutes';
+import jobPostingRoutes from './routes/jobPostingRoutes';
 
 dotenv.config();
 
@@ -18,6 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
+app.use('/api/artist-profiles', artistProfileRoutes);
+app.use('/api/job-postings', jobPostingRoutes);
 
 
 const uri: string =
