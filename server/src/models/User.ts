@@ -13,13 +13,35 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: UserRole;
+  firstName: string;
+  lastName: string;
+  location: string;
+  bio: string;
+  preferences: {
+    genres: Types.ObjectId[];
+    notificationSettings: {
+      email: boolean;
+      push: boolean;
+    };
+  };
   comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
 
 const UserSchema: Schema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: Object.values(UserRole), default: UserRole.USER }
+  role: { type: String, enum: Object.values(UserRole), default: UserRole.USER },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  location: { type: String },
+  bio: { type: String },
+  preferences: {
+    genres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],
+    notificationSettings: {
+      email: { type: Boolean, default: true },
+      push: { type: Boolean, default: true }
+    }
+  }
 });
 
 UserSchema.pre<IUser>('save', async function (next) {

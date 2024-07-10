@@ -1,89 +1,13 @@
 import express from 'express';
-import JobPosting, { IJobPosting } from '../models/JobPosting';
-import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
-import { UserRole } from '../models/User';
+import { createJobPosting, getJobPosting, updateJobPosting, deleteJobPosting, searchJobPostings } from '../controllers/jobPostingController';
+import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Create a new job posting
-router.post('/', authMiddleware, async (req: AuthRequest, res) => {
-  try {
-    const newJobPosting: IJobPosting = new JobPosting({
-      ...req.body,
-      postedBy: req.user?.id
-    });
-    await newJobPosting.save();
-    res.status(201).json(newJobPosting);
-  } catch (error) {
-    res.status(500).send('Error creating job posting');
-  }
-});
-
-// Get a specific job posting
-router.get('/:id', async (req, res) => {
-  try {
-    const jobPosting = await JobPosting.findById(req.params.id).populate('genres postedBy');
-    if (!jobPosting) {
-      return res.status(404).send('Job posting not found');
-    }
-    res.json(jobPosting);
-  } catch (error) {
-    res.status(500).send('Error fetching job posting');
-  }
-});
-
-// Update a job posting
-router.put('/:id', authMiddleware, async (req: AuthRequest, res) => {
-  try {
-    const jobPosting = await JobPosting.findById(req.params.id);
-    if (!jobPosting) {
-      return res.status(404).send('Job posting not found');
-    }
-    if (jobPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
-      return res.status(403).send('Not authorized to update this job posting');
-    }
-
-    const updatedJobPosting = await JobPosting.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updatedJobPosting);
-  } catch (error) {
-    res.status(500).send('Error updating job posting');
-  }
-});
-
-// Delete a job posting
-router.delete('/:id', authMiddleware, async (req: AuthRequest, res) => {
-  try {
-    const jobPosting = await JobPosting.findById(req.params.id);
-    if (!jobPosting) {
-      return res.status(404).send('Job posting not found');
-    }
-    if (jobPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
-      return res.status(403).send('Not authorized to delete this job posting');
-    }
-
-    await JobPosting.findByIdAndDelete(req.params.id);
-    res.send('Job posting deleted successfully');
-  } catch (error) {
-    res.status(500).send('Error deleting job posting');
-  }
-});
-
-// Search job postings
-router.get('/', async (req, res) => {
-  try {
-    const { genre, instrument, location, status } = req.query;
-    let query: any = {};
-
-    if (genre) query.genres = genre;
-    if (instrument) query.requiredInstruments = { $in: [instrument] };
-    if (location) query.location = new RegExp(location as string, 'i');
-    if (status) query.status = status;
-
-    const jobPostings = await JobPosting.find(query).populate('genres postedBy');
-    res.json(jobPostings);
-  } catch (error) {
-    res.status(500).send('Error searching job postings');
-  }
-});
+router.post('/', authMiddleware, createJobPosting);
+router.get('/:id', getJobPosting);
+router.put('/:id', authMiddleware, updateJobPosting);
+router.delete('/:id', authMiddleware, deleteJobPosting);
+router.get('/', searchJobPostings);
 
 export default router;

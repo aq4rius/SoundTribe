@@ -1,11 +1,11 @@
 import express from 'express';
 import User, { UserRole } from '../models/User';
-import { authMiddleware, roleMiddleware } from '../middleware/authMiddleware';
+import { authMiddleware, roleMiddleware, AuthRequest } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 // Get all users (admin only)
-router.get('/', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req, res) => {
+router.get('/', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
@@ -15,7 +15,7 @@ router.get('/', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req, res)
 });
 
 // Update user role (admin only)
-router.put('/:id/role', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req, res) => {
+router.put('/:id/role', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res) => {
   try {
     const { role } = req.body;
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
