@@ -31,8 +31,8 @@ const UserSchema: Schema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: Object.values(UserRole), default: UserRole.USER },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
+  firstName: { type: String },
+  lastName: { type: String },
   location: { type: String },
   bio: { type: String },
   preferences: {
