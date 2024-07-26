@@ -15,11 +15,23 @@ import rateLimit from "express-rate-limit";
 dotenv.config();
 
 const app: Express = express();
-const allowedOrigins = ['http://localhost:3000', 'https://yourdomain.com'];
+const allowedOrigins = ['http://localhost:5173','http://localhost:3000', 'https://yourdomain.com'];
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 100, // limit each IP to 100 requests per windowMs
 });
+
+app.use(cors({
+	origin: function(origin, callback) {
+	  if (!origin) return callback(null, true);
+	  if (allowedOrigins.indexOf(origin) === -1) {
+		const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+		return callback(new Error(msg), false);
+	  }
+	  return callback(null, true);
+	},
+	credentials: true
+  }));
 
 app.use(limiter);
 app.use(express.json());
@@ -30,16 +42,6 @@ app.use("/api/genres", genreRoutes);
 app.use("/api/artist-profiles", artistProfileRoutes);
 app.use("/api/job-postings", jobPostingRoutes);
 
-app.use(cors({
-	origin: function(origin, callback) {
-	  if (!origin) return callback(null, true);
-	  if (allowedOrigins.indexOf(origin) === -1) {
-		const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-		return callback(new Error(msg), false);
-	  }
-	  return callback(null, true);
-	}
-  }));
 
 const uri: string =
 	process.env.MONGODB_URI || "mongodb://localhost:27017/soundtribe";

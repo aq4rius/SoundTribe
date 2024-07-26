@@ -3,20 +3,51 @@ import User, { UserRole, IUser } from '../models/User';
 import { generateToken } from '../utils/jwtUtils';
 import { AuthRequest } from '../middleware/authMiddleware';
 
-export const register = async (req: Request, res: Response) => {
-  const { email, password, role } = req.body;
+export const createAdmin = async (req: Request, res: Response) => {
+  const { email, password, adminSecret } = req.body;
+  
+  // Check if the provided admin secret matches the environment variable
+  if (adminSecret !== process.env.ADMIN_SECRET) {
+    return res.status(403).send('Invalid admin secret');
+  }
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).send('User already exists');
     }
-    const user: IUser = new User({ email, password, role });
+    const user = new User({ email, password, role: UserRole.ADMIN });
     await user.save();
     const token = generateToken(user._id, user.role);
     res.status(201).send({ token, role: user.role });
+  } catch (error) {
+    res.status(500).send('Error creating admin user');
+  }
+};
+
+export const register = async (req: Request, res: Response) => {
+  const { username, email, password } = req.body;
+  try {
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email or username already exists' });
+    }
+    const user: IUser = new User({ username, email, password });
+    await user.save();
+    const token = generateToken(user._id, user.role);
+    res.status(201).json({ 
+      token, 
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profileCompleted: user.profileCompleted
+      } 
+    });
   } catch (error: any) {
     console.error('Registration error:', error);
-    res.status(500).send({ message: 'Error registering new user', error: error.message });
+    res.status(500).json({ message: 'Error registering new user', error: error.message });
   }
 };
 
@@ -25,12 +56,21 @@ export const login = async (req: Request, res: Response) => {
   try {
     const user: IUser | null = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).send('Invalid email or password');
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
     const token = generateToken(user._id, user.role);
-    res.status(200).send({ token, role: user.role });
+    res.status(200).json({ 
+      token, 
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profileCompleted: user.profileCompleted
+      } 
+    });
   } catch (error) {
-    res.status(500).send('Error logging in');
+    res.status(500).json({ message: 'Error logging in' });
   }
 };
 

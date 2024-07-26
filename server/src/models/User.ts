@@ -10,14 +10,16 @@ export enum UserRole {
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
+  username: string;
   email: string;
   password: string;
   role: UserRole;
-  firstName: string;
-  lastName: string;
-  location: string;
-  bio: string;
-  preferences: {
+  profileCompleted: boolean;
+  firstName?: string;
+  lastName?: string;
+  location?: string;
+  bio?: string;
+  preferences?: {
     genres: Types.ObjectId[];
     notificationSettings: {
       email: boolean;
@@ -28,9 +30,11 @@ export interface IUser extends Document {
 }
 
 const UserSchema: Schema = new Schema({
+  username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: Object.values(UserRole), default: UserRole.USER },
+  profileCompleted: { type: Boolean, default: false },
   firstName: { type: String },
   lastName: { type: String },
   location: { type: String },

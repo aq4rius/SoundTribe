@@ -1,12 +1,16 @@
 // server/src/routes/authRoutes.ts
 
 import express, { Request, Response } from 'express';
-import { register, login, getCurrentUser } from '../controllers/authController';
+import { register, login, getCurrentUser, createAdmin } from '../controllers/authController';
 import { registerValidation, loginValidation } from '../validation/userValidation';
 import { validationResult } from 'express-validator';
 import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router();
+
+router.post('/create-admin', async (req, res) => {
+  createAdmin(req, res);
+});
 
 router.post('/register', registerValidation, (req: Request, res: Response) => {
   const errors = validationResult(req);
