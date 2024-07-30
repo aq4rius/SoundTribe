@@ -4,7 +4,6 @@ import bcrypt from 'bcrypt';
 export enum UserRole {
   USER = 'user',
   ARTIST = 'artist',
-  RECRUITER = 'recruiter',
   ADMIN = 'admin'
 }
 
@@ -19,12 +18,15 @@ export interface IUser extends Document {
   lastName?: string;
   location?: string;
   bio?: string;
-  preferences?: {
-    genres: Types.ObjectId[];
-    notificationSettings: {
-      email: boolean;
-      push: boolean;
-    };
+  favoriteGenres?: Types.ObjectId[];
+  preferredContentTypes?: string[];
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+  };
+  privacySettings?: {
+    showEmail: boolean;
+    showLocation: boolean;
   };
   comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
@@ -39,12 +41,15 @@ const UserSchema: Schema = new Schema({
   lastName: { type: String },
   location: { type: String },
   bio: { type: String },
-  preferences: {
-    genres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],
-    notificationSettings: {
-      email: { type: Boolean, default: true },
-      push: { type: Boolean, default: true }
-    }
+  favoriteGenres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],
+  preferredContentTypes: [{ type: String }],
+  notificationPreferences: {
+    email: { type: Boolean, default: true },
+    push: { type: Boolean, default: true }
+  },
+  privacySettings: {
+    showEmail: { type: Boolean, default: false },
+    showLocation: { type: Boolean, default: true }
   }
 });
 

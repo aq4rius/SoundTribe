@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import User, { UserRole, IUser } from '../models/User';
 import { generateToken } from '../utils/jwtUtils';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { validationResult } from 'express-validator';
 
 export const createAdmin = async (req: Request, res: Response) => {
   const { email, password, adminSecret } = req.body;
@@ -26,6 +27,11 @@ export const createAdmin = async (req: Request, res: Response) => {
 };
 
 export const register = async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { username, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
@@ -52,6 +58,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
+  console.log('Login attempt:', req.body);
   const { email, password } = req.body;
   try {
     const user: IUser | null = await User.findOne({ email });
@@ -69,7 +76,8 @@ export const login = async (req: Request, res: Response) => {
         profileCompleted: user.profileCompleted
       } 
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Error logging in' });
   }
 };
@@ -78,10 +86,17 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.user?._id).select('-password');
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
-  } catch (error) {
-    res.status(500).send('Server error');
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profileCompleted: user.profileCompleted
+    });
+  } catch (error: any) {
+    console.error('Get current user error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };

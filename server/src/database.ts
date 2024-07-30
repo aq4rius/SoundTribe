@@ -1,3 +1,5 @@
+// server/src/database.ts
+
 import mongoose from 'mongoose';
 
 export async function connectToDatabase(uri: string): Promise<void> {
@@ -6,7 +8,6 @@ export async function connectToDatabase(uri: string): Promise<void> {
     console.log('Connected to the database');
   } catch (error) {
     console.error('Database connection error:', error);
-    // Rethrow the error to be handled by the caller
     throw error;
   }
 }

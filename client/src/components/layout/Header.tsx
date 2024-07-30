@@ -3,17 +3,17 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Header: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
 
   return (
     <header className="bg-blue-200 text-white p-4">
       <nav className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold">SoundTribe</Link>
         <div>
-          {isAuthenticated ? (
+          {isAuthenticated && user ? (
             <>
               <Link to="/dashboard" className="mr-4">Dashboard</Link>
-              <button onClick={logout}>Logout</button>
+              <button onClick={logout} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Logout</button>
             </>
           ) : (
             <>

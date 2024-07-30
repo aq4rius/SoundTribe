@@ -1,16 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwtUtils';
-import { ObjectId } from 'mongodb'; // Import ObjectId from the 'mongodb' package
+import { ObjectId } from 'mongodb';
 import User, { IUser, UserRole } from '../models/User';
 
 export interface AuthRequest extends Request {
   user?: Partial<IUser>;
 }
 
-const roles = [UserRole.ADMIN, UserRole.ARTIST, UserRole.RECRUITER];
+const roles = [UserRole.ADMIN, UserRole.ARTIST, UserRole.USER];
 
 export const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
+  console.log('Received token:', token);
 
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
@@ -18,12 +19,15 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 
   try {
     const decoded = verifyToken(token);
-    req.user = {
-      _id: new ObjectId(decoded.id), // Convert decoded.id to ObjectId
-      role: decoded.role,
-    };
+    console.log('Decoded token:', decoded);
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    req.user = user;
     next();
   } catch (error) {
+    console.error('Token verification error:', error);
     res.status(401).json({ message: 'Invalid token' });
   }
 };
