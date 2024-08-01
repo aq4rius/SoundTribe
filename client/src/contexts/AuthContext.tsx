@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { login, register, getCurrentUser } from '../services/auth';
+// import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -9,7 +10,7 @@ interface User {
   profileCompleted: boolean;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
@@ -18,12 +19,13 @@ interface AuthContextType {
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  // const navigate = useNavigate();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -69,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
+    // navigate('/'); // Navigate to home page after logout
   };
 
   return (

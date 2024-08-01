@@ -5,20 +5,20 @@ import { IGenre } from './Genre';
 export interface IArtistProfile extends Document {
   user: Types.ObjectId | IUser;
   stageName: string;
-  biography: string;
+  biography?: string;
   genres: Array<Types.ObjectId | IGenre>;
   instruments: string[];
   yearsOfExperience: number;
   location: string;
   websiteUrl?: string;
-  socialMediaLinks: {
+  socialMediaLinks?: {
     facebook?: string;
     instagram?: string;
     twitter?: string;
     youtube?: string;
   };
   profileImage?: string;
-  portfolioItems: Array<{
+  portfolioItems?: Array<{
     title: string;
     description: string;
     mediaUrl: string;
@@ -36,7 +36,7 @@ export interface IArtistProfile extends Document {
 const ArtistProfileSchema: Schema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
   stageName: { type: String, required: true },
-  biography: { type: String, required: true },
+  biography: { type: String },
   genres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],
   instruments: [{ type: String }],
   yearsOfExperience: { type: Number, required: true },
