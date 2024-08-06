@@ -6,6 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 const ProfileSetup: React.FC = () => {
 	const [step, setStep] = useState(1);
 	const [basicInfo, setBasicInfo] = useState({
+    username: "",
 		firstName: "",
 		lastName: "",
 		location: "",
@@ -36,23 +37,29 @@ const ProfileSetup: React.FC = () => {
 	const navigate = useNavigate();
 	const { login } = useAuth();
 
-	const handleBasicInfoSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		try {
-			console.log("Updating profile with:", basicInfo);
-			const updatedUser = await updateUserProfile(basicInfo);
-			console.log("Updated user:", updatedUser);
-			if (updatedUser) {
-				login(localStorage.getItem("token") || "", updatedUser);
-				setStep(2);
-			} else {
-				throw new Error("Failed to update user profile");
-			}
-		} catch (error) {
-			console.error("Error updating profile:", error);
-			alert("Failed to update profile. Please try again.");
-		}
-	};
+  const handleBasicInfoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      console.log("Updating profile with:", basicInfo);
+      const updatedUser = await updateUserProfile(basicInfo);
+      console.log("Updated user:", updatedUser);
+      if (updatedUser) {
+        login(localStorage.getItem("token") || "", updatedUser);
+        if (updatedUser.basicProfileCompleted) {
+          console.log("Basic profile completed. Moving to step 2");
+          setStep(2);
+        } else {
+          console.log("Basic profile not complete.");
+          alert("Please fill in all required fields for the basic profile.");
+        }
+      } else {
+        throw new Error("Failed to update user profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
 
 	const handleArtistInfoSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -72,6 +79,14 @@ const ProfileSetup: React.FC = () => {
 				return (
 					<form onSubmit={handleBasicInfoSubmit}>
 						{/* Add form fields for basic info */}
+            <input
+              type="text"
+              placeholder="Username"
+              value={basicInfo.username}
+              onChange={(e) =>
+                setBasicInfo({ ...basicInfo, username: e.target.value })
+              }
+            />
 						<input
 							type="text"
 							placeholder="First Name"

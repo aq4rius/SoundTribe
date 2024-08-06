@@ -5,6 +5,11 @@ export const updateUserProfile = async (userData: any) => {
   return response.data;
 };
 
+export const getUserProfile = async () => {
+  const response = await api.get('/users/profile');
+  return response.data;
+};
+
 export const createArtistProfile = async (artistData: any) => {
   const response = await api.post('/users/artist-profile', artistData);
   return response.data;

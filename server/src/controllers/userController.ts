@@ -25,7 +25,7 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Only update the fields that are provided
+    // Update the fields
     if (username) user.username = username;
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
@@ -36,23 +36,16 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     if (notificationPreferences) user.notificationPreferences = notificationPreferences;
     if (privacySettings) user.privacySettings = privacySettings;
 
-    // Check if all required fields are filled
-    const requiredFields = [user.username, user.firstName, user.lastName, user.location, user.bio];
-    user.profileCompleted = requiredFields.every(field => field && field.trim() !== '');
+    // Check if all required basic fields are filled
+    const requiredBasicFields = ['username', 'firstName', 'lastName', 'location', 'bio'];
+    user.basicProfileCompleted = requiredBasicFields.every(field => user[field as keyof IUser] && (user[field as keyof IUser] as string).trim() !== '');
+
+    // Update overall profile completion status
+    user.profileCompleted = user.basicProfileCompleted && (user.role !== UserRole.ARTIST || user.artistProfileCompleted);
 
     const updatedUser = await user.save();
     console.log('User updated successfully:', updatedUser);
-    res.json({
-      id: updatedUser._id,
-      username: updatedUser.username,
-      email: updatedUser.email,
-      role: updatedUser.role,
-      profileCompleted: updatedUser.profileCompleted,
-      firstName: updatedUser.firstName,
-      lastName: updatedUser.lastName,
-      location: updatedUser.location,
-      bio: updatedUser.bio
-    });
+    res.json(updatedUser.toObject({ virtuals: true }));
   } catch (error) {
     console.error('Error updating user profile:', error);
     res.status(500).json({ message: 'Server error', error });
@@ -100,9 +93,21 @@ export const createArtistProfile = async (req: AuthRequest, res: Response) => {
     await artistProfile.save();
 
     user.role = UserRole.ARTIST;
+    user.artistProfileCompleted = true;
+    user.profileCompleted = user.basicProfileCompleted && user.artistProfileCompleted;
+    
     await user.save();
 
-    res.status(201).json(artistProfile);
+    res.status(201).json({
+      artistProfile,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profileCompleted: user.profileCompleted
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

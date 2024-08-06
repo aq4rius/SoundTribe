@@ -13,6 +13,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: UserRole;
+  basicProfileCompleted: boolean;
+  artistProfileCompleted: boolean;
   profileCompleted: boolean;
   firstName?: string;
   lastName?: string;
@@ -36,6 +38,8 @@ const UserSchema: Schema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: Object.values(UserRole), default: UserRole.USER },
+  basicProfileCompleted: { type: Boolean, default: false },
+  artistProfileCompleted: { type: Boolean, default: false },
   profileCompleted: { type: Boolean, default: false },
   firstName: { type: String },
   lastName: { type: String },

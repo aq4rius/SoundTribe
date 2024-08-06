@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ProfileSetup from '../components/profile/ProfileSetup';
+import EditProfile from '../components/profile/EditProfile';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ const Dashboard: React.FC = () => {
           <p className="text-lg">Welcome, {user.username}!</p>
           <p>Email: {user.email}</p>
           <p>Role: {user.role}</p>
+          <EditProfile/>
           {/* Add more user information here */}
         </div>
       )}
