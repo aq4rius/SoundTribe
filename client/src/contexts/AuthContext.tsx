@@ -8,6 +8,7 @@ interface User {
   email: string;
   role: string;
   profileCompleted: boolean;
+  artistProfileCompleted: boolean;
 }
 
 export interface AuthContextType {
