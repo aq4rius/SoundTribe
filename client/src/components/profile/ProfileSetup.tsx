@@ -4,9 +4,10 @@ import { updateUserProfile, createArtistProfile } from "../../services/user";
 import { useAuth } from "../../contexts/AuthContext";
 
 const ProfileSetup: React.FC = () => {
+  const { user } = useAuth();
 	const [step, setStep] = useState(1);
 	const [basicInfo, setBasicInfo] = useState({
-    username: "",
+    username: user?.username || "",
 		firstName: "",
 		lastName: "",
 		location: "",

@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     localStorage.setItem('token', data.token);
     setIsAuthenticated(true);
-    setUser(data.user);
+    setUser({ ...data.user, username: data.user.username });
   };
 
   const registerUser = async (userData: any) => {

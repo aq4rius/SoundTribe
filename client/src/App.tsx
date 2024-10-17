@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProfileSetup from './components/profile/ProfileSetup';
+import CreateArtistProfile from './components/profile/CreateArtistProfile';
 import Layout from './components/layout/Layout';
 
 interface PrivateRouteProps {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
           <Route path="/profile" element={<PrivateRoute element={<ProfileSetup />} />} />
+          <Route path="/create-artist-profile" element={<PrivateRoute element={<CreateArtistProfile />} />} />
         </Routes>
         </Layout>
       </Router>
