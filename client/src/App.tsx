@@ -6,9 +6,12 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import EditArtistProfile from './components/profile/EditArtistProfile';
 import ProfileSetup from './components/profile/ProfileSetup';
 import CreateArtistProfile from './components/profile/CreateArtistProfile';
 import Layout from './components/layout/Layout';
+
+
 
 interface PrivateRouteProps {
   element: React.ReactElement;
@@ -31,6 +34,7 @@ function App() {
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
           <Route path="/profile" element={<PrivateRoute element={<ProfileSetup />} />} />
           <Route path="/create-artist-profile" element={<PrivateRoute element={<CreateArtistProfile />} />} />
+          <Route path="/edit-artist-profile/:id" element={<PrivateRoute element={<EditArtistProfile />}/>} />
         </Routes>
         </Layout>
       </Router>

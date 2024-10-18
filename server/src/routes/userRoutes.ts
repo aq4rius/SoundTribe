@@ -1,14 +1,12 @@
 import express from 'express';
 import User, { UserRole } from '../models/User';
-import { getUserProfile, updateUserProfile, createArtistProfile, getArtistProfile } from '../controllers/userController';
+import { getUserProfile, updateUserProfile } from '../controllers/userController';
 import { authMiddleware, roleMiddleware, AuthRequest } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 router.get('/profile', authMiddleware, getUserProfile);
 router.put('/profile', authMiddleware, updateUserProfile);
-router.post('/artist-profile', authMiddleware, createArtistProfile);
-router.get('/artist-profile', authMiddleware, getArtistProfile);
 
 // Get all users (admin only)
 router.get('/', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res) => {

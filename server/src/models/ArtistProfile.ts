@@ -34,7 +34,7 @@ export interface IArtistProfile extends Document {
 }
 
 const ArtistProfileSchema: Schema = new Schema({
-  user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   stageName: { type: String, required: true },
   biography: { type: String },
   genres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],

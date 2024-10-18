@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwtUtils';
-import { ObjectId } from 'mongodb';
 import User, { IUser, UserRole } from '../models/User';
 
 export interface AuthRequest extends Request {

@@ -1,28 +1,36 @@
 // server/src/controllers/artistProfileController.ts
 
 import { Request, Response } from 'express';
+import User, { UserRole } from '../models/User';
 import ArtistProfile, { IArtistProfile } from '../models/ArtistProfile';
 import { AuthRequest } from '../middleware/authMiddleware';
-import { UserRole } from '../models/User';
+
 
 export const createArtistProfile = async (req: AuthRequest, res: Response) => {
+  console.log('Received artist profile data:', req.body);
   try {
     const userId = req.user?._id;
-    const existingProfile = await ArtistProfile.findOne({ user: userId });
-    if (existingProfile) {
-      return res.status(400).send('Artist profile already exists for this user');
-    }
 
     const newProfile: IArtistProfile = new ArtistProfile({
       ...req.body,
       user: userId
     });
+    
     await newProfile.save();
-    res.status(201).json(newProfile);
+    console.log('Artist profile saved successfully:', newProfile._id);
+
+    res.status(201).json({ artistProfile: newProfile});
   } catch (error) {
-    res.status(500).send('Error creating artist profile');
+    console.error('Error creating artist profile:', error);
+    if (error instanceof Error) {
+      res.status(500).send(`Error creating artist profile: ${error.message}`);
+    } else {
+      res.status(500).send('Error creating artist profile');
+    }
   }
 };
+
+
 
 export const getArtistProfile = async (req: Request, res: Response) => {
   try {
@@ -85,3 +93,13 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
     res.status(500).send('Error searching artist profiles');
   }
 };
+
+export const getUserArtistProfiles = async (req: AuthRequest, res: Response) => {
+  try {
+    const artistProfiles = await ArtistProfile.find({ user: req.user?._id });
+    res.json(artistProfiles);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching artist profiles' });
+  }
+};
+
