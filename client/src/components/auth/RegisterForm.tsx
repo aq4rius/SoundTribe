@@ -22,7 +22,7 @@ const RegisterForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-1/2 mx-auto">
       <div>
         <label htmlFor="username" className="block mb-1">Username</label>
         <input

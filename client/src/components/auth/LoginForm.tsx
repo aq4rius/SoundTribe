@@ -21,7 +21,7 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-1/2 mx-auto">
       <div>
         <label htmlFor="email" className="block mb-1">Email</label>
         <input
