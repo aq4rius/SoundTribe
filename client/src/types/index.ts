@@ -1,5 +1,5 @@
 export interface User {
-    id: string;
+    _id: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -19,7 +19,7 @@ export interface User {
   }
 
   export interface ArtistProfile {
-    id: string;
+    _id: string;
     user: User;
     stageName: string;
     biography?: string;
@@ -29,26 +29,27 @@ export interface User {
     location: string;
     websiteUrl?: string;
     socialMediaLinks?: {
-      facebook?: string;
-      instagram?: string;
-      twitter?: string;
-      youtube?: string;
+        facebook?: string;
+        instagram?: string;
+        twitter?: string;
+        youtube?: string;
     };
     profileImage?: string;
     portfolioItems?: Array<{
-      title: string;
-      description: string;
-      mediaUrl: string;
-      mediaType: 'audio' | 'video' | 'image';
+        title: string;
+        description: string;
+        mediaUrl: string;
+        mediaType: 'audio' | 'video' | 'image';
     }>;
     availability: {
-      isAvailable: boolean;
-      availableDates?: Date[];
+        isAvailable: boolean;
+        availableDates?: Date[];
     };
     ratePerHour?: number;
     createdAt: Date;
     updatedAt: Date;
-  }
+}
+
   
   export interface LoginData {
     email: string;

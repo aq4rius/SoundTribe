@@ -19,7 +19,7 @@ const Dashboard: React.FC = () => {
             try {
                 await deleteArtistProfile(profileId);
                 setArtistProfiles((profiles) =>
-                    profiles.filter((p) => p.id !== profileId)
+                    profiles.filter((p) => p._id !== profileId)
                 );
             } catch (error) {
                 console.error("Error deleting profile:", error);
@@ -56,20 +56,19 @@ const Dashboard: React.FC = () => {
                                 Artist Profiles
                             </h2>
                             {artistProfiles.map((profile) => (
-                                <div key={profile.id} className="mt-4 p-4 border rounded">
+                                <div key={profile._id} className="mt-4 p-4 border rounded">
                                     <h3 className="text-lg font-semibold">{profile.stageName}</h3>
                                     <p>{profile.biography}</p>
-                                    {user.role === "admin" && (
+                                    
                                         <button
                                             className="mt-2 bg-red-500 text-white py-1 px-2 rounded"
-                                            onClick={() => handleDeleteProfile(profile.id)}
+                                            onClick={() => handleDeleteProfile(profile._id)}
                                         >
                                             Delete
                                         </button>
-                                    )}
                                     <button
                                         className="mt-2 bg-blue-500 text-white py-1 px-2 rounded"
-                                        onClick={() => navigate(`/edit-artist-profile/${profile.id}`)}
+                                        onClick={() => navigate(`/edit-artist-profile/${profile._id}`)}
                                     >
                                         Edit
                                     </button>

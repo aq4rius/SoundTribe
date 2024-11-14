@@ -30,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
+      setLoading(true);
       const token = localStorage.getItem('token');
       if (token) {
         try {
@@ -39,11 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (error) {
           console.error('Failed to get current user:', error);
           localStorage.removeItem('token');
+          setIsAuthenticated(false);
+          setUser(null);
         }
       }
       setLoading(false);
     };
-
+  
     initAuth();
   }, []);
 
