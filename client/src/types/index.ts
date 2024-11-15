@@ -18,12 +18,17 @@ export interface User {
     };
   }
 
+  interface Genre {
+    _id: string;
+    name: string;
+  }
+
   export interface ArtistProfile {
     _id: string;
     user: User;
     stageName: string;
     biography?: string;
-    genres: string[];
+    genres: Genre[];
     instruments: string[];
     yearsOfExperience: number;
     location: string;

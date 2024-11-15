@@ -57,15 +57,22 @@ const EditArtistProfile: React.FC = () => {
     }
   };
 
-	const handleGenreChange = (genreId: string) => {
-		if (!profile) return;
-		setProfile((prev) => ({
-			...prev!,
-			genres: prev!.genres.includes(genreId)
-				? prev!.genres.filter((id) => id !== genreId)
-				: [...prev!.genres, genreId],
-		}));
-	};
+  const handleGenreChange = (genreId: string) => {
+	if (!profile) return;
+	
+	setProfile(prev => {
+	  if (!prev) return null;
+	  const genres = prev.genres.map(g => g._id);
+	  const newGenres = genres.includes(genreId)
+		? prev.genres.filter(g => g._id !== genreId)
+		: [...prev.genres, { _id: genreId, name: availableGenres.find(g => g._id === genreId)?.name || '' }];
+	  
+	  return {
+		...prev,
+		genres: newGenres
+	  };
+	});
+  };
 
 	const handleSocialMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (!profile) return;
@@ -122,7 +129,7 @@ const EditArtistProfile: React.FC = () => {
 						<input
 							type="checkbox"
 							id={genre._id}
-							checked={profile.genres.includes(genre._id)}
+							checked={profile.genres.some(g => g._id === genre._id)}
 							onChange={() => handleGenreChange(genre._id)}
 						/>
 						<label htmlFor={genre._id}>{genre.name}</label>
@@ -370,12 +377,21 @@ const EditArtistProfile: React.FC = () => {
 				className="w-full px-3 py-2 border rounded"
 			/>
 
-			<button
-				type="submit"
-				className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-			>
-				Update Artist Profile
-			</button>
+<div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="px-4 py-2 border rounded hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Save Changes
+          </button>
+        </div>
 		</form>
 	);
 };

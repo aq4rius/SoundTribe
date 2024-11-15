@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import EditArtistProfile from './components/profile/EditArtistProfile';
+import EditProfile from './components/profile/EditProfile';
 import ProfileSetup from './components/profile/ProfileSetup';
 import CreateArtistProfile from './components/profile/CreateArtistProfile';
 import Layout from './components/layout/Layout';
@@ -41,6 +42,9 @@ function App() {
           <Route path="/profile" element={<PrivateRoute element={<ProfileSetup />} />} />
           <Route path="/create-artist-profile" element={<PrivateRoute element={<CreateArtistProfile />} />} />
           <Route path="/edit-artist-profile/:id" element={<PrivateRoute element={<EditArtistProfile />}/>} />
+          <Route path="/edit-profile" element={<PrivateRoute element={<EditProfile />} />} />
+
+
         </Routes>
         </Layout>
       </Router>

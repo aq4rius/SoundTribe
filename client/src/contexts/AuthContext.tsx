@@ -9,6 +9,10 @@ interface User {
   role: string;
   profileCompleted: boolean;
   artistProfileCompleted: boolean;
+  location: string;
+  bio: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface AuthContextType {

@@ -96,14 +96,13 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
 
 export const getUserArtistProfiles = async (req: AuthRequest, res: Response) => {
   try {
-    console.log('Fetching profiles for user:', req.user?._id);
-    const artistProfiles = await ArtistProfile.find({ user: req.user?._id });
-    console.log('Found profiles:', artistProfiles);
+    const artistProfiles = await ArtistProfile.find({ user: req.user?._id })
+      .populate('genres', 'name');
     res.json(artistProfiles);
   } catch (error) {
-    console.error('Error in getUserArtistProfiles:', error);
     res.status(500).json({ message: 'Error fetching artist profiles' });
   }
 };
+
 
 
