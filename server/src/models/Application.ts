@@ -1,12 +1,12 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
 import { IUser } from './User';
 import { IArtistProfile } from './ArtistProfile';
-import { IJobPosting } from './JobPosting';
+import { IEventPosting } from './Event';
 
 export interface IApplication extends Document {
   applicant: Types.ObjectId | IUser;
   artistProfile: Types.ObjectId | IArtistProfile;
-  jobPosting: Types.ObjectId | IJobPosting;
+  eventPosting: Types.ObjectId | IEventPosting;
   coverLetter: string;
   status: 'pending' | 'accepted' | 'rejected';
   proposedRate?: number;
@@ -18,7 +18,7 @@ export interface IApplication extends Document {
 const ApplicationSchema: Schema = new Schema({
   applicant: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   artistProfile: { type: Schema.Types.ObjectId, ref: 'ArtistProfile', required: true },
-  jobPosting: { type: Schema.Types.ObjectId, ref: 'JobPosting', required: true },
+  eventPosting: { type: Schema.Types.ObjectId, ref: 'EventPosting', required: true },
   coverLetter: { type: String, required: true },
   status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
   proposedRate: { type: Number },

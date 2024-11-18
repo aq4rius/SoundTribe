@@ -1,9 +1,9 @@
 import { Types } from 'mongoose';
-import { IJobPosting } from '../models/JobPosting';
+import { IEventPosting } from '../models/Event';
 import { IUser } from '../models/User';
 
-export function isPopulatedJobPosting(job: Types.ObjectId | IJobPosting): job is IJobPosting {
-  return (job as IJobPosting).postedBy !== undefined;
+export function isPopulatedEventPosting(event: Types.ObjectId | IEventPosting): event is IEventPosting {
+  return (event as IEventPosting).postedBy !== undefined;
 }
 
 export function isPopulatedUser(user: Types.ObjectId | IUser): user is IUser {

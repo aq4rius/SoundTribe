@@ -1,31 +1,31 @@
 import { Request, Response } from 'express';
 import Application, { IApplication } from '../models/Application';
-import JobPosting from '../models/JobPosting';
+import EventPosting from '../models/Event';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { UserRole } from '../models/User';
-import { isPopulatedJobPosting, isPopulatedUser } from '../utils/typeGuards';
+import { isPopulatedEventPosting, isPopulatedUser } from '../utils/typeGuards';
 
 export const submitApplication = async (req: AuthRequest, res: Response) => {
   try {
-    const { jobPostingId, artistProfileId, coverLetter, proposedRate, availability } = req.body;
+    const { eventPostingId, artistProfileId, coverLetter, proposedRate, availability } = req.body;
 
-    const jobPosting = await JobPosting.findById(jobPostingId);
-    if (!jobPosting || jobPosting.status !== 'open') {
-      return res.status(400).send('Invalid or closed job posting');
+    const eventPosting = await EventPosting.findById(eventPostingId);
+    if (!eventPosting || eventPosting.status !== 'open') {
+      return res.status(400).send('Invalid or closed event posting');
     }
 
     const existingApplication = await Application.findOne({
       applicant: req.user?.id,
-      jobPosting: jobPostingId
+      eventPosting: eventPostingId
     });
     if (existingApplication) {
-      return res.status(400).send('You have already applied to this job posting');
+      return res.status(400).send('You have already applied to this event posting');
     }
 
     const newApplication: IApplication = new Application({
       applicant: req.user?.id,
       artistProfile: artistProfileId,
-      jobPosting: jobPostingId,
+      eventPosting: eventPostingId,
       coverLetter,
       proposedRate,
       availability
@@ -40,7 +40,7 @@ export const submitApplication = async (req: AuthRequest, res: Response) => {
 export const getApplication = async (req: AuthRequest, res: Response) => {
   try {
     const application = await Application.findById(req.params.id)
-      .populate('applicant artistProfile jobPosting');
+      .populate('applicant artistProfile eventPosting');
     if (!application) {
       return res.status(404).send('Application not found');
     }
@@ -51,8 +51,8 @@ export const getApplication = async (req: AuthRequest, res: Response) => {
       isAuthorized = isAuthorized || application.applicant._id.toString() === req.user?.id;
     }
 
-    if (isPopulatedJobPosting(application.jobPosting) && isPopulatedUser(application.jobPosting.postedBy)) {
-      isAuthorized = isAuthorized || application.jobPosting.postedBy._id.toString() === req.user?.id;
+    if (isPopulatedEventPosting(application.eventPosting) && isPopulatedUser(application.eventPosting.postedBy)) {
+      isAuthorized = isAuthorized || application.eventPosting.postedBy._id.toString() === req.user?.id;
     }
 
     if (!isAuthorized) {
@@ -68,15 +68,15 @@ export const getApplication = async (req: AuthRequest, res: Response) => {
 export const updateApplicationStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.body;
-    const application = await Application.findById(req.params.id).populate('jobPosting');
+    const application = await Application.findById(req.params.id).populate('eventPosting');
     if (!application) {
       return res.status(404).send('Application not found');
     }
     
     let isAuthorized = req.user?.role === UserRole.ADMIN;
 
-    if (isPopulatedJobPosting(application.jobPosting) && isPopulatedUser(application.jobPosting.postedBy)) {
-      isAuthorized = isAuthorized || application.jobPosting.postedBy._id.toString() === req.user?.id;
+    if (isPopulatedEventPosting(application.eventPosting) && isPopulatedUser(application.eventPosting.postedBy)) {
+      isAuthorized = isAuthorized || application.eventPosting.postedBy._id.toString() === req.user?.id;
     }
 
     if (!isAuthorized) {
@@ -91,16 +91,16 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response) =
   }
 };
 
-export const getApplicationsForJob = async (req: AuthRequest, res: Response) => {
+export const getApplicationsForEvent = async (req: AuthRequest, res: Response) => {
   try {
-    const jobPosting = await JobPosting.findById(req.params.jobId);
-    if (!jobPosting) {
-      return res.status(404).send('Job posting not found');
+    const eventPosting = await EventPosting.findById(req.params.eventId);
+    if (!eventPosting) {
+      return res.status(404).send('Event posting not found');
     }
-    if (jobPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
+    if (eventPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
       return res.status(403).send('Not authorized to view these applications');
     }
-    const applications = await Application.find({ jobPosting: req.params.jobId })
+    const applications = await Application.find({ eventPosting: req.params.eventId })
       .populate('applicant artistProfile');
     res.json(applications);
   } catch (error) {
@@ -111,7 +111,7 @@ export const getApplicationsForJob = async (req: AuthRequest, res: Response) => 
 export const getUserApplications = async (req: AuthRequest, res: Response) => {
   try {
     const applications = await Application.find({ applicant: req.user?.id })
-      .populate('jobPosting');
+      .populate('eventPosting');
     res.json(applications);
   } catch (error) {
     res.status(500).send('Error fetching your applications');

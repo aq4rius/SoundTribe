@@ -2,7 +2,7 @@ import mongoose, { Document, Schema, Types } from 'mongoose';
 import { IUser } from './User';
 import { IGenre } from './Genre';
 
-export interface IJobPosting extends Document {
+export interface IEventPosting extends Document {
   postedBy: Types.ObjectId | IUser;
   title: string;
   description: string;
@@ -20,7 +20,7 @@ export interface IJobPosting extends Document {
   updatedAt: Date;
 }
 
-const JobPostingSchema: Schema = new Schema({
+const EventPostingSchema: Schema = new Schema({
   postedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
@@ -36,6 +36,6 @@ const JobPostingSchema: Schema = new Schema({
   status: { type: String, enum: ['open', 'closed', 'filled'], default: 'open' },
 }, { timestamps: true });
 
-const JobPosting = mongoose.model<IJobPosting>('JobPosting', JobPostingSchema);
+const EventPosting = mongoose.model<IEventPosting>('EventPosting', EventPostingSchema);
 
-export default JobPosting;
+export default EventPosting;

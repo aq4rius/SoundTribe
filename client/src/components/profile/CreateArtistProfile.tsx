@@ -16,6 +16,7 @@ const CreateArtistProfile: React.FC = () => {
 			description: string;
 			mediaUrl: string;
 			mediaType: "audio" | "video" | "image";
+			isEditing: boolean;
 		}>
 	>([]);
 	const [artistInfo, setArtistInfo] = useState({
@@ -87,8 +88,18 @@ const CreateArtistProfile: React.FC = () => {
 				description: "",
 				mediaUrl: "",
 				mediaType: "image",
+				isEditing: true,
 			},
 		]);
+	};
+
+	const toggleEditMode = (index: number) => {
+		const updatedItems = [...portfolioItems];
+		updatedItems[index] = {
+			...updatedItems[index],
+			isEditing: !updatedItems[index].isEditing,
+		};
+		setPortfolioItems(updatedItems);
 	};
 
 	const handlePortfolioItemChange = (
@@ -112,24 +123,24 @@ const CreateArtistProfile: React.FC = () => {
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Filter out empty portfolio items
-      const validPortfolioItems = portfolioItems.filter(item => 
-        item.title.trim() !== '' && item.mediaUrl.trim() !== ''
-      );
-  
-      await createArtistProfile({ 
-        ...artistInfo, 
-        genres: selectedGenres,
-        portfolioItems: validPortfolioItems 
-      });
-      await updateUserProfile({ artistProfileCompleted: true });
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Error creating artist profile:', error);
-    }
-  };
+		e.preventDefault();
+		try {
+			// Filter out empty portfolio items
+			const validPortfolioItems = portfolioItems.filter(
+				(item) => item.title.trim() !== "" && item.mediaUrl.trim() !== ""
+			);
+
+			await createArtistProfile({
+				...artistInfo,
+				genres: selectedGenres,
+				portfolioItems: validPortfolioItems,
+			});
+			await updateUserProfile({ artistProfileCompleted: true });
+			navigate("/dashboard");
+		} catch (error) {
+			console.error("Error creating artist profile:", error);
+		}
+	};
 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
@@ -308,61 +319,97 @@ const CreateArtistProfile: React.FC = () => {
 			<div className="space-y-4">
 				<h3 className="text-lg font-semibold">Portfolio Items</h3>
 				{portfolioItems.map((item, index) => (
-					<div key={index} className="space-y-2 p-4 border rounded">
-						<input
-							type="text"
-							value={item.title}
-							onChange={(e) =>
-								handlePortfolioItemChange(index, "title", e.target.value)
-							}
-							placeholder="Title"
-							className="w-full px-3 py-2 border rounded"
-						/>
-						<textarea
-							value={item.description}
-							onChange={(e) =>
-								handlePortfolioItemChange(index, "description", e.target.value)
-							}
-							placeholder="Description"
-							className="w-full px-3 py-2 border rounded"
-						/>
-						<input
-							type="text"
-							value={item.mediaUrl}
-							onChange={(e) =>
-								handlePortfolioItemChange(index, "mediaUrl", e.target.value)
-							}
-							placeholder="Media URL"
-							className="w-full px-3 py-2 border rounded"
-						/>
-						<select
-							value={item.mediaType}
-							onChange={(e) =>
-								handlePortfolioItemChange(index, "mediaType", e.target.value)
-							}
-							className="w-full px-3 py-2 border rounded"
-						>
-							<option value="image">Image</option>
-							<option value="audio">Audio</option>
-							<option value="video">Video</option>
-						</select>
-					</div>
-				))}
+    <div key={index} className="space-y-2 p-4 border rounded">
+        {item.isEditing ? (
+            <>
+                <input
+                    type="text"
+                    value={item.title}
+                    onChange={(e) => handlePortfolioItemChange(index, "title", e.target.value)}
+                    placeholder="Title"
+                    className="w-full px-3 py-2 border rounded"
+                />
+                <textarea
+                    value={item.description}
+                    onChange={(e) => handlePortfolioItemChange(index, "description", e.target.value)}
+                    placeholder="Description"
+                    className="w-full px-3 py-2 border rounded"
+                />
+                <input
+                    type="text"
+                    value={item.mediaUrl}
+                    onChange={(e) => handlePortfolioItemChange(index, "mediaUrl", e.target.value)}
+                    placeholder="Media URL"
+                    className="w-full px-3 py-2 border rounded"
+                />
+                <select
+                    value={item.mediaType}
+                    onChange={(e) => handlePortfolioItemChange(index, "mediaType", e.target.value)}
+                    className="w-full px-3 py-2 border rounded"
+                >
+                    <option value="image">Image</option>
+                    <option value="audio">Audio</option>
+                    <option value="video">Video</option>
+                </select>
+                <button
+                    type="button"
+                    onClick={() => toggleEditMode(index)}
+                    className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 mr-2"
+                >
+                    Save Item
+                </button>
+            </>
+        ) : (
+            <>
+                <h4 className="font-bold">{item.title}</h4>
+                <p>{item.description}</p>
+                <p>Media Type: {item.mediaType}</p>
+                <p>URL: {item.mediaUrl}</p>
+                <button
+                    type="button"
+                    onClick={() => toggleEditMode(index)}
+                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2"
+                >
+                    Edit
+                </button>
+            </>
+        )}
+        <button
+            type="button"
+            onClick={() => {
+                const updatedItems = portfolioItems.filter((_, i) => i !== index);
+                setPortfolioItems(updatedItems);
+            }}
+            className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+        >
+            Delete Item
+        </button>
+    </div>
+))}
 				<button
 					type="button"
 					onClick={handleAddPortfolioItem}
-					className="w-full bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300"
+					className="w-fit bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300"
 				>
 					Add Portfolio Item
 				</button>
 			</div>
 
-			<button
-				type="submit"
-				className="w-full bg-blue-500 text-white py-2 rounded"
-			>
-				Create Artist Profile
-			</button>
+			<div className="flex justify-end space-x-4">
+				<button
+					type="button"
+					onClick={() => navigate("/dashboard")}
+					className="px-4 py-2 border rounded hover:bg-gray-100"
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+				>
+					Create Artist Profile
+				</button>
+			</div>
 		</form>
 	);
 };

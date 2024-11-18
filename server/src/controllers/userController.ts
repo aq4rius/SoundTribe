@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import User, { IUser, UserRole } from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';
+import ArtistProfile from '../models/ArtistProfile';
 
 export const getUserProfile = async (req: AuthRequest, res: Response) => {
   try {
@@ -48,5 +49,21 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error updating user profile:', error);
     res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const deleteUserProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    
+    // Delete all artist profiles associated with the user
+    await ArtistProfile.deleteMany({ user: userId });
+    
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+    
+    res.status(200).json({ message: 'Profile deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting profile' });
   }
 };

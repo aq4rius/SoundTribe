@@ -45,6 +45,7 @@ export interface User {
         description: string;
         mediaUrl: string;
         mediaType: 'audio' | 'video' | 'image';
+        isEditing?: boolean;
     }>;
     availability: {
         isAvailable: boolean;

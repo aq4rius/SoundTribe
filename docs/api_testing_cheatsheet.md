@@ -9,7 +9,7 @@ Please update this document as new endpoints are added or existing ones are modi
 - Authentication
 - Genre Management
 - Artist Profile Management
-- Job/Gig Posting Management
+- Event/Gig Posting Management
 - Application Management
 - Helpful Tips
 
@@ -75,28 +75,28 @@ curl -X PUT http://localhost:3000/api/artists/ARTIST_ID_HERE \
 curl -X DELETE http://localhost:3000/api/artists/ARTIST_ID_HERE \
      -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
 
-## Job/Gig Posting Management
+## Event/Gig Posting Management
 
-# Create Job Posting
-curl -X POST http://localhost:3000/api/jobs \
+# Create Event Posting
+curl -X POST http://localhost:3000/api/events \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
      -d '{"title": "Guitarist Needed", "description": "Looking for a guitarist", "genre": "GENRE_ID_HERE"}'
 
-# Get All Job Postings
-curl -X GET http://localhost:3000/api/jobs
+# Get All Event Postings
+curl -X GET http://localhost:3000/api/events
 
-# Get Specific Job Posting
-curl -X GET http://localhost:3000/api/jobs/JOB_ID_HERE
+# Get Specific Event Posting
+curl -X GET http://localhost:3000/api/events/EVENT_ID_HERE
 
-# Update Job Posting
-curl -X PUT http://localhost:3000/api/jobs/JOB_ID_HERE \
+# Update Event Posting
+curl -X PUT http://localhost:3000/api/events/EVENT_ID_HERE \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
      -d '{"title": "Updated Title", "description": "Updated description"}'
 
-# Delete Job Posting
-curl -X DELETE http://localhost:3000/api/jobs/JOB_ID_HERE \
+# Delete Event Posting
+curl -X DELETE http://localhost:3000/api/events/EVENT_ID_HERE \
      -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
 
 ## Application Management
@@ -105,7 +105,7 @@ curl -X DELETE http://localhost:3000/api/jobs/JOB_ID_HERE \
 curl -X POST http://localhost:3000/api/applications \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
-     -d '{"job": "JOB_ID_HERE", "artist": "ARTIST_ID_HERE", "message": "I'm interested in this gig"}'
+     -d '{"event": "EVENT_ID_HERE", "artist": "ARTIST_ID_HERE", "message": "I'm interested in this gig"}'
 
 # Get All Applications (Admin only)
 curl -X GET http://localhost:3000/api/applications \

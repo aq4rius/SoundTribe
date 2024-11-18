@@ -10,15 +10,15 @@ import { getAllGenres } from "../../services/genre";
 const EditArtistProfile: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
-	const [profile, setProfile] = useState<ArtistProfile | null>(null);
+	const [profile, setProfile] = useState<ArtistProfile & { portfolioItems?: Array<{ isEditing?: boolean }> } | null>(null);
 	const [availableGenres, setAvailableGenres] = useState<
 		{ _id: string; name: string }[]
 	>([]);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-    isVisible: boolean;
-  } | null>(null);
+	const [notification, setNotification] = useState<{
+		type: "success" | "error";
+		message: string;
+		isVisible: boolean;
+	} | null>(null);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -35,44 +35,51 @@ const EditArtistProfile: React.FC = () => {
 	}, [id]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (profile && id) {
-        await updateArtistProfile(id, profile);
-        setNotification({
-          type: 'success',
-          message: 'Profile updated successfully!',
-          isVisible: true
-        });
-        setTimeout(() => navigate('/dashboard'), 1500);
-      }
-    } catch (err) {
-      setNotification({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Failed to update profile',
-        isVisible: true
-      });
-      setTimeout(() => setNotification(null), 3000);
-    }
-  };
+		e.preventDefault();
 
-  const handleGenreChange = (genreId: string) => {
-	if (!profile) return;
-	
-	setProfile(prev => {
-	  if (!prev) return null;
-	  const genres = prev.genres.map(g => g._id);
-	  const newGenres = genres.includes(genreId)
-		? prev.genres.filter(g => g._id !== genreId)
-		: [...prev.genres, { _id: genreId, name: availableGenres.find(g => g._id === genreId)?.name || '' }];
-	  
-	  return {
-		...prev,
-		genres: newGenres
-	  };
-	});
-  };
+		try {
+			if (profile && id) {
+				await updateArtistProfile(id, profile);
+				setNotification({
+					type: "success",
+					message: "Profile updated successfully!",
+					isVisible: true,
+				});
+				setTimeout(() => navigate("/dashboard"), 1500);
+			}
+		} catch (err) {
+			setNotification({
+				type: "error",
+				message:
+					err instanceof Error ? err.message : "Failed to update profile",
+				isVisible: true,
+			});
+			setTimeout(() => setNotification(null), 3000);
+		}
+	};
+
+	const handleGenreChange = (genreId: string) => {
+		if (!profile) return;
+
+		setProfile((prev) => {
+			if (!prev) return null;
+			const genres = prev.genres.map((g) => g._id);
+			const newGenres = genres.includes(genreId)
+				? prev.genres.filter((g) => g._id !== genreId)
+				: [
+						...prev.genres,
+						{
+							_id: genreId,
+							name: availableGenres.find((g) => g._id === genreId)?.name || "",
+						},
+				  ];
+
+			return {
+				...prev,
+				genres: newGenres,
+			};
+		});
+	};
 
 	const handleSocialMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (!profile) return;
@@ -88,24 +95,27 @@ const EditArtistProfile: React.FC = () => {
 
 	if (!profile) return <div>Loading...</div>;
 
-  const Notification = () => {
-    if (!notification?.isVisible) return null;
-  
-    const baseStyles = "fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-transform duration-300 ease-in-out";
-    const typeStyles = notification.type === 'success' 
-      ? "bg-green-500 text-white" 
-      : "bg-red-500 text-white";
-  
-    return (
-      <div className={`${baseStyles} ${typeStyles}`}>
-        {notification.message}
-      </div>
-    );
-  };
+	const Notification = () => {
+		if (!notification?.isVisible) return null;
+
+		const baseStyles =
+			"fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-transform duration-300 ease-in-out";
+		const typeStyles =
+			notification.type === "success"
+				? "bg-green-500 text-white"
+				: "bg-red-500 text-white";
+
+		return (
+			<div className={`${baseStyles} ${typeStyles}`}>
+				{notification.message}
+			</div>
+		);
+	};
+	
 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
-      <Notification />
+			<Notification />
 			<input
 				type="text"
 				name="stageName"
@@ -129,7 +139,7 @@ const EditArtistProfile: React.FC = () => {
 						<input
 							type="checkbox"
 							id={genre._id}
-							checked={profile.genres.some(g => g._id === genre._id)}
+							checked={profile.genres.some((g) => g._id === genre._id)}
 							onChange={() => handleGenreChange(genre._id)}
 						/>
 						<label htmlFor={genre._id}>{genre.name}</label>
@@ -212,90 +222,122 @@ const EditArtistProfile: React.FC = () => {
 				/>
 			</div>
 			<div className="space-y-4">
-				<h3 className="font-semibold">Portfolio Items</h3>
-				{profile.portfolioItems?.map((item, index) => (
-					<div key={index} className="p-4 border rounded">
-						<input
-							type="text"
-							value={item.title}
-							onChange={(e) => {
-								const newItems = [...(profile.portfolioItems || [])];
-								newItems[index] = { ...item, title: e.target.value };
-								setProfile({ ...profile, portfolioItems: newItems });
-							}}
-							placeholder="Title"
-							className="w-full px-3 py-2 border rounded mb-2"
-						/>
-						<textarea
-							value={item.description}
-							onChange={(e) => {
-								const newItems = [...(profile.portfolioItems || [])];
-								newItems[index] = { ...item, description: e.target.value };
-								setProfile({ ...profile, portfolioItems: newItems });
-							}}
-							placeholder="Description"
-							className="w-full px-3 py-2 border rounded mb-2"
-						/>
-						<input
-							type="text"
-							value={item.mediaUrl}
-							onChange={(e) => {
-								const newItems = [...(profile.portfolioItems || [])];
-								newItems[index] = { ...item, mediaUrl: e.target.value };
-								setProfile({ ...profile, portfolioItems: newItems });
-							}}
-							placeholder="Media URL"
-							className="w-full px-3 py-2 border rounded mb-2"
-						/>
-						<select
-							value={item.mediaType}
-							onChange={(e) => {
-								const newItems = [...(profile.portfolioItems || [])];
-								newItems[index] = {
-									...item,
-									mediaType: e.target.value as "audio" | "video" | "image",
-								};
-								setProfile({ ...profile, portfolioItems: newItems });
-							}}
-							className="w-full px-3 py-2 border rounded mb-2"
-						>
-							<option value="audio">Audio</option>
-							<option value="video">Video</option>
-							<option value="image">Image</option>
-						</select>
-						<button
-							type="button"
-							onClick={() => {
-								const newItems = profile.portfolioItems?.filter(
-									(_, i) => i !== index
-								);
-								setProfile({ ...profile, portfolioItems: newItems });
-							}}
-							className="bg-red-500 text-white px-3 py-1 rounded"
-						>
-							Remove
-						</button>
-					</div>
-				))}
-				<button
-					type="button"
-					onClick={() => {
-						const newItem = {
-							title: "",
-							description: "",
-							mediaUrl: "",
-							mediaType: "image" as const,
-						};
-						setProfile({
-							...profile,
-							portfolioItems: [...(profile.portfolioItems || []), newItem],
-						});
-					}}
-					className="bg-green-500 text-white px-3 py-1 rounded"
-				>
-					Add Portfolio Item
-				</button>
-			</div>
+    <h3 className="font-semibold">Portfolio Items</h3>
+    {profile.portfolioItems?.map((item, index) => (
+        <div key={index} className="p-4 border rounded">
+            {item.isEditing ? (
+                <>
+                    <input
+                        type="text"
+                        value={item.title}
+                        onChange={(e) => {
+                            const newItems = [...(profile.portfolioItems || [])];
+                            newItems[index] = { ...item, title: e.target.value };
+                            setProfile({ ...profile, portfolioItems: newItems });
+                        }}
+                        placeholder="Title"
+                        className="w-full px-3 py-2 border rounded mb-2"
+                    />
+                    <textarea
+                        value={item.description}
+                        onChange={(e) => {
+                            const newItems = [...(profile.portfolioItems || [])];
+                            newItems[index] = { ...item, description: e.target.value };
+                            setProfile({ ...profile, portfolioItems: newItems });
+                        }}
+                        placeholder="Description"
+                        className="w-full px-3 py-2 border rounded mb-2"
+                    />
+                    <input
+                        type="text"
+                        value={item.mediaUrl}
+                        onChange={(e) => {
+                            const newItems = [...(profile.portfolioItems || [])];
+                            newItems[index] = { ...item, mediaUrl: e.target.value };
+                            setProfile({ ...profile, portfolioItems: newItems });
+                        }}
+                        placeholder="Media URL"
+                        className="w-full px-3 py-2 border rounded mb-2"
+                    />
+                    <select
+                        value={item.mediaType}
+                        onChange={(e) => {
+                            const newItems = [...(profile.portfolioItems || [])];
+                            newItems[index] = {
+                                ...item,
+                                mediaType: e.target.value as "audio" | "video" | "image",
+                            };
+                            setProfile({ ...profile, portfolioItems: newItems });
+                        }}
+                        className="w-full px-3 py-2 border rounded mb-2"
+                    >
+                        <option value="audio">Audio</option>
+                        <option value="video">Video</option>
+                        <option value="image">Image</option>
+                    </select>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const newItems = [...(profile.portfolioItems || [])];
+                            newItems[index] = { ...item, isEditing: false };
+                            setProfile({ ...profile, portfolioItems: newItems });
+                        }}
+                        className="bg-green-500 text-white px-4 py-2 rounded mr-2"
+                    >
+                        Save Item
+                    </button>
+                </>
+            ) : (
+                <>
+                    <h4 className="font-bold">{item.title}</h4>
+                    <p>{item.description}</p>
+                    <p>Media Type: {item.mediaType}</p>
+                    <p>URL: {item.mediaUrl}</p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const newItems = [...(profile.portfolioItems || [])];
+                            newItems[index] = { ...item, isEditing: true };
+                            setProfile({ ...profile, portfolioItems: newItems });
+                        }}
+                        className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+                    >
+                        Edit
+                    </button>
+                </>
+            )}
+            <button
+                type="button"
+                onClick={() => {
+                    const newItems = profile.portfolioItems?.filter((_, i) => i !== index);
+                    setProfile({ ...profile, portfolioItems: newItems });
+                }}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+                Remove
+            </button>
+        </div>
+    ))}
+    <button
+        type="button"
+        onClick={() => {
+            const newItem = {
+                title: "",
+                description: "",
+                mediaUrl: "",
+                mediaType: "image" as const,
+                isEditing: true,
+            };
+            setProfile({
+                ...profile,
+                portfolioItems: [...(profile.portfolioItems || []), newItem],
+            });
+        }}
+        className="bg-green-500 text-white px-4 py-2 rounded"
+    >
+        Add Portfolio Item
+    </button>
+</div>
 
 			<div>
 				<label className="block mb-2">Availability</label>
@@ -377,21 +419,21 @@ const EditArtistProfile: React.FC = () => {
 				className="w-full px-3 py-2 border rounded"
 			/>
 
-<div className="flex justify-end space-x-4">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="px-4 py-2 border rounded hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Save Changes
-          </button>
-        </div>
+			<div className="flex justify-end space-x-4">
+				<button
+					type="button"
+					onClick={() => navigate("/dashboard")}
+					className="px-4 py-2 border rounded hover:bg-gray-100"
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+				>
+					Save Changes
+				</button>
+			</div>
 		</form>
 	);
 };
