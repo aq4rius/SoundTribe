@@ -18,9 +18,28 @@ export interface User {
     };
   }
 
-  interface Genre {
+  export interface Genre {
     _id: string;
     name: string;
+  }
+
+  export interface Event {
+    _id: string;
+    postedBy: User;
+    title: string;
+    description: string;
+    genres: Genre[];
+    requiredInstruments: string[];
+    location: string;
+    eventDate: Date;
+    duration: number;
+    paymentAmount: number;
+    paymentType: 'fixed' | 'hourly';
+    requiredExperience: number;
+    applicationDeadline: Date;
+    status: 'open' | 'closed' | 'filled';
+    createdAt: Date;
+    updatedAt: Date;
   }
 
   export interface ArtistProfile {

@@ -78,3 +78,13 @@ export const searchEventPostings = async (req: Request, res: Response) => {
     res.status(500).send('Error searching event postings');
   }
 };
+
+export const getUserEvents = async (req: AuthRequest, res: Response) => {
+  try {
+    const events = await EventPosting.find({ postedBy: req.user?._id })
+      .populate('genres postedBy');
+    res.json(events);
+  } catch (error) {
+    res.status(500).send('Error fetching user events');
+  }
+};

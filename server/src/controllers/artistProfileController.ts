@@ -78,22 +78,6 @@ export const deleteArtistProfile = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const searchArtistProfiles = async (req: Request, res: Response) => {
-  try {
-    const { genre, instrument, location } = req.query;
-    let query: any = {};
-
-    if (genre) query.genres = genre;
-    if (instrument) query.instruments = { $in: [instrument] };
-    if (location) query.location = new RegExp(location as string, 'i');
-
-    const profiles = await ArtistProfile.find(query).populate('genres');
-    res.json(profiles);
-  } catch (error) {
-    res.status(500).send('Error searching artist profiles');
-  }
-};
-
 export const getUserArtistProfiles = async (req: AuthRequest, res: Response) => {
   try {
     const artistProfiles = await ArtistProfile.find({ user: req.user?._id })
