@@ -27,3 +27,19 @@ export const updateArtistProfile = async (profileId: string, profileData: Partia
   const response = await api.put(`/artist-profiles/${profileId}`, profileData);
   return response.data;
 };
+
+export const searchArtistProfiles = async (filters: {
+  searchTerm?: string;
+  selectedGenres?: string[];
+  instruments?: string[];
+  experienceMin?: number;
+  rateMin?: number;
+  rateMax?: number;
+  location?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const response = await api.get('/artist-profiles/search', { params: filters });
+  return response.data;
+};
+

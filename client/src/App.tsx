@@ -18,6 +18,7 @@ import CreateArtistProfile from "./components/profile/CreateArtistProfile";
 import Layout from "./components/layout/Layout";
 import CreateEvent from "./components/events/CreateEvent";
 import EditEvent from "./components/events/EditEvent";
+import AllArtists from './pages/AllArtists';
 
 interface PrivateRouteProps {
 	element: React.ReactElement;
@@ -70,6 +71,7 @@ function App() {
 							path="/edit-event/:id"
 							element={<PrivateRoute element={<EditEvent />} />}
 						/>
+						<Route path="/artists" element={<AllArtists />} />
 					</Routes>
 				</Layout>
 			</Router>

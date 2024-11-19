@@ -88,5 +88,74 @@ export const getUserArtistProfiles = async (req: AuthRequest, res: Response) => 
   }
 };
 
+export const searchArtistProfiles = async (req: Request, res: Response) => {
+  try {
+    const { 
+      searchTerm,
+      selectedGenres,
+      instruments,
+      experienceMin,
+      rateMin,
+      rateMax,
+      location,
+      page = 1,
+      limit = 9
+    } = req.query;
+
+    let query: any = {};
+
+    if (searchTerm) {
+      query.$or = [
+        { stageName: new RegExp(searchTerm as string, 'i') },
+        { biography: new RegExp(searchTerm as string, 'i') }
+      ];
+    }
+
+    if (selectedGenres) {
+      const genreIds = Array.isArray(selectedGenres) ? selectedGenres : [selectedGenres];
+      query.genres = { $in: genreIds };
+    }
+
+    if (instruments) {
+      query.instruments = { $in: Array.isArray(instruments) ? instruments : [instruments] };
+    }
+
+    if (experienceMin) {
+      query.yearsOfExperience = { $gte: Number(experienceMin) };
+    }
+
+    if (rateMin || rateMax) {
+      query.ratePerHour = {};
+      if (rateMin) query.ratePerHour.$gte = Number(rateMin);
+      if (rateMax) query.ratePerHour.$lte = Number(rateMax);
+    }
+
+    if (location) {
+      query.location = new RegExp(location as string, 'i');
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    
+    const [artistProfiles, total] = await Promise.all([
+      ArtistProfile.find(query)
+        .populate('genres')
+        .populate('user', 'username email')
+        .skip(skip)
+        .limit(Number(limit)),
+      ArtistProfile.countDocuments(query)
+    ]);
+
+    res.json({
+      data: artistProfiles,
+      total,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / Number(limit))
+    });
+  } catch (error) {
+    res.status(500).send('Error searching artist profiles');
+  }
+};
+
+
 
 

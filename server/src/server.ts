@@ -9,6 +9,8 @@ import { handleError } from "./utils/errorHandler";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
+import { apiLimiter } from './middleware/rateLimiter';
+
 
 dotenv.config();
 
@@ -30,6 +32,7 @@ app.use(cors({
   credentials: true
 }));
 
+app.use('/api/', apiLimiter);
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(limiter);
