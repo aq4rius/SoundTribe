@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import User, { UserRole } from '../models/User';
 import ArtistProfile, { IArtistProfile } from '../models/ArtistProfile';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { AppError } from '../utils/errorHandler';
 
 
 export const createArtistProfile = async (req: AuthRequest, res: Response) => {
@@ -136,23 +137,27 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
 
     const skip = (Number(page) - 1) * Number(limit);
     
-    const [artistProfiles, total] = await Promise.all([
+    const [artists, total] = await Promise.all([
       ArtistProfile.find(query)
         .populate('genres')
         .populate('user', 'username email')
+        .lean()
         .skip(skip)
         .limit(Number(limit)),
       ArtistProfile.countDocuments(query)
     ]);
 
     res.json({
-      data: artistProfiles,
+      data: artists,
       total,
       currentPage: Number(page),
       totalPages: Math.ceil(total / Number(limit))
     });
   } catch (error) {
-    res.status(500).send('Error searching artist profiles');
+    if (error instanceof Error) {
+      throw new AppError(`Error searching artist profiles: ${error.message}`, 500);
+    }
+    throw new AppError('Error searching artist profiles', 500);
   }
 };
 

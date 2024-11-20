@@ -38,8 +38,12 @@ export const searchArtistProfiles = async (filters: {
   location?: string;
   page?: number;
   limit?: number;
-}) => {
-  const response = await api.get('/artist-profiles/search', { params: filters });
+}, signal?: AbortSignal) => {
+  const response = await api.get('/artist-profiles/search', { 
+    params: filters,
+    signal 
+  });
   return response.data;
 };
+
 
