@@ -25,11 +25,24 @@ export const deleteEvent = async (eventId: string) => {
   return response.data;
 };
 
-export const searchEvents = async (params: {
-  genre?: string;
-  instrument?: string;
+export const searchEventPostings = async (filters: {
+  searchTerm?: string;
+  selectedGenres?: string[];
+  instruments?: string[];
   location?: string;
-}) => {
-  const response = await api.get('/event-postings', { params });
+  dateFrom?: string;
+  dateTo?: string;
+  paymentMin?: number;
+  paymentMax?: number;
+  paymentType?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}, signal?: AbortSignal) => {
+  const response = await api.get('/event-postings/search', { 
+    params: filters,
+    signal 
+  });
   return response.data;
 };
+

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import EventPosting, { IEventPosting } from '../models/Event';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { UserRole } from '../models/User';
+import { AppError } from '../utils/errorHandler';
 
 export const createEventPosting = async (req: AuthRequest, res: Response) => {
   try {
@@ -64,20 +65,91 @@ export const deleteEventPosting = async (req: AuthRequest, res: Response) => {
 
 export const searchEventPostings = async (req: Request, res: Response) => {
   try {
-    const { genre, instrument, location, status } = req.query;
+    const { 
+      searchTerm,
+      selectedGenres,
+      instruments,
+      location,
+      dateFrom,
+      dateTo,
+      paymentMin,
+      paymentMax,
+      paymentType,
+      status,
+      page = 1,
+      limit = 9
+    } = req.query;
+
     let query: any = {};
 
-    if (genre) query.genres = genre;
-    if (instrument) query.requiredInstruments = { $in: [instrument] };
-    if (location) query.location = new RegExp(location as string, 'i');
-    if (status) query.status = status;
+    if (searchTerm) {
+      query.$or = [
+        { title: new RegExp(searchTerm as string, 'i') },
+        { description: new RegExp(searchTerm as string, 'i') }
+      ];
+    }
 
-    const eventPostings = await EventPosting.find(query).populate('genres postedBy');
-    res.json(eventPostings);
+    if (selectedGenres) {
+      const genreIds = Array.isArray(selectedGenres) ? selectedGenres : [selectedGenres];
+      query.genres = { $in: genreIds };
+    }
+
+    if (instruments) {
+      query.requiredInstruments = { 
+        $in: Array.isArray(instruments) ? instruments : [instruments] 
+      };
+    }
+
+    if (location) {
+      query.location = new RegExp(location as string, 'i');
+    }
+
+    if (dateFrom || dateTo) {
+      query.eventDate = {};
+      if (dateFrom) query.eventDate.$gte = new Date(dateFrom as string);
+      if (dateTo) query.eventDate.$lte = new Date(dateTo as string);
+    }
+
+    if (paymentMin || paymentMax) {
+      query.paymentAmount = {};
+      if (paymentMin) query.paymentAmount.$gte = Number(paymentMin);
+      if (paymentMax) query.paymentAmount.$lte = Number(paymentMax);
+    }
+
+    if (paymentType) {
+      query.paymentType = paymentType;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    
+    const [events, total] = await Promise.all([
+      EventPosting.find(query)
+        .populate('genres')
+        .populate('postedBy', 'username email')
+        .lean()
+        .skip(skip)
+        .limit(Number(limit)),
+      EventPosting.countDocuments(query)
+    ]);
+
+    res.json({
+      data: events,
+      total,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / Number(limit))
+    });
   } catch (error) {
-    res.status(500).send('Error searching event postings');
+    if (error instanceof Error) {
+      throw new AppError(`Error searching event postings: ${error.message}`, 500);
+    }
+    throw new AppError('Error searching event postings', 500);
   }
 };
+
 
 export const getUserEvents = async (req: AuthRequest, res: Response) => {
   try {

@@ -4,37 +4,58 @@ import { Event } from '../../types';
 
 interface EventCardProps {
   event: Event;
-  onDelete: (id: string) => void;
+  mode?: 'compact' | 'full';
+  className?: string;
+  onDelete?: (id: string) => void;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onDelete }) => {
+const EventCard: React.FC<EventCardProps> = ({ 
+  event, 
+  mode = 'compact',
+  className = '',
+  onDelete 
+}) => {
   const navigate = useNavigate();
 
+  const handleClick = () => {
+    navigate(`/events/${event._id}`);
+  };
+
   return (
-    <div className="bg-white shadow rounded-lg p-6 mb-4">
+    <div 
+      onClick={handleClick}
+      className={`bg-white shadow rounded-lg p-6 mb-4 hover:shadow-lg transition-shadow cursor-pointer ${className}`}
+    >
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-xl font-semibold">{event.title}</h3>
           <p className="text-gray-600 mt-1">{event.location}</p>
         </div>
-        <div className="space-x-2">
-          <button
-            onClick={() => navigate(`/edit-event/${event._id}`)}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDelete(event._id)}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
-        </div>
+        {mode === 'full' && onDelete && (
+          <div className="space-x-2" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => navigate(`/edit-event/${event._id}`)}
+              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => onDelete(event._id)}
+              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 space-y-2">
-        <p className="text-gray-700">{event.description}</p>
+        <p className="text-gray-700">
+          {mode === 'compact' 
+            ? `${event.description.slice(0, 150)}...`
+            : event.description
+          }
+        </p>
         <div className="flex space-x-4 text-sm text-gray-600">
           <span>Date: {new Date(event.eventDate).toLocaleDateString()}</span>
           <span>Duration: {event.duration} hours</span>
@@ -54,12 +75,21 @@ const EventCard: React.FC<EventCardProps> = ({ event, onDelete }) => {
             </span>
           ))}
         </div>
-        <div className="mt-4 text-sm text-gray-600">
-          <p>Required Experience: {event.requiredExperience} years</p>
-          <p>Application Deadline: {new Date(event.applicationDeadline).toLocaleDateString()}</p>
-          <p>Status: <span className="capitalize">{event.status}</span></p>
-        </div>
       </div>
+
+      {mode === 'compact' && (
+        <div className="mt-4">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/events/${event._id}`);
+            }}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+          >
+            View Details
+          </button>
+        </div>
+      )}
     </div>
   );
 };

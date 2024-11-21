@@ -112,14 +112,15 @@ const AllArtists: React.FC = () => {
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-			<div className="flex gap-6">
+			<h1 className="text-3xl font-bold mb-8">All Artists</h1>
+			<div className="flex flex-col md:flex-row gap-6">
 				{/* Filter Sidebar */}
-				<div className="w-64 flex-shrink-0">
-					<div className="bg-white p-4 rounded-lg shadow">
+				<div className="w-full md:w-64 flex-shrink-0">
+					<div className="bg-white p-6 rounded-lg shadow sticky top-4">
 						<h3 className="text-lg font-semibold mb-4">Filters</h3>
 
 						{/* Search Input */}
-						<div className="mb-4">
+						<div className="space-y-4">
 							<input
 								type="text"
 								placeholder="Search artists..."
@@ -222,7 +223,7 @@ const AllArtists: React.FC = () => {
 				<div className="flex-1">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 						{artists.map((artist) => (
-							<ArtistCard key={artist._id} artist={artist} />
+							<ArtistCard key={artist._id} artist={artist} mode="compact" />
 						))}
 					</div>
 

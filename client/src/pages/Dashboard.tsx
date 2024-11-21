@@ -9,6 +9,8 @@ import {
 import { ArtistProfile } from "../types";
 import { getUserEvents, deleteEvent } from "../services/event";
 import { Event } from "../types";
+import ArtistCard from "../components/artists/ArtistCard";
+import EventCard from "../components/events/EventCard";
 
 const Dashboard: React.FC = () => {
 	const { user } = useAuth();
@@ -104,64 +106,14 @@ const Dashboard: React.FC = () => {
 				</div>
 
 				<div className="mt-4 space-y-6">
-					{events.map((event) => (
-						<div key={event._id} className="p-6 bg-white rounded-lg shadow">
-							<div className="flex justify-between items-start">
-								<h3 className="text-lg font-semibold">{event.title}</h3>
-								<div className="space-x-2">
-									<button
-										onClick={() => navigate(`/edit-event/${event._id}`)}
-										className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-									>
-										Edit
-									</button>
-									<button
-										onClick={() => handleDeleteEvent(event._id)}
-										className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-									>
-										Delete
-									</button>
-								</div>
-							</div>
-
-							<div className="mt-4 grid grid-cols-2 gap-4">
-								<div>
-									<p className="font-semibold">Description:</p>
-									<p>{event.description}</p>
-								</div>
-								<div>
-									<p className="font-semibold">Location:</p>
-									<p>{event.location}</p>
-								</div>
-								<div>
-									<p className="font-semibold">Date:</p>
-									<p>{new Date(event.eventDate).toLocaleDateString()}</p>
-								</div>
-								<div>
-									<p className="font-semibold">Duration:</p>
-									<p>{event.duration} hours</p>
-								</div>
-								<div>
-									<p className="font-semibold">Payment:</p>
-									<p>
-										${event.paymentAmount} ({event.paymentType})
-									</p>
-								</div>
-								<div>
-									<p className="font-semibold">Required Instruments:</p>
-									<p>{event.requiredInstruments.join(", ")}</p>
-								</div>
-								<div>
-									<p className="font-semibold">Genres:</p>
-									<p>{event.genres.map((genre) => genre.name).join(", ")}</p>
-								</div>
-								<div>
-									<p className="font-semibold">Status:</p>
-									<p className="capitalize">{event.status}</p>
-								</div>
-							</div>
-						</div>
-					))}
+				{events.map((event) => (
+    <EventCard 
+      key={event._id}
+      event={event}
+      mode="full"
+      onDelete={handleDeleteEvent}
+    />
+  ))}
 				</div>
 			</div>
 
@@ -179,59 +131,23 @@ const Dashboard: React.FC = () => {
 
 				<div className="mt-4 space-y-6">
 					{artistProfiles.map((profile) => (
-						<div key={profile._id} className="p-6 bg-white rounded-lg shadow">
-							<div className="flex justify-between items-start">
-								<h3 className="text-lg font-semibold">{profile.stageName}</h3>
-								<div className="space-x-2">
-									<button
-										onClick={() =>
-											navigate(`/edit-artist-profile/${profile._id}`)
-										}
-										className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-									>
-										Edit
-									</button>
-									<button
-										onClick={() => handleDeleteProfile(profile._id)}
-										className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-									>
-										Delete
-									</button>
-								</div>
-							</div>
-
-							<div className="mt-4 grid grid-cols-2 gap-4">
-								<div>
-									<p className="font-semibold">Biography:</p>
-									<p>{profile.biography || "No biography provided"}</p>
-								</div>
-								<div>
-									<p className="font-semibold">Genres:</p>
-									<p>
-										{profile.genres.map((genre) => genre.name).join(", ") ||
-											"No genres specified"}
-									</p>
-								</div>
-
-								<div>
-									<p className="font-semibold">Instruments:</p>
-									<p>
-										{profile.instruments.join(", ") ||
-											"No instruments specified"}
-									</p>
-								</div>
-								<div>
-									<p className="font-semibold">Experience:</p>
-									<p>{profile.yearsOfExperience} years</p>
-								</div>
-								<div>
-									<p className="font-semibold">Rate:</p>
-									<p>${profile.ratePerHour}/hour</p>
-								</div>
-								<div>
-									<p className="font-semibold">Location:</p>
-									<p>{profile.location}</p>
-								</div>
+						<div key={profile._id} className="mt-4">
+							<ArtistCard artist={profile} mode="full" />
+							<div className="mt-2 space-x-2">
+								<button
+									onClick={() =>
+										navigate(`/edit-artist-profile/${profile._id}`)
+									}
+									className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+								>
+									Edit
+								</button>
+								<button
+									onClick={() => handleDeleteProfile(profile._id)}
+									className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+								>
+									Delete
+								</button>
 							</div>
 						</div>
 					))}

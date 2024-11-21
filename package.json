@@ -22,6 +22,7 @@
     "ioredis": "^5.4.1",
     "lodash": "^4.17.21",
     "morgan": "^1.10.0",
-    "react-router-dom": "^6.25.1"
+    "react-router-dom": "^6.25.1",
+    "slugify": "^1.6.6"
   }
 }

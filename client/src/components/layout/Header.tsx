@@ -14,6 +14,7 @@ const Header: React.FC = () => {
             <>
               <Link to="/dashboard" className="mr-4">Dashboard</Link>
               <Link to="/artists" className="mr-4">Artists</Link>
+              <Link to="/events" className="mr-4">Events</Link>
               <button onClick={logout} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Logout</button>
             </>
           ) : (
