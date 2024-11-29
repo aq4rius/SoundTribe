@@ -68,14 +68,26 @@ export const getApplication = async (req: AuthRequest, res: Response) => {
 export const updateApplicationStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.body;
-    const application = await Application.findById(req.params.id).populate('eventPosting');
+    const application = await Application.findById(req.params.id)
+      .populate({
+        path: 'eventPosting',
+        populate: { 
+          path: 'postedBy',
+          select: '_id email'
+        }
+      });
+
     if (!application) {
       return res.status(404).send('Application not found');
     }
-    
+
+    // Log for debugging
+    console.log('Current user:', req.user?.id);
+
     let isAuthorized = req.user?.role === UserRole.ADMIN;
 
-    if (isPopulatedEventPosting(application.eventPosting) && isPopulatedUser(application.eventPosting.postedBy)) {
+    if (isPopulatedEventPosting(application.eventPosting)) {
+      console.log('Event owner:', application.eventPosting.postedBy);
       isAuthorized = isAuthorized || application.eventPosting.postedBy._id.toString() === req.user?.id;
     }
 
@@ -87,9 +99,13 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response) =
     await application.save();
     res.json(application);
   } catch (error) {
+    console.error('Update status error:', error);
     res.status(500).send('Error updating application status');
   }
 };
+
+
+
 
 export const getApplicationsForEvent = async (req: AuthRequest, res: Response) => {
   try {
