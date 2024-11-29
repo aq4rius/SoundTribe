@@ -18,7 +18,6 @@ async function populateGenres() {
     await Genre.findOneAndUpdate({ name: genreName }, { name: genreName }, { upsert: true });
   }
 
-  console.log('Genres populated successfully');
   mongoose.connection.close();
 }
 

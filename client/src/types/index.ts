@@ -84,3 +84,17 @@ export interface User {
   export interface RegisterData extends LoginData {
     username: string;
   }
+
+  export interface Application {
+    _id: string;
+    applicant: User;
+    artistProfile: ArtistProfile;
+    eventPosting: Event;
+    coverLetter: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    proposedRate?: number;
+    availability: Date[];
+    createdAt: Date;
+    updatedAt: Date;
+  }
+  

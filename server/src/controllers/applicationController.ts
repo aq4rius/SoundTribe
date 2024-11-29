@@ -112,8 +112,10 @@ export const getUserApplications = async (req: AuthRequest, res: Response) => {
   try {
     const applications = await Application.find({ applicant: req.user?.id })
       .populate('eventPosting');
-    res.json(applications);
-  } catch (error) {
-    res.status(500).send('Error fetching your applications');
+    return res.json(applications || []);
+  } catch (error: any) {
+    console.error('=== getUserApplications error ===');
+    console.error('Full error:', error);
+    return res.status(500).json({ error: error?.message || 'Unknown error occurred' });
   }
 };

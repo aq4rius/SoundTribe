@@ -11,12 +11,17 @@ import { getUserEvents, deleteEvent } from "../services/event";
 import { Event } from "../types";
 import ArtistCard from "../components/artists/ArtistCard";
 import EventCard from "../components/events/EventCard";
+import { Application } from '../types';
+import { getUserApplications } from '../services/application';
+import ApplicationsList from '../components/applications/ApplicationsList';
+
 
 const Dashboard: React.FC = () => {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [artistProfiles, setArtistProfiles] = useState<ArtistProfile[]>([]);
 	const [events, setEvents] = useState<Event[]>([]);
+	const [userApplications, setUserApplications] = useState<Application[]>([]);
 
 	const handleDeleteProfile = async (profileId: string) => {
 		if (window.confirm("Are you sure you want to delete this profile?")) {
@@ -44,15 +49,17 @@ const Dashboard: React.FC = () => {
 
 	useEffect(() => {
 		const fetchData = async () => {
-			const [profiles, userEvents] = await Promise.all([
-				getUserArtistProfiles(),
-				getUserEvents(),
-			]);
-			setArtistProfiles(profiles);
-			setEvents(userEvents);
+		  const [profiles, userEvents, applications] = await Promise.all([
+			getUserArtistProfiles(),
+			getUserEvents(),
+			getUserApplications()
+		  ]);
+		  setArtistProfiles(profiles);
+		  setEvents(userEvents);
+		  setUserApplications(applications);
 		};
 		fetchData();
-	}, []);
+	  }, []);
 
 	if (!user?.profileCompleted) {
 		return <ProfileSetup />;
@@ -152,6 +159,10 @@ const Dashboard: React.FC = () => {
 						</div>
 					))}
 				</div>
+<div className="mt-8">
+  <h2 className="text-2xl font-bold mb-4">My Applications</h2>
+  <ApplicationsList applications={userApplications} />
+</div>
 			</div>
 		</div>
 	);

@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getEventById } from '../../services/event';
 import { Event } from '../../types';
+import { useAuth } from '../../hooks/useAuth';
+import EventApplication from '../applications/EventApplication';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +32,9 @@ const EventDetails: React.FC = () => {
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
   if (!event) return <div>Event not found</div>;
+
+  const isEventOwner = user && event.postedBy && user.email === event.postedBy.email;
+
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
@@ -82,7 +88,11 @@ const EventDetails: React.FC = () => {
             ))}
           </div>
         </div>
+      
       </div>
+      <div className="mt-8">
+          <EventApplication event={event} />
+        </div>
     </div>
   );
 };

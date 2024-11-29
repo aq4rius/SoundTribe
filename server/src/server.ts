@@ -6,7 +6,6 @@ import dotenv from "dotenv";
 import { connectToDatabase } from "./database";
 import routes from "./routes/index";
 import { handleError } from "./utils/errorHandler";
-import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
 import { apiLimiter } from './middleware/rateLimiter';
@@ -16,10 +15,6 @@ dotenv.config();
 
 const app: Express = express();
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://yourdomain.com'];
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-});
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -35,7 +30,6 @@ app.use(cors({
 app.use('/api/', apiLimiter);
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

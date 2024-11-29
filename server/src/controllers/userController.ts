@@ -17,8 +17,6 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    console.log('Updating profile for user:', req.user);
-    console.log('Update data:', req.body);
     const { username, firstName, lastName, location, bio, favoriteGenres, preferredContentTypes, notificationPreferences, privacySettings } = req.body;
     const user = await User.findById(req.user?._id);
     if (!user) {
@@ -44,7 +42,6 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     user.profileCompleted = user.basicProfileCompleted && (user.role !== UserRole.ARTIST || user.artistProfileCompleted);
 
     const updatedUser = await user.save();
-    console.log('User updated successfully:', updatedUser);
     res.json(updatedUser.toObject({ virtuals: true }));
   } catch (error) {
     console.error('Error updating user profile:', error);

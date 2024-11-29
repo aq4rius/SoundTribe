@@ -8,7 +8,6 @@ import { AppError } from '../utils/errorHandler';
 
 
 export const createArtistProfile = async (req: AuthRequest, res: Response) => {
-  console.log('Received artist profile data:', req.body);
   try {
     const userId = req.user?._id;
 
@@ -18,7 +17,6 @@ export const createArtistProfile = async (req: AuthRequest, res: Response) => {
     });
     
     await newProfile.save();
-    console.log('Artist profile saved successfully:', newProfile._id);
 
     res.status(201).json({ artistProfile: newProfile});
   } catch (error) {
