@@ -14,7 +14,18 @@ import { apiLimiter } from './middleware/rateLimiter';
 dotenv.config();
 
 const app: Express = express();
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://yourdomain.com'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'https://yourdomain.com'
+];
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
 
 app.use(cors({
   origin: function(origin, callback) {
