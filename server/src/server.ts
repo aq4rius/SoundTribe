@@ -42,9 +42,10 @@ app.use(express.urlencoded({ extended: true }));
 // Use routes
 app.use('/api', routes);
 
-app.get("/health", (_req: Request, res: Response) => {
+app.get("/api/health", (_req: Request, res: Response) => {
   res.status(200).send("Server is running");
 });
+
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   handleError(err, res);
