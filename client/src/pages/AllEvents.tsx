@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import debounce from "lodash/debounce";
 import { searchEventPostings } from "../services/event";
 import { getAllGenres } from "../services/genre";
-import { Event, Genre } from "../types";
+import { Event, Genre, EventFilterType } from "../types";
 import EventCard from "../components/events/EventCard";
 import Pagination from "../components/common/Pagination";
 
@@ -47,7 +47,7 @@ const AllEvents: React.FC = () => {
 
 	const fetchEvents = useMemo(
 		() =>
-			debounce(async (currentFilters, page) => {
+			debounce(async (currentFilters: EventFilterType, page: number) => {
 				if (abortControllerRef.current) {
 					abortControllerRef.current.abort();
 				}

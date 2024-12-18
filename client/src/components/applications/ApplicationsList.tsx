@@ -1,7 +1,6 @@
 import React from 'react';
 import { Application } from '../../types';
 import { updateApplicationStatus } from '../../services/application';
-import { useAuth } from '../../hooks/useAuth';
 
 interface ApplicationsListProps {
   applications: Application[];
@@ -14,8 +13,6 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
   isEventOwner = false,
   onStatusUpdate
 }) => {
-  const { user } = useAuth();
-
   const handleStatusUpdate = async (applicationId: string, status: 'accepted' | 'rejected') => {
     try {
       await updateApplicationStatus(applicationId, status);

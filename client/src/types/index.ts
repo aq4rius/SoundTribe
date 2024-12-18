@@ -97,4 +97,29 @@ export interface User {
     createdAt: Date;
     updatedAt: Date;
   }
+
+  export interface ArtistFilterType {
+    searchTerm: string;
+    selectedGenres: string[];
+    instruments: string[];
+    experienceMin: number;
+    rateMin: number;
+    rateMax: number;
+    location: string;
+}
+
+export interface EventFilterType {
+    searchTerm: string;
+    selectedGenres: string[];
+    instruments: string[];
+    location: string;
+    dateFrom: string;
+    dateTo: string;
+    paymentMin: number;
+    paymentMax: number;
+    paymentType: "" | "fixed" | "hourly";
+    status: string;
+}
+
+
   

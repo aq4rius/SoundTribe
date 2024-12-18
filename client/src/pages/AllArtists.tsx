@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import debounce from "lodash/debounce";
 import { searchArtistProfiles } from "../services/artistProfile";
 import { getAllGenres } from "../services/genre";
-import { ArtistProfile, Genre } from "../types";
+import { ArtistProfile, Genre, ArtistFilterType } from "../types";
 import ArtistCard from "../components/artists/ArtistCard";
 import Pagination from "../components/common/Pagination";
 
@@ -46,7 +46,7 @@ const AllArtists: React.FC = () => {
 
 	const fetchArtists = useMemo(
 		() =>
-			debounce(async (currentFilters, page) => {
+			debounce(async (currentFilters: ArtistFilterType, page: number) => {
 				if (abortControllerRef.current) {
 					abortControllerRef.current.abort();
 				}
