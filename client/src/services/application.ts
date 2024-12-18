@@ -1,5 +1,4 @@
 import api from './api';
-import { Application } from '../types';
 
 export const submitApplication = async (applicationData: {
   eventPostingId: string;
