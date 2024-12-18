@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import debounce from "lodash/debounce";
+import { debounce } from "lodash";
 import { searchEventPostings } from "../services/event";
 import { getAllGenres } from "../services/genre";
 import { Event, Genre, EventFilterType } from "../types";

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import debounce from "lodash/debounce";
+import { debounce } from "lodash";
 import { searchArtistProfiles } from "../services/artistProfile";
 import { getAllGenres } from "../services/genre";
 import { ArtistProfile, Genre, ArtistFilterType } from "../types";
