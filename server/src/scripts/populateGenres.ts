@@ -1,10 +1,11 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import mongoose from 'mongoose';
 import Genre from '../models/Genre';
-import dotenv from 'dotenv';
-import path from 'path';
 import { connectToDatabase } from '../database';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 
 const genres = [
   'Rock', 'Pop', 'Hip Hop', 'Jazz', 'Classical', 'Electronic', 'R&B', 'Country',
