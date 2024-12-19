@@ -19,8 +19,11 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
-  'https://yourdomain.com'
+  'https://soundtribe.vercel.app',
+  'https://soundtribe-aq4rius-projects.vercel.app',
+  'https://soundtribe-git-main-aq4rius-projects.vercel.app'
 ];
+
 
 app.use(cors({
   origin: function(origin, callback) {
