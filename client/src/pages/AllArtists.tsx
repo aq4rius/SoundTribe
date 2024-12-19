@@ -16,7 +16,7 @@ const DEFAULT_FILTERS = {
 	rateMin: 0,
 	rateMax: 1000,
 	location: "",
-};
+}; 
 
 const AllArtists: React.FC = () => {
 	const [artists, setArtists] = useState<ArtistProfile[]>([]);
