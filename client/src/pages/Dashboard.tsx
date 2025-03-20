@@ -11,10 +11,9 @@ import { getUserEvents, deleteEvent } from "../services/event";
 import { Event } from "../types";
 import ArtistCard from "../components/artists/ArtistCard";
 import EventCard from "../components/events/EventCard";
-import { Application } from '../types';
-import { getUserApplications } from '../services/application';
-import ApplicationsList from '../components/applications/ApplicationsList';
-
+import { Application } from "../types";
+import { getUserApplications } from "../services/application";
+import ApplicationsList from "../components/applications/ApplicationsList";
 
 const Dashboard: React.FC = () => {
 	const { user } = useAuth();
@@ -49,17 +48,17 @@ const Dashboard: React.FC = () => {
 
 	useEffect(() => {
 		const fetchData = async () => {
-		  const [profiles, userEvents, applications] = await Promise.all([
-			getUserArtistProfiles(),
-			getUserEvents(),
-			getUserApplications()
-		  ]);
-		  setArtistProfiles(profiles);
-		  setEvents(userEvents);
-		  setUserApplications(applications);
+			const [profiles, userEvents, applications] = await Promise.all([
+				getUserArtistProfiles(),
+				getUserEvents(),
+				getUserApplications(),
+			]);
+			setArtistProfiles(profiles);
+			setEvents(userEvents);
+			setUserApplications(applications);
 		};
 		fetchData();
-	  }, []);
+	}, []);
 
 	if (!user?.profileCompleted) {
 		return <ProfileSetup />;
@@ -113,14 +112,14 @@ const Dashboard: React.FC = () => {
 				</div>
 
 				<div className="mt-4 space-y-6">
-				{events.map((event) => (
-    <EventCard 
-      key={event._id}
-      event={event}
-      mode="full"
-      onDelete={handleDeleteEvent}
-    />
-  ))}
+					{events.map((event) => (
+						<EventCard
+							key={event._id}
+							event={event}
+							mode="full"
+							onDelete={handleDeleteEvent}
+						/>
+					))}
 				</div>
 			</div>
 
@@ -159,10 +158,10 @@ const Dashboard: React.FC = () => {
 						</div>
 					))}
 				</div>
-<div className="mt-8">
-  <h2 className="text-2xl font-bold mb-4">My Applications</h2>
-  <ApplicationsList applications={userApplications} />
-</div>
+				<div className="mt-8">
+					<h2 className="text-2xl font-bold mb-4">My Applications</h2>
+					<ApplicationsList applications={userApplications} />
+				</div>
 			</div>
 		</div>
 	);

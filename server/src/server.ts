@@ -4,7 +4,7 @@ import express, { Express, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { connectToDatabase } from "./database";
-import routes from "./routes/index";
+import routes from "./routes/indexRoutes";
 import { handleError } from "./utils/errorHandler";
 import helmet from "helmet";
 import morgan from "morgan";
