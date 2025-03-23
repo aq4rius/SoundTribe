@@ -67,7 +67,7 @@ Implementation Plan:
 Create a Message model with fields like:
 
 sender (reference to User)
-recipient (reference to User)
+reciever (reference to User)
 content
 timestamp
 read status

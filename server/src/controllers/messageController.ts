@@ -2,7 +2,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { Response } from 'express';
 import User, { IUser } from '../models/User';
 import Message from '../models/Message';
-import cloudinary from '../config/cloudinary';
+import cloudinary from '../utils/cloudinary';
 
 export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
   try {
@@ -49,10 +49,14 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         const {id: receiverId} = req.params;
         const senderId = req.user?._id;
 
+        if (!senderId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
         let attachmentUrl;
         if(attachment) {
-            const attachmentUrl = await cloudinary.uploader.upload(attachment);
-            attachmentUrl = attachmentUrl.secure_url;
+            const uploadResponse = await cloudinary.uploader.upload(attachment);
+            attachmentUrl = uploadResponse.secure_url;
         }
         const newMessage = new Message({
             text,
@@ -64,8 +68,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         await newMessage.save();
 
         // todo: realtime functionality goes here => socket.io
-        res.status(201).json({ message: 'Message sent successfully', message: newMessage });
-
+        res.status(201).json({ message: newMessage });
     } catch (error) {
         console.error('Error in sendMessage:', error);
         res.status(500).json({ message: 'Server error' });
