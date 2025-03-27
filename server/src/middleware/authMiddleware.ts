@@ -1,3 +1,5 @@
+// server/src/middleware/authMiddleware.ts
+
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwtUtils';
 import User, { IUser, UserRole } from '../models/User';

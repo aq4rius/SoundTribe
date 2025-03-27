@@ -1,3 +1,5 @@
+// server/src/controllers/messageController.ts
+
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Response } from 'express';
 import User, { IUser } from '../models/User';

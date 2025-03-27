@@ -1,3 +1,5 @@
+// client/src/pages/AllEvents.tsx
+
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { debounce } from "lodash";
 import { searchEventPostings } from "../services/event";

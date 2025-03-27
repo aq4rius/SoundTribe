@@ -1,3 +1,5 @@
+// client/src/services/artistProfile.ts
+
 import api from './api';
 import { ArtistProfile } from '../types';
 

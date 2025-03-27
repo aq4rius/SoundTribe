@@ -1,3 +1,5 @@
+// client/src/components/profile/EditArtistProfile.tsx
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArtistProfile } from "../../types";

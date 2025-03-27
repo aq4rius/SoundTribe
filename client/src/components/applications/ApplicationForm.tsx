@@ -1,3 +1,5 @@
+// client/src/components/applications/ApplicationForm.tsx
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitApplication } from '../../services/application';

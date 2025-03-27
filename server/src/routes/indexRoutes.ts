@@ -1,4 +1,4 @@
-// server/src/routes/index.ts
+// server/src/routes/indexRoutes.ts
 
 import express from 'express';
 import authRoutes from './authRoutes';

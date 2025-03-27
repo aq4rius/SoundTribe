@@ -1,3 +1,5 @@
+// server/src/models/Application.ts
+
 import mongoose, { Document, Schema, Types } from 'mongoose';
 import { IUser } from './User';
 import { IArtistProfile } from './ArtistProfile';

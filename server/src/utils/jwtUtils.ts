@@ -1,3 +1,5 @@
+// server/src/utils/jwtUtils.ts
+
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../models/User';
 import { Types } from 'mongoose';

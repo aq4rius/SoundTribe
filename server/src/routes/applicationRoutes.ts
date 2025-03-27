@@ -1,3 +1,5 @@
+// server/src/routes/applicationRoutes.ts
+
 import express from 'express';
 import { submitApplication, getApplication, updateApplicationStatus, getApplicationsForEvent, getUserApplications } from '../controllers/applicationController';
 import { authMiddleware } from '../middleware/authMiddleware';

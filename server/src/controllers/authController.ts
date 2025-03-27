@@ -1,3 +1,5 @@
+// server/src/controllers/authController.ts
+
 import { Request, Response } from 'express';
 import User, { UserRole, IUser } from '../models/User';
 import { generateToken } from '../utils/jwtUtils';

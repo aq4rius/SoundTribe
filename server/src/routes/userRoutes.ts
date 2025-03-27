@@ -1,3 +1,5 @@
+// server/src/routes/userRoutes.ts
+
 import express from 'express';
 import User, { UserRole } from '../models/User';
 import { getUserProfile, updateUserProfile, deleteUserProfile } from '../controllers/userController';

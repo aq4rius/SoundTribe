@@ -1,3 +1,5 @@
+// server/src/controllers/userController.ts
+
 import { Response } from 'express';
 import User, { IUser, UserRole } from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';

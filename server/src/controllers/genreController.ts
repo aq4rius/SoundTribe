@@ -1,3 +1,5 @@
+// server/src/controllers/genreController.ts
+
 import { Request, Response } from 'express';
 import Genre, { IGenre } from '../models/Genre';
 

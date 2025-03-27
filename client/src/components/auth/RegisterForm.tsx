@@ -1,3 +1,5 @@
+// client/src/components/auth/RegisterForm.tsx
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../../services/auth';

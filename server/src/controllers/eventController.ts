@@ -1,3 +1,5 @@
+// server/src/controllers/eventController.ts
+
 import { Request, Response } from 'express';
 import EventPosting, { IEventPosting } from '../models/Event';
 import { AuthRequest } from '../middleware/authMiddleware';

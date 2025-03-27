@@ -1,3 +1,5 @@
+// client/src/contexts/AuthContext.tsx
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { login, register, getCurrentUser } from '../services/auth';
 // import { useNavigate } from 'react-router-dom';

@@ -1,3 +1,5 @@
+// client/src/pages/Register.tsx
+
 import React from 'react';
 import RegisterForm from '../components/auth/RegisterForm';
 

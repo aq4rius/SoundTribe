@@ -1,3 +1,5 @@
+// server/src/controllers/applicationController.ts
+
 import { Request, Response } from 'express';
 import Application, { IApplication } from '../models/Application';
 import EventPosting from '../models/Event';

@@ -1,3 +1,5 @@
+// server/src/routes/messageRoutes.ts
+
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import {getUsersForSidebar, getMessages, sendMessage} from '../controllers/messageController';

@@ -1,3 +1,5 @@
+// client/src/components/profile/CreateArtistProfile.tsx
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createArtistProfile } from "../../services/artistProfile";

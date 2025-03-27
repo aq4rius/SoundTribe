@@ -1,3 +1,5 @@
+// client/src/components/applications/ApplicationsList.tsx
+
 import React from 'react';
 import { Application } from '../../types';
 import { updateApplicationStatus } from '../../services/application';

@@ -1,3 +1,5 @@
+// server/src/models/Genre.ts
+
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IGenre extends Document {
