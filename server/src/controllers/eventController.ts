@@ -1,10 +1,4 @@
-<<<<<<< HEAD
 import { Request, Response, NextFunction } from 'express';
-=======
-// server/src/controllers/eventController.ts
-
-import { Request, Response } from 'express';
->>>>>>> 2f6e93ed4b55c65df521d2598d73f9c4f48e5484
 import EventPosting, { IEventPosting } from '../models/Event';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { UserRole } from '../models/User';
