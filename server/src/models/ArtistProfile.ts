@@ -1,3 +1,5 @@
+// server/src/models/ArtistProfile.ts
+
 import mongoose, { Document, Schema, Types } from 'mongoose';
 import { IUser } from './User';
 import { IGenre } from './Genre';

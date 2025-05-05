@@ -1,3 +1,5 @@
+// server/src/utils/typeGuards.ts
+
 import { Types } from 'mongoose';
 import { IEventPosting } from '../models/Event';
 import { IUser } from '../models/User';

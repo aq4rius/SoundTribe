@@ -1,3 +1,5 @@
+// server/src/scripts/populateGenres.ts
+
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import mongoose from 'mongoose';

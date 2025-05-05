@@ -1,3 +1,5 @@
+// client/src/components/artists/ArtistDetails.tsx
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getArtistProfileById } from '../../services/artistProfile';

@@ -1,3 +1,5 @@
+// client/src/components/profile/ProfileSetup.tsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateUserProfile } from "../../services/user";

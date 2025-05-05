@@ -1,3 +1,5 @@
+// client/src/services/event.ts
+
 import api from './api';
 
 export const createEvent = async (eventData: any) => {

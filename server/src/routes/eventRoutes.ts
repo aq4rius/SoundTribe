@@ -1,3 +1,5 @@
+// server/src/routes/eventRoutes.ts
+
 import express from 'express';
 import { createEventPosting, getEventPosting, updateEventPosting, deleteEventPosting, searchEventPostings, getUserEvents } from '../controllers/eventController';
 import { authMiddleware } from '../middleware/authMiddleware';

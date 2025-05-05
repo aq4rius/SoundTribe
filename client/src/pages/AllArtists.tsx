@@ -1,3 +1,5 @@
+// client/src/pages/AllArtists.tsx
+
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { debounce } from "lodash";
 import { searchArtistProfiles } from "../services/artistProfile";

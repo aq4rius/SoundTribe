@@ -1,3 +1,5 @@
+// server/src/models/Event.ts
+
 import mongoose, { Document, Schema, Types } from 'mongoose';
 import { IUser } from './User';
 import { IGenre } from './Genre';

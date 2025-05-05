@@ -1,3 +1,5 @@
+// client/src/components/events/EventDetails.tsx
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getEventById } from '../../services/event';

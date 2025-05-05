@@ -1,3 +1,5 @@
+// client/src/components/artists/ArtistCard.tsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArtistProfile } from '../../types';

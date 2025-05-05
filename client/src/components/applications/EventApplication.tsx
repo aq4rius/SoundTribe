@@ -1,3 +1,5 @@
+// client/src/components/applications/EventApplication.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Event, Application, ArtistProfile } from '../../types';
 import { useAuth } from '../../hooks/useAuth';

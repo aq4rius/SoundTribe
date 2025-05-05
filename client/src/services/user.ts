@@ -1,3 +1,5 @@
+// client/src/services/user.ts
+
 import api from './api';
 
 export const updateUserProfile = async (userData: any) => {

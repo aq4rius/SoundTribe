@@ -1,3 +1,5 @@
+// client/src/services/application.ts
+
 import api from './api';
 
 export const submitApplication = async (applicationData: {

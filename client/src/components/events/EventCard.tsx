@@ -1,3 +1,5 @@
+// client/src/components/events/EventCard.tsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Event } from '../../types';

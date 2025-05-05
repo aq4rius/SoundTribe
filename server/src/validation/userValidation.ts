@@ -1,3 +1,5 @@
+// server/src/validation/userValidation.ts
+
 import { body } from 'express-validator';
 
 export const registerValidation = [

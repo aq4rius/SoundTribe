@@ -1,3 +1,5 @@
+// client/src/components/events/EditEvent.tsx
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEventById, updateEvent } from '../../services/event';
