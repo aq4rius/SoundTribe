@@ -1,7 +1,8 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import User, { UserRole } from '../models/User';
 import { getUserProfile, updateUserProfile, deleteUserProfile } from '../controllers/userController';
 import { authMiddleware, roleMiddleware, AuthRequest } from '../middleware/authMiddleware';
+import { AppError } from '../utils/errorHandler';
 
 const router = express.Router();
 
@@ -11,26 +12,26 @@ router.delete('/profile', authMiddleware, deleteUserProfile);
 
 
 // Get all users (admin only)
-router.get('/', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res) => {
+router.get('/', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
   } catch (error) {
-    res.status(500).send('Server error');
+    next(new AppError('Server error', 500));
   }
 });
 
 // Update user role (admin only)
-router.put('/:id/role', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res) => {
+router.put('/:id/role', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { role } = req.body;
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
     if (!user) {
-      return res.status(404).send('User not found');
+      return next(new AppError('User not found', 404));
     }
     res.json(user);
   } catch (error) {
-    res.status(500).send('Server error');
+    next(new AppError('Server error', 500));
   }
 });
 

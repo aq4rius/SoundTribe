@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import EventPosting, { IEventPosting } from '../models/Event';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { UserRole } from '../models/User';
 import { AppError } from '../utils/errorHandler';
 
-export const createEventPosting = async (req: AuthRequest, res: Response) => {
+export const createEventPosting = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const newEventPosting: IEventPosting = new EventPosting({
       ...req.body,
@@ -13,57 +13,57 @@ export const createEventPosting = async (req: AuthRequest, res: Response) => {
     await newEventPosting.save();
     res.status(201).json(newEventPosting);
   } catch (error) {
-    res.status(500).send('Error creating event posting');
+    next(error);
   }
 };
 
-export const getEventPosting = async (req: Request, res: Response) => {
+export const getEventPosting = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const eventPosting = await EventPosting.findById(req.params.id).populate('genres postedBy');
     if (!eventPosting) {
-      return res.status(404).send('Event posting not found');
+      throw new AppError('Event posting not found', 404);
     }
     res.json(eventPosting);
   } catch (error) {
-    res.status(500).send('Error fetching event posting');
+    next(error);
   }
 };
 
-export const updateEventPosting = async (req: AuthRequest, res: Response) => {
+export const updateEventPosting = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const eventPosting = await EventPosting.findById(req.params.id);
     if (!eventPosting) {
-      return res.status(404).send('Event posting not found');
+      throw new AppError('Event posting not found', 404);
     }
     if (eventPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
-      return res.status(403).send('Not authorized to update this event posting');
+      throw new AppError('Not authorized to update this event posting', 403);
     }
 
     const updatedEventPosting = await EventPosting.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updatedEventPosting);
   } catch (error) {
-    res.status(500).send('Error updating event posting');
+    next(error);
   }
 };
 
-export const deleteEventPosting = async (req: AuthRequest, res: Response) => {
+export const deleteEventPosting = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const eventPosting = await EventPosting.findById(req.params.id);
     if (!eventPosting) {
-      return res.status(404).send('Event posting not found');
+      throw new AppError('Event posting not found', 404);
     }
     if (eventPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
-      return res.status(403).send('Not authorized to delete this event posting');
+      throw new AppError('Not authorized to delete this event posting', 403);
     }
 
     await EventPosting.findByIdAndDelete(req.params.id);
     res.send('Event posting deleted successfully');
   } catch (error) {
-    res.status(500).send('Error deleting event posting');
+    next(error);
   }
 };
 
-export const searchEventPostings = async (req: Request, res: Response) => {
+export const searchEventPostings = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
       searchTerm,
@@ -142,21 +142,18 @@ export const searchEventPostings = async (req: Request, res: Response) => {
       currentPage: Number(page),
       totalPages: Math.ceil(total / Number(limit))
     });
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new AppError(`Error searching event postings: ${error.message}`, 500);
-    }
-    throw new AppError('Error searching event postings', 500);
+  } catch (error: any) {
+    next(new AppError(`Error searching event postings: ${error.message || 'Unknown error'}`, 500));
   }
 };
 
 
-export const getUserEvents = async (req: AuthRequest, res: Response) => {
+export const getUserEvents = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const events = await EventPosting.find({ postedBy: req.user?._id })
       .populate('genres postedBy');
     res.json(events);
   } catch (error) {
-    res.status(500).send('Error fetching user events');
+    next(error);
   }
 };

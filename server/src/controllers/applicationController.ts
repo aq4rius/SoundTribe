@@ -1,25 +1,26 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Application, { IApplication } from '../models/Application';
 import EventPosting from '../models/Event';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { UserRole } from '../models/User';
 import { isPopulatedEventPosting, isPopulatedUser } from '../utils/typeGuards';
+import { AppError } from '../utils/errorHandler';
 
-export const submitApplication = async (req: AuthRequest, res: Response) => {
+export const submitApplication = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { eventPostingId, artistProfileId, coverLetter, proposedRate, availability } = req.body;
 
     const eventPosting = await EventPosting.findById(eventPostingId);
     if (!eventPosting || eventPosting.status !== 'open') {
-      return res.status(400).send('Invalid or closed event posting');
+      throw new AppError('Invalid or closed event posting', 400);
     }
 
     const existingApplication = await Application.findOne({
-      applicant: req.user?.id,
+      applicant: req.user?._id,
       eventPosting: eventPostingId
     });
     if (existingApplication) {
-      return res.status(400).send('You have already applied to this event posting');
+      throw new AppError('You have already applied to this event posting', 400);
     }
 
     const newApplication: IApplication = new Application({
@@ -33,16 +34,16 @@ export const submitApplication = async (req: AuthRequest, res: Response) => {
     await newApplication.save();
     res.status(201).json(newApplication);
   } catch (error) {
-    res.status(500).send('Error submitting application');
+    next(error);
   }
 };
 
-export const getApplication = async (req: AuthRequest, res: Response) => {
+export const getApplication = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const application = await Application.findById(req.params.id)
       .populate('applicant artistProfile eventPosting');
     if (!application) {
-      return res.status(404).send('Application not found');
+      throw new AppError('Application not found', 404);
     }
     
     let isAuthorized = req.user?.role === UserRole.ADMIN;
@@ -56,16 +57,16 @@ export const getApplication = async (req: AuthRequest, res: Response) => {
     }
 
     if (!isAuthorized) {
-      return res.status(403).send('Not authorized to view this application');
+      throw new AppError('Not authorized to view this application', 403);
     }
     
     res.json(application);
   } catch (error) {
-    res.status(500).send('Error fetching application');
+    next(error);
   }
 };
 
-export const updateApplicationStatus = async (req: AuthRequest, res: Response) => {
+export const updateApplicationStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { status } = req.body;
     const application = await Application.findById(req.params.id)
@@ -78,21 +79,18 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response) =
       });
 
     if (!application) {
-      return res.status(404).send('Application not found');
+      throw new AppError('Application not found', 404);
     }
 
-    // Log for debugging
-    console.log('Current user:', req.user?.id);
 
     let isAuthorized = req.user?.role === UserRole.ADMIN;
 
     if (isPopulatedEventPosting(application.eventPosting)) {
-      console.log('Event owner:', application.eventPosting.postedBy);
       isAuthorized = isAuthorized || application.eventPosting.postedBy._id.toString() === req.user?.id;
     }
 
     if (!isAuthorized) {
-      return res.status(403).send('Not authorized to update this application');
+      throw new AppError('Not authorized to update this application', 403);
     }
     
     application.status = status;
@@ -100,31 +98,31 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response) =
     res.json(application);
   } catch (error) {
     console.error('Update status error:', error);
-    res.status(500).send('Error updating application status');
+    next(error);
   }
 };
 
 
 
 
-export const getApplicationsForEvent = async (req: AuthRequest, res: Response) => {
+export const getApplicationsForEvent = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const eventPosting = await EventPosting.findById(req.params.eventId);
     if (!eventPosting) {
-      return res.status(404).send('Event posting not found');
+      throw new AppError('Event posting not found', 404);
     }
     if (eventPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
-      return res.status(403).send('Not authorized to view these applications');
+      throw new AppError('Not authorized to view these applications', 403);
     }
     const applications = await Application.find({ eventPosting: req.params.eventId })
       .populate('applicant artistProfile');
     res.json(applications);
   } catch (error) {
-    res.status(500).send('Error fetching applications');
+    next(error);
   }
 };
 
-export const getUserApplications = async (req: AuthRequest, res: Response) => {
+export const getUserApplications = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const applications = await Application.find({ applicant: req.user?.id })
       .populate('eventPosting');

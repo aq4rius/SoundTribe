@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwtUtils';
 import User, { IUser, UserRole } from '../models/User';
+import { AppError } from '../utils/errorHandler';
 
 export interface AuthRequest extends Request {
   user?: Partial<IUser>;
@@ -13,7 +14,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+    return next(new AppError('No token provided', 401));
   }
 
   try {
@@ -22,24 +23,24 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
     const user = await User.findById(decoded.id).select('-password');
     
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      return next(new AppError('User not found', 401));
     }
     
     req.user = user;
     next();
   } catch (error) {
     console.error('=== Auth Middleware Error ===', error);
-    res.status(401).json({ message: 'Invalid token' });
+    next(new AppError('Invalid token', 401));
   }
 };
 
 export const roleMiddleware = (role: UserRole) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role as UserRole)) {
-      return res.status(403).json({ message: 'Access denied' });
+      return next(new AppError('Access denied', 403));
     }
     if (req.user.role !== role) {
-      return res.status(403).json({ message: 'Insufficient privileges' });
+      return next(new AppError('Insufficient privileges', 403));
     }
     next();
   };

@@ -1,13 +1,13 @@
 // server/src/controllers/artistProfileController.ts
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User, { UserRole } from '../models/User';
 import ArtistProfile, { IArtistProfile } from '../models/ArtistProfile';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../utils/errorHandler';
 
 
-export const createArtistProfile = async (req: AuthRequest, res: Response) => {
+export const createArtistProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?._id;
 
@@ -22,62 +22,62 @@ export const createArtistProfile = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error creating artist profile:', error);
     if (error instanceof Error) {
-      res.status(500).send(`Error creating artist profile: ${error.message}`);
+      next(error);  
     } else {
-      res.status(500).send('Error creating artist profile');
+      next(error);  
     }
   }
 };
 
 
 
-export const getArtistProfile = async (req: Request, res: Response) => {
+export const getArtistProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const profile = await ArtistProfile.findById(req.params.id).populate('genres');
     if (!profile) {
-      return res.status(404).send('Artist profile not found');
+      throw new AppError('Artist profile not found', 404);
     }
     res.json(profile);
   } catch (error) {
-    res.status(500).send('Error fetching artist profile');
+    next(error);
   }
 };
 
-export const updateArtistProfile = async (req: AuthRequest, res: Response) => {
+export const updateArtistProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const profile = await ArtistProfile.findById(req.params.id);
     if (!profile) {
-      return res.status(404).send('Artist profile not found');
+      throw new AppError('Artist profile not found', 404);
     }
     if (profile.user.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
-      return res.status(403).send('Not authorized to update this profile');
+      throw new AppError('Not authorized to update this profile', 403);
     }
 
     const updatedProfile = await ArtistProfile.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updatedProfile);
   } catch (error) {
-    res.status(500).send('Error updating artist profile');
+    next(error);
   }
 };
 
-export const deleteArtistProfile = async (req: AuthRequest, res: Response) => {
+export const deleteArtistProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const profile = await ArtistProfile.findById(req.params.id);
     if (!profile) {
-      return res.status(404).send('Artist profile not found');
+      throw new AppError('Artist profile not found', 404);
     }
     if (profile.user.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
-      return res.status(403).send('Not authorized to delete this profile');
+      throw new AppError('Not authorized to delete this profile', 403);
     }
 
     await ArtistProfile.findByIdAndDelete(req.params.id);
     res.send('Artist profile deleted successfully');
   } catch (error) {
-    res.status(500).send('Error deleting artist profile');
+    next(error);
   }
 };
 
-export const getUserArtistProfiles = async (req: AuthRequest, res: Response) => {
+export const getUserArtistProfiles = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const artistProfiles = await ArtistProfile.find({ user: req.user?._id })
       .populate('genres', 'name');

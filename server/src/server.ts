@@ -5,7 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { connectToDatabase } from "./database";
 import routes from "./routes/indexRoutes";
-import { handleError } from "./utils/errorHandler";
+import { errorHandler } from "./utils/errorHandler";
 import helmet from "helmet";
 import morgan from "morgan";
 import { apiLimiter } from './middleware/rateLimiter';
@@ -52,9 +52,7 @@ app.get("/api/health", (_req: Request, res: Response) => {
 });
 
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  handleError(err, res);
-});
+app.use(errorHandler);
 
 const uri: string = process.env.MONGODB_URI || "mongodb://localhost:27017/soundtribe";
 const port: number = parseInt(process.env.PORT || "3000", 10);

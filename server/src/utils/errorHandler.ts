@@ -1,6 +1,15 @@
 // server/src/utils/errorHandler.ts
 
-import { Response } from 'express';
+import { Response, Request, NextFunction } from 'express';
+
+export const errorHandler = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  handleError(err, res);
+};
 
 export class AppError extends Error {
   statusCode: number;

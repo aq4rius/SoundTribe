@@ -1,26 +1,27 @@
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import User, { IUser, UserRole } from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';
 import ArtistProfile from '../models/ArtistProfile';
+import { AppError } from '../utils/errorHandler';
 
-export const getUserProfile = async (req: AuthRequest, res: Response) => {
+export const getUserProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(req.user?._id).select('-password');
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return next(new AppError('User not found', 404));
     }
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    next(new AppError('Server error', 500));
   }
 };
 
-export const updateUserProfile = async (req: AuthRequest, res: Response) => {
+export const updateUserProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { username, firstName, lastName, location, bio, favoriteGenres, preferredContentTypes, notificationPreferences, privacySettings } = req.body;
     const user = await User.findById(req.user?._id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return next(new AppError('User not found', 404));
     }
 
     // Update the fields
@@ -45,11 +46,11 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     res.json(updatedUser.toObject({ virtuals: true }));
   } catch (error) {
     console.error('Error updating user profile:', error);
-    res.status(500).json({ message: 'Server error', error });
+    next(new AppError('Server error', 500));
   }
 };
 
-export const deleteUserProfile = async (req: AuthRequest, res: Response) => {
+export const deleteUserProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?._id;
     
@@ -61,6 +62,6 @@ export const deleteUserProfile = async (req: AuthRequest, res: Response) => {
     
     res.status(200).json({ message: 'Profile deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting profile' });
+    next(new AppError('Error deleting profile', 500));
   }
 };

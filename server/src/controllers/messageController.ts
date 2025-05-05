@@ -1,15 +1,16 @@
 import { AuthRequest } from '../middleware/authMiddleware';
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import User, { IUser } from '../models/User';
 import Message from '../models/Message';
 import cloudinary from '../utils/cloudinary';
+import { AppError } from '../utils/errorHandler';
 
-export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
+export const getUsersForSidebar = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const loggedInUserId = req.user?._id;
     
     if (!loggedInUserId) {
-      return res.status(401).json({ message: 'User not authenticated' });
+     throw new AppError('User not authenticated', 401);
     }
     
     const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select('-password');
@@ -17,16 +18,16 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
     res.status(200).json(filteredUsers);
   } catch (error) {
     console.error('Error in getUsersForSidebar:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
-export const getMessages = async (req: AuthRequest, res: Response) => {
+export const getMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const loggedInUserId = req.user?._id;
     const otherUserId = req.params.id; 
     if (!loggedInUserId || !otherUserId) {
-      return res.status(401).json({ message: 'User not authenticated or other user not specified' });
+      throw new AppError('User not authenticated or other user ID not provided', 401);
     }
 
     const messages = await Message.find({
@@ -39,18 +40,18 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
     res.status(200).json(messages);
   } catch (error) {
     console.error('Error in getMessages:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
-export const sendMessage = async (req: AuthRequest, res: Response) => {
+export const sendMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const {text, attachment} = req.body;
         const {id: receiverId} = req.params;
         const senderId = req.user?._id;
 
         if (!senderId) {
-            return res.status(401).json({ message: 'User not authenticated' });
+           throw new AppError('User not authenticated', 401);
         }
 
         let attachmentUrl;
@@ -70,7 +71,6 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         // todo: realtime functionality goes here => socket.io
         res.status(201).json({ message: newMessage });
     } catch (error) {
-        console.error('Error in sendMessage:', error);
-        res.status(500).json({ message: 'Server error' });
+        next(error);
     }
 }
