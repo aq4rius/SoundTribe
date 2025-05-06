@@ -109,166 +109,169 @@ const AllEvents: React.FC = () => {
 	const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
 	return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold mb-8">Available Events</h1>
-          
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Filters Sidebar */}
-            <div className="w-full md:w-64 flex-shrink-0">
-              <div className="bg-white p-6 rounded-lg shadow sticky top-4">
-                <h2 className="text-lg font-semibold mb-4">Filters</h2>
-                
-                <div className="space-y-4">
-                  {/* Search input */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Search</label>
-                    <input
-                      type="text"
-                      value={filters.searchTerm}
-                      onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-                      placeholder="Search events..."
-                      className="w-full px-3 py-2 border rounded"
-                    />
-                  </div>
-      
-                  {/* Location filter */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Location</label>
-                    <input
-                      type="text"
-                      value={filters.location}
-                      onChange={(e) => handleFilterChange('location', e.target.value)}
-                      placeholder="Enter location"
-                      className="w-full px-3 py-2 border rounded"
-                    />
-                  </div>
-      
-                  {/* Date range */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">From Date</label>
-                    <input
-                      type="date"
-                      value={filters.dateFrom}
-                      onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                      className="w-full px-3 py-2 border rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">To Date</label>
-                    <input
-                      type="date"
-                      value={filters.dateTo}
-                      onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                      className="w-full px-3 py-2 border rounded"
-                    />
-                  </div>
-      
-                  {/* Payment range */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Payment Range</label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="number"
-                        value={filters.paymentMin}
-                        onChange={(e) => handleFilterChange('paymentMin', Number(e.target.value))}
-                        placeholder="Min"
-                        className="w-1/2 px-3 py-2 border rounded"
-                      />
-                      <input
-                        type="number"
-                        value={filters.paymentMax}
-                        onChange={(e) => handleFilterChange('paymentMax', Number(e.target.value))}
-                        placeholder="Max"
-                        className="w-1/2 px-3 py-2 border rounded"
-                      />
-                    </div>
-                  </div>
-      
-                  {/* Payment type */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Payment Type</label>
-                    <select
-                      value={filters.paymentType}
-                      onChange={(e) => handleFilterChange('paymentType', e.target.value)}
-                      className="w-full px-3 py-2 border rounded"
-                    >
-                      <option value="">All</option>
-                      <option value="fixed">Fixed</option>
-                      <option value="hourly">Hourly</option>
-                    </select>
-                  </div>
-      
-                  {/* Genres */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Genres</label>
-                    <div className="space-y-1">
-                      {genres.map(genre => (
-                        <label key={genre._id} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={filters.selectedGenres.includes(genre._id)}
-                            onChange={() => {
-                              const newGenres = filters.selectedGenres.includes(genre._id)
-                                ? filters.selectedGenres.filter(id => id !== genre._id)
-                                : [...filters.selectedGenres, genre._id];
-                              handleFilterChange('selectedGenres', newGenres);
-                            }}
-                            className="mr-2"
-                          />
-                          <span>{genre.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-      
-                  {/* Reset filters button */}
-                  <button
-                    onClick={() => setFilters({
-                      searchTerm: '',
-                      selectedGenres: [],
-                      instruments: [],
-                      location: '',
-                      dateFrom: '',
-                      dateTo: '',
-                      paymentMin: 0,
-                      paymentMax: 1000,
-                      paymentType: '',
-                      status: 'open'
-                    })}
-                    className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                  >
-                    Reset Filters
-                  </button>
-                </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <h1 className="text-3xl font-bold mb-8">Available Events</h1>
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Filters Sidebar */}
+        <div className="w-full md:w-64 flex-shrink-0">
+          <div className="card bg-base-100 p-6 rounded-lg shadow sticky top-4">
+            <h2 className="text-lg font-semibold mb-4">Filters</h2>
+            <div className="space-y-4">
+              {/* Search input */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Search</span>
+                </label>
+                <input
+                  type="text"
+                  value={filters.searchTerm}
+                  onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                  placeholder="Search events..."
+                  className="input input-bordered w-full"
+                />
               </div>
-            </div>
-      
-            {/* Events Grid */}
-            <div className="flex-1">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {events.map((event) => (
-                  <EventCard
-                    key={event._id}
-                    event={event}
-                    mode="compact"
+              {/* Location filter */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Location</span>
+                </label>
+                <input
+                  type="text"
+                  value={filters.location}
+                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                  placeholder="Enter location"
+                  className="input input-bordered w-full"
+                />
+              </div>
+              {/* Date range */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">From Date</span>
+                </label>
+                <input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  className="input input-bordered w-full"
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">To Date</span>
+                </label>
+                <input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  className="input input-bordered w-full"
+                />
+              </div>
+              {/* Payment range */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Payment Range</span>
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="number"
+                    value={filters.paymentMin}
+                    onChange={(e) => handleFilterChange('paymentMin', Number(e.target.value))}
+                    placeholder="Min"
+                    className="input input-bordered w-1/2"
                   />
-                ))}
-              </div>
-      
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-6">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
+                  <input
+                    type="number"
+                    value={filters.paymentMax}
+                    onChange={(e) => handleFilterChange('paymentMax', Number(e.target.value))}
+                    placeholder="Max"
+                    className="input input-bordered w-1/2"
                   />
                 </div>
-              )}
+              </div>
+              {/* Payment type */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Payment Type</span>
+                </label>
+                <select
+                  value={filters.paymentType}
+                  onChange={(e) => handleFilterChange('paymentType', e.target.value)}
+                  className="select select-bordered w-full"
+                >
+                  <option value="">All</option>
+                  <option value="fixed">Fixed</option>
+                  <option value="hourly">Hourly</option>
+                </select>
+              </div>
+              {/* Genres */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Genres</span>
+                </label>
+                <div className="space-y-1">
+                  {genres.map(genre => (
+                    <label key={genre._id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={filters.selectedGenres.includes(genre._id)}
+                        onChange={() => {
+                          const newGenres = filters.selectedGenres.includes(genre._id)
+                            ? filters.selectedGenres.filter(id => id !== genre._id)
+                            : [...filters.selectedGenres, genre._id];
+                          handleFilterChange('selectedGenres', newGenres);
+                        }}
+                        className="checkbox checkbox-sm"
+                      />
+                      <span>{genre.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => setFilters({
+                  searchTerm: '',
+                  selectedGenres: [],
+                  instruments: [],
+                  location: '',
+                  dateFrom: '',
+                  dateTo: '',
+                  paymentMin: 0,
+                  paymentMax: 1000,
+                  paymentType: '',
+                  status: 'open'
+                })}
+                className="btn btn-outline btn-sm w-full mt-2"
+              >
+                Reset Filters
+              </button>
             </div>
           </div>
         </div>
-      );
+        {/* Events Grid */}
+        <div className="flex-1">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {events.map((event) => (
+              <EventCard
+                key={event._id}
+                event={event}
+                mode="compact"
+              />
+            ))}
+          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default AllEvents;

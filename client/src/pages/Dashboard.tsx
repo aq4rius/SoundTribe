@@ -67,53 +67,54 @@ const Dashboard: React.FC = () => {
 	}
 
 	return (
-		<div className="max-w-8xl mx-auto py-3 sm:px-10 lg:px-10">
-			<h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+		<div className="max-w-7xl mx-auto py-3 px-2 md:px-8">
+			<h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
 			{/* Basic User Info Section */}
-			<div className="mt-6 p-6 bg-white rounded-lg shadow">
-				<div className="flex justify-between items-center">
-					<h2 className="text-xl font-semibold">Basic Information</h2>
-					<button
-						onClick={() => navigate("/edit-profile")}
-						className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-					>
-						Edit Profile
-					</button>
-				</div>
-				<div className="mt-4 grid grid-cols-2 gap-4">
-					<div>
-						<p className="font-semibold">Username:</p>
-						<p>{user.username}</p>
+			<div className="card bg-base-100 shadow mb-8">
+				<div className="card-body">
+					<div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
+						<h2 className="card-title">Basic Information</h2>
+						<button
+							onClick={() => navigate("/edit-profile")}
+							className="btn btn-outline btn-primary btn-sm"
+						>
+							Edit Profile
+						</button>
 					</div>
-					<div>
-						<p className="font-semibold">Email:</p>
-						<p>{user.email}</p>
-					</div>
-					<div>
-						<p className="font-semibold">Location:</p>
-						<p>{user.location || "Not specified"}</p>
-					</div>
-					<div>
-						<p className="font-semibold">Bio:</p>
-						<p>{user.bio || "No bio provided"}</p>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<p className="font-semibold">Username:</p>
+							<p>{user.username}</p>
+						</div>
+						<div>
+							<p className="font-semibold">Email:</p>
+							<p>{user.email}</p>
+						</div>
+						<div>
+							<p className="font-semibold">Location:</p>
+							<p>{user.location || "Not specified"}</p>
+						</div>
+						<div>
+							<p className="font-semibold">Bio:</p>
+							<p>{user.bio || "No bio provided"}</p>
+						</div>
 					</div>
 				</div>
 			</div>
 
 			{/* Events Section */}
-			<div className="mt-8">
-				<div className="flex justify-between items-center">
+			<div className="mb-8">
+				<div className="flex justify-between items-center mb-2">
 					<h2 className="text-xl font-semibold">Events</h2>
 					<button
 						onClick={() => navigate("/create-event")}
-						className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+						className="btn btn-success btn-sm"
 					>
 						Create New Event
 					</button>
 				</div>
-
-				<div className="mt-4 space-y-6">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					{events.map((event) => (
 						<EventCard
 							key={event._id}
@@ -126,33 +127,32 @@ const Dashboard: React.FC = () => {
 			</div>
 
 			{/* Artist Profiles Section */}
-			<div className="mt-8">
-				<div className="flex justify-between items-center">
+			<div className="mb-8">
+				<div className="flex justify-between items-center mb-2">
 					<h2 className="text-xl font-semibold">Artist Profiles</h2>
 					<button
 						onClick={() => navigate("/create-artist-profile")}
-						className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+						className="btn btn-success btn-sm"
 					>
 						Create New Artist Profile
 					</button>
 				</div>
-
-				<div className="mt-4 space-y-6">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					{artistProfiles.map((profile) => (
-						<div key={profile._id} className="mt-4">
+						<div key={profile._id}>
 							<ArtistCard artist={profile} mode="full" />
-							<div className="mt-2 space-x-2">
+							<div className="mt-2 flex gap-2">
 								<button
 									onClick={() =>
 										navigate(`/edit-artist-profile/${profile._id}`)
 									}
-									className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+									className="btn btn-outline btn-primary btn-xs"
 								>
 									Edit
 								</button>
 								<button
 									onClick={() => handleDeleteProfile(profile._id)}
-									className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+									className="btn btn-outline btn-error btn-xs"
 								>
 									Delete
 								</button>
@@ -160,10 +160,12 @@ const Dashboard: React.FC = () => {
 						</div>
 					))}
 				</div>
-				<div className="mt-8">
-					<h2 className="text-2xl font-bold mb-4">My Applications</h2>
-					<ApplicationsList applications={userApplications} />
-				</div>
+			</div>
+
+			{/* Applications Section */}
+			<div className="mb-8">
+				<h2 className="text-xl font-semibold mb-2">My Applications</h2>
+				<ApplicationsList applications={userApplications} />
 			</div>
 		</div>
 	);

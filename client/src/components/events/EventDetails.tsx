@@ -36,13 +36,13 @@ const EventDetails: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold mb-4">{event.title}</h1>
+      <div className="bg-base-100 rounded-lg shadow-lg p-6">
+        <h1 className="text-3xl font-bold mb-4 text-primary">{event.title}</h1>
         
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h2 className="text-xl font-semibold mb-2">Event Details</h2>
-            <div className="space-y-2">
+            <h2 className="text-xl font-semibold mb-2 text-primary">Event Details</h2>
+            <div className="space-y-2 text-base-content">
               <p><span className="font-medium">Location:</span> {event.location}</p>
               <p><span className="font-medium">Date:</span> {new Date(event.eventDate).toLocaleDateString()}</p>
               <p><span className="font-medium">Duration:</span> {event.duration} hours</p>
@@ -52,8 +52,8 @@ const EventDetails: React.FC = () => {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold mb-2">Requirements</h2>
-            <div className="space-y-2">
+            <h2 className="text-xl font-semibold mb-2 text-primary">Requirements</h2>
+            <div className="space-y-2 text-base-content">
               <p><span className="font-medium">Experience:</span> {event.requiredExperience} years</p>
               <p><span className="font-medium">Application Deadline:</span> {new Date(event.applicationDeadline).toLocaleDateString()}</p>
             </div>
@@ -61,15 +61,15 @@ const EventDetails: React.FC = () => {
         </div>
 
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Description</h2>
-          <p className="text-gray-700">{event.description}</p>
+          <h2 className="text-xl font-semibold mb-2 text-primary">Description</h2>
+          <p className="text-base-content">{event.description}</p>
         </div>
 
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Required Instruments</h2>
+          <h2 className="text-xl font-semibold mb-2 text-primary">Required Instruments</h2>
           <div className="flex flex-wrap gap-2">
             {event.requiredInstruments.map((instrument, index) => (
-              <span key={index} className="px-3 py-1 bg-green-100 text-green-800 rounded-full">
+              <span key={index} className="px-3 py-1 bg-base-200 text-base-content rounded-full">
                 {instrument}
               </span>
             ))}
@@ -77,10 +77,10 @@ const EventDetails: React.FC = () => {
         </div>
 
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Genres</h2>
+          <h2 className="text-xl font-semibold mb-2 text-primary">Genres</h2>
           <div className="flex flex-wrap gap-2">
             {event.genres.map(genre => (
-              <span key={genre._id} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+              <span key={genre._id} className="px-3 py-1 bg-base-200 text-base-content rounded-full">
                 {genre.name}
               </span>
             ))}

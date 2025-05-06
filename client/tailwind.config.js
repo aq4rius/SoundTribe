@@ -7,6 +7,17 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [],
+  plugins: [
+    require('daisyui'),
+  ],
+  daisyui: {
+    themes: [
+      "light", // default DaisyUI light theme
+      "cupcake", // a soft light theme
+      "emerald", // another light theme
+      "corporate", // clean light theme
+      "synthwave", // for optional dark mode
+    ],
+  },
 }
 

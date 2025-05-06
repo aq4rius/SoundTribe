@@ -50,41 +50,41 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium mb-1">Cover Letter</label>
+        <label className="block text-sm font-medium mb-1 text-base-content">Cover Letter</label>
         <textarea
           value={formData.coverLetter}
           onChange={(e) => setFormData({ ...formData, coverLetter: e.target.value })}
-          className="w-full px-3 py-2 border rounded min-h-[150px]"
+          className="w-full textarea textarea-bordered min-h-[150px]"
           required
           placeholder="Explain why you're interested in this event and why you'd be a good fit..."
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Proposed Rate (${event.paymentType})</label>
+        <label className="block text-sm font-medium mb-1 text-base-content">Proposed Rate (${event.paymentType})</label>
         <input
           type="number"
           value={formData.proposedRate}
           onChange={(e) => setFormData({ ...formData, proposedRate: Number(e.target.value) })}
-          className="w-full px-3 py-2 border rounded"
+          className="w-full input input-bordered"
           min={0}
         />
       </div>
 
-      {error && <div className="text-red-500">{error}</div>}
+      {error && <div className="text-error">{error}</div>}
 
       <div className="flex justify-end space-x-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-gray-600 hover:text-gray-800"
+          className="btn btn-ghost"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          className="btn btn-primary"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Application'}
         </button>

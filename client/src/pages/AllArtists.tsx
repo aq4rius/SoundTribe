@@ -118,109 +118,116 @@ const AllArtists: React.FC = () => {
 			<div className="flex flex-col md:flex-row gap-6">
 				{/* Filter Sidebar */}
 				<div className="w-full md:w-64 flex-shrink-0">
-					<div className="bg-white p-6 rounded-lg shadow sticky top-4">
-						<h3 className="text-lg font-semibold mb-4">Filters</h3>
-
-						{/* Search Input */}
+					<div className="card bg-base-100 p-6 rounded-lg shadow sticky top-4">
+						<h2 className="text-lg font-semibold mb-4">Filters</h2>
 						<div className="space-y-4">
-							<input
-								type="text"
-								placeholder="Search artists..."
-								value={filters.searchTerm}
-								onChange={(e) =>
-									handleFilterChange("searchTerm", e.target.value)
-								}
-								className="w-full px-3 py-2 border rounded"
-							/>
-						</div>
-
-						{/* Genre Filter */}
-						<div className="mb-4">
-							<h4 className="font-medium mb-2">Genres</h4>
-							{genres.map((genre) => (
-								<label key={genre._id} className="flex items-center mb-2">
-									<input
-										type="checkbox"
-										checked={filters.selectedGenres.includes(genre._id)}
-										onChange={() => {
-											const newGenres = filters.selectedGenres.includes(
-												genre._id
-											)
-												? filters.selectedGenres.filter(
-														(id) => id !== genre._id
-												  )
-												: [...filters.selectedGenres, genre._id];
-											handleFilterChange("selectedGenres", newGenres);
-										}}
-										className="mr-2"
-									/>
-									{genre.name}
-								</label>
-							))}
-						</div>
-
-						{/* Experience Range */}
-						<div className="mb-4">
-							<h4 className="font-medium mb-2">Minimum Experience (years)</h4>
-							<input
-								type="number"
-								value={filters.experienceMin}
-								onChange={(e) =>
-									handleFilterChange("experienceMin", Number(e.target.value))
-								}
-								className="w-full px-3 py-2 border rounded"
-								min="0"
-							/>
-						</div>
-
-						{/* Rate Range */}
-						<div className="mb-4">
-							<h4 className="font-medium mb-2">Hourly Rate Range ($)</h4>
-							<div className="flex gap-2">
+							{/* Search Input */}
+							<div className="form-control">
 								<input
-									type="number"
-									value={filters.rateMin}
+									type="text"
+									placeholder="Search artists..."
+									value={filters.searchTerm}
 									onChange={(e) =>
-										handleFilterChange("rateMin", Number(e.target.value))
+										handleFilterChange("searchTerm", e.target.value)
 									}
-									className="w-1/2 px-3 py-2 border rounded"
-									min="0"
-									placeholder="Min"
-								/>
-								<input
-									type="number"
-									value={filters.rateMax}
-									onChange={(e) =>
-										handleFilterChange("rateMax", Number(e.target.value))
-									}
-									className="w-1/2 px-3 py-2 border rounded"
-									min="0"
-									placeholder="Max"
+									className="input input-bordered w-full"
 								/>
 							</div>
+							{/* Genre Filter */}
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text">Genres</span>
+								</label>
+								<div className="space-y-1">
+									{genres.map((genre) => (
+										<label key={genre._id} className="flex items-center gap-2">
+											<input
+												type="checkbox"
+												checked={filters.selectedGenres.includes(genre._id)}
+												onChange={() => {
+													const newGenres = filters.selectedGenres.includes(
+														genre._id
+													)
+														? filters.selectedGenres.filter(
+																(id) => id !== genre._id
+														  )
+														: [...filters.selectedGenres, genre._id];
+													handleFilterChange("selectedGenres", newGenres);
+												}}
+												className="checkbox checkbox-sm"
+											/>
+											<span>{genre.name}</span>
+										</label>
+									))}
+								</div>
+							</div>
+							{/* Experience Range */}
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text">Minimum Experience (years)</span>
+								</label>
+								<input
+									type="number"
+									value={filters.experienceMin}
+									onChange={(e) =>
+										handleFilterChange("experienceMin", Number(e.target.value))
+									}
+									className="input input-bordered w-full"
+									min="0"
+								/>
+							</div>
+							{/* Rate Range */}
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text">Hourly Rate Range ($)</span>
+								</label>
+								<div className="flex gap-2">
+									<input
+										type="number"
+										value={filters.rateMin}
+										onChange={(e) =>
+											handleFilterChange("rateMin", Number(e.target.value))
+										}
+										className="input input-bordered w-1/2"
+										min="0"
+										placeholder="Min"
+									/>
+									<input
+										type="number"
+										value={filters.rateMax}
+										onChange={(e) =>
+											handleFilterChange("rateMax", Number(e.target.value))
+										}
+										className="input input-bordered w-1/2"
+										min="0"
+										placeholder="Max"
+									/>
+								</div>
+							</div>
+							{/* Location Filter */}
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text">Location</span>
+								</label>
+								<input
+									type="text"
+									value={filters.location}
+									onChange={(e) =>
+										handleFilterChange("location", e.target.value)
+									}
+									className="input input-bordered w-full"
+									placeholder="Enter location"
+								/>
+							</div>
+							<button
+								onClick={handleResetFilters}
+								className="btn btn-outline btn-sm w-full mt-2"
+							>
+								Reset Filters
+							</button>
 						</div>
-
-						{/* Location Filter */}
-						<div className="mb-4">
-							<h4 className="font-medium mb-2">Location</h4>
-							<input
-								type="text"
-								value={filters.location}
-								onChange={(e) => handleFilterChange("location", e.target.value)}
-								className="w-full px-3 py-2 border rounded"
-								placeholder="Enter location"
-							/>
-						</div>
-
-						<button
-							onClick={handleResetFilters}
-							className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-						>
-							Reset Filters
-						</button>
 					</div>
 				</div>
-
 				{/* Artists Grid with Pagination */}
 				<div className="flex-1">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -228,12 +235,13 @@ const AllArtists: React.FC = () => {
 							<ArtistCard key={artist._id} artist={artist} mode="compact" />
 						))}
 					</div>
-
-					<Pagination
-						currentPage={currentPage}
-						totalPages={totalPages}
-						onPageChange={handlePageChange}
-					/>
+					<div className="mt-6">
+						<Pagination
+							currentPage={currentPage}
+							totalPages={totalPages}
+							onPageChange={handlePageChange}
+						/>
+					</div>
 				</div>
 			</div>
 		</div>

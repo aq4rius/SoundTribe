@@ -19,48 +19,54 @@ const RegisterForm: React.FC = () => {
       login(data.token, data.user);
       navigate('/dashboard');
     } catch (error) {
+      // TODO: Add DaisyUI alert for error
       console.error('Registration failed', error);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 w-1/2 mx-auto">
-      <div>
-        <label htmlFor="username" className="block mb-1">Username</label>
+    <form onSubmit={handleSubmit} className="card w-full max-w-md mx-auto bg-base-100 shadow-md p-8 space-y-4">
+      <h2 className="text-2xl font-bold text-center">Register</h2>
+      <div className="form-control">
+        <label htmlFor="username" className="label">
+          <span className="label-text">Username</span>
+        </label>
         <input
           type="text"
           id="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          className="w-full px-3 py-2 border rounded"
+          className="input input-bordered w-full"
         />
       </div>
-      <div>
-        <label htmlFor="email" className="block mb-1">Email</label>
+      <div className="form-control">
+        <label htmlFor="email" className="label">
+          <span className="label-text">Email</span>
+        </label>
         <input
           type="email"
           id="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full px-3 py-2 border rounded"
+          className="input input-bordered w-full"
         />
       </div>
-      <div>
-        <label htmlFor="password" className="block mb-1">Password</label>
+      <div className="form-control">
+        <label htmlFor="password" className="label">
+          <span className="label-text">Password</span>
+        </label>
         <input
           type="password"
           id="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full px-3 py-2 border rounded"
+          className="input input-bordered w-full"
         />
       </div>
-      <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded">
-        Register
-      </button>
+      <button type="submit" className="btn btn-primary w-full mt-2">Register</button>
     </form>
   );
 };

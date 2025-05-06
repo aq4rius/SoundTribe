@@ -70,8 +70,8 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
       )}
 
       {showApplicationForm && artistProfile && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Submit Application</h2>
+        <div className="mt-6 bg-base-100 rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-primary mb-2">Submit Application</h2>
           <ApplicationForm
             event={event}
             artistProfile={artistProfile}

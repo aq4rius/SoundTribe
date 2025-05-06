@@ -1,28 +1,30 @@
-// client/src/components/layout/Header.tsx
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import ThemeSwitcher from './ThemeSwitcher';
 
 const Header: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
 
   return (
-    <header className="bg-blue-200 text-white p-4">
-      <nav className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold">SoundTribe</Link>
-        <div>
+    <header className="bg-base-100 shadow">
+      <nav className="navbar container mx-auto">
+        <div className="flex-1">
+          <Link to="/" className="btn btn-ghost normal-case text-xl">SoundTribe</Link>
+        </div>
+        <div className="flex-none gap-2">
+          <ThemeSwitcher />
           {isAuthenticated && user ? (
             <>
-              <Link to="/dashboard" className="mr-4">Dashboard</Link>
-              <Link to="/artists" className="mr-4">Artists</Link>
-              <Link to="/events" className="mr-4">Events</Link>
-              <button onClick={logout} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Logout</button>
+              <Link to="/dashboard" className="btn btn-ghost btn-sm">Dashboard</Link>
+              <Link to="/artists" className="btn btn-ghost btn-sm">Artists</Link>
+              <Link to="/events" className="btn btn-ghost btn-sm">Events</Link>
+              <button onClick={logout} className="btn btn-error btn-sm">Logout</button>
             </>
           ) : (
             <>
-              <Link to="/login" className="mr-4">Login</Link>
-              <Link to="/register">Register</Link>
+              <Link to="/login" className="btn btn-ghost btn-sm">Login</Link>
+              <Link to="/register" className="btn btn-primary btn-sm">Register</Link>
             </>
           )}
         </div>

@@ -24,12 +24,12 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
   return (
     <div 
       onClick={handleClick}
-      className={`bg-white p-4 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer ${className}`}
+      className={`bg-base-100 p-4 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer ${className}`}
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-lg font-semibold">{artist.stageName}</h3>
-          <p className="text-gray-600">{artist.location}</p>
+          <h3 className="text-lg font-semibold text-primary">{artist.stageName}</h3>
+          <p className="text-base-content">{artist.location}</p>
         </div>
         {artist.profileImage && (
           <img
@@ -40,7 +40,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
         )}
       </div>
       
-      <p className="text-sm mt-2 text-gray-700">
+      <p className="text-sm mt-2 text-base-content">
         {artist.biography 
           ? artist.biography.slice(0, mode === 'compact' ? 150 : 300) + '...' 
           : 'No biography provided'
@@ -51,7 +51,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
         {artist.genres.map(genre => (
           <span
             key={genre._id}
-            className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+            className="px-2 py-1 bg-secondary text-secondary-content text-xs rounded-full"
           >
             {genre.name}
           </span>
@@ -59,12 +59,12 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
       </div>
 
       <div className="mt-4 space-y-1">
-        <p className="text-sm text-gray-600">Experience: {artist.yearsOfExperience} years</p>
+        <p className="text-sm text-base-content">Experience: {artist.yearsOfExperience} years</p>
         {artist.ratePerHour && (
-          <p className="text-sm text-gray-600">Rate: ${artist.ratePerHour}/hour</p>
+          <p className="text-sm text-base-content">Rate: ${artist.ratePerHour}/hour</p>
         )}
         {artist.instruments.length > 0 && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-base-content">
             Instruments: {artist.instruments.join(', ')}
           </p>
         )}
@@ -76,7 +76,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
             e.stopPropagation();
             navigate(`/artists/${artist._id}`);
           }}
-          className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+          className="mt-4 w-full btn btn-primary"
         >
           View Full Profile
         </button>
