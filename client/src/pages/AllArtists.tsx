@@ -7,6 +7,7 @@ import { getAllGenres } from "../services/genre";
 import { ArtistProfile, Genre, ArtistFilterType } from "../types";
 import ArtistCard from "../components/artists/ArtistCard";
 import Pagination from "../components/common/Pagination";
+import ErrorAlert from '../components/common/ErrorAlert';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -103,7 +104,7 @@ const AllArtists: React.FC = () => {
 	};
 
 	if (isLoading) return <div>Loading...</div>;
-	if (error) return <div className="text-red-500">{error}</div>;
+	if (error) return <ErrorAlert message={error} />;
 
 	const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 

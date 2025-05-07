@@ -7,8 +7,8 @@ import {getUsersForSidebar, getMessages, sendMessage} from '../controllers/messa
 const router = express.Router();
 
 router.get("/users", authMiddleware, getUsersForSidebar);
-router.get("/:id", authMiddleware, getMessages);
+router.get("/convo", authMiddleware, getMessages); // expects senderId, senderType, receiverId, receiverType as query params
 
-router.post("/:id", authMiddleware, sendMessage);
+router.post("/", authMiddleware, sendMessage); // expects senderId, senderType, receiverId, receiverType, text, attachment in body
 
 export default router;

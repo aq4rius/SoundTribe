@@ -2,25 +2,16 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { login, register, getCurrentUser } from '../services/auth';
+import { User } from '../types/index';
 // import { useNavigate } from 'react-router-dom';
-
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-  profileCompleted: boolean;
-  artistProfileCompleted: boolean;
-  location: string;
-  bio: string;
-  firstName: string;
-  lastName: string;
-}
 
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: {
+    (email: string, password: string): Promise<void>;
+    (token: string, user: User): void;
+  };
   register: (userData: any) => Promise<void>;
   logout: () => void;
   loading: boolean;

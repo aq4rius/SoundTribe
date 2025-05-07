@@ -1,16 +1,18 @@
 // client/src/components/events/EventDetails.tsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getEventById } from '../../services/event';
 import { Event } from '../../types';
 import EventApplication from '../applications/EventApplication';
+import ErrorAlert from '../common/ErrorAlert';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -30,14 +32,22 @@ const EventDetails: React.FC = () => {
   }, [id]);
 
   if (isLoading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  if (error) return <ErrorAlert message={error} />;
   if (!event) return <div>Event not found</div>;
 
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="bg-base-100 rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold mb-4 text-primary">{event.title}</h1>
+        <div className="flex items-start justify-between mb-6">
+          <h1 className="text-3xl font-bold mb-4 text-primary">{event.title}</h1>
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate(`/chat?targetId=${event._id}&targetType=Event&targetName=${encodeURIComponent(event.title)}`)}
+          >
+            Send Message
+          </button>
+        </div>
         
         <div className="grid grid-cols-2 gap-6">
           <div>

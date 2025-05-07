@@ -16,6 +16,8 @@ import EventCard from "../components/events/EventCard";
 import { Application } from "../types";
 import { getUserApplications } from "../services/application";
 import ApplicationsList from "../components/applications/ApplicationsList";
+import ErrorAlert from '../components/common/ErrorAlert';
+import Chat from '../components/common/Chat';
 
 const Dashboard: React.FC = () => {
 	const { user } = useAuth();
@@ -23,6 +25,9 @@ const Dashboard: React.FC = () => {
 	const [artistProfiles, setArtistProfiles] = useState<ArtistProfile[]>([]);
 	const [events, setEvents] = useState<Event[]>([]);
 	const [userApplications, setUserApplications] = useState<Application[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
 
 	const handleDeleteProfile = async (profileId: string) => {
 		if (window.confirm("Are you sure you want to delete this profile?")) {
@@ -31,8 +36,8 @@ const Dashboard: React.FC = () => {
 				setArtistProfiles((profiles) =>
 					profiles.filter((p) => p._id !== profileId)
 				);
-			} catch (error) {
-				console.error("Error deleting profile:", error);
+			} catch (error: any) {
+				setDeleteError(error.response?.data?.message || error.message || "Error deleting profile");
 			}
 		}
 	};
@@ -42,22 +47,30 @@ const Dashboard: React.FC = () => {
 			try {
 				await deleteEvent(eventId);
 				setEvents(events.filter((event) => event._id !== eventId));
-			} catch (error) {
-				console.error("Error deleting event:", error);
+			} catch (error: any) {
+				setDeleteError(error.response?.data?.message || error.message || "Error deleting event");
 			}
 		}
 	};
 
 	useEffect(() => {
 		const fetchData = async () => {
-			const [profiles, userEvents, applications] = await Promise.all([
-				getUserArtistProfiles(),
-				getUserEvents(),
-				getUserApplications(),
-			]);
-			setArtistProfiles(profiles);
-			setEvents(userEvents);
-			setUserApplications(applications);
+			setIsLoading(true);
+			setError(null);
+			try {
+				const [profiles, userEvents, applications] = await Promise.all([
+					getUserArtistProfiles(),
+					getUserEvents(),
+					getUserApplications(),
+				]);
+				setArtistProfiles(profiles);
+				setEvents(userEvents);
+				setUserApplications(applications);
+			} catch (err: any) {
+				setError(err.response?.data?.message || err.message || "Failed to load dashboard data");
+			} finally {
+				setIsLoading(false);
+			}
 		};
 		fetchData();
 	}, []);
@@ -65,6 +78,9 @@ const Dashboard: React.FC = () => {
 	if (!user?.profileCompleted) {
 		return <ProfileSetup />;
 	}
+
+	if (isLoading) return <div>Loading...</div>;
+	if (error) return <ErrorAlert message={error} />;
 
 	return (
 		<div className="max-w-7xl mx-auto py-3 px-2 md:px-8">
@@ -166,6 +182,15 @@ const Dashboard: React.FC = () => {
 			<div className="mb-8">
 				<h2 className="text-xl font-semibold mb-2">My Applications</h2>
 				<ApplicationsList applications={userApplications} />
+			</div>
+			{deleteError && <ErrorAlert message={deleteError} onClose={() => setDeleteError(null)} />}
+
+			{/* Chat Section */}
+			<div className="mb-8">
+				<h2 className="text-xl font-semibold mb-2">Chat</h2>
+				<div className="max-w-2xl mx-auto">
+					<Chat />
+				</div>
 			</div>
 		</div>
 	);

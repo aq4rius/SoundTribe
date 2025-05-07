@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserProfile, updateUserProfile, deleteUserProfile } from "../../services/user";
 import { useAuth } from "../../contexts/AuthContext";
+import ErrorAlert from '../common/ErrorAlert';
 
 const EditProfile: React.FC = () => {
 	const [notification, setNotification] = useState<{
@@ -30,6 +31,9 @@ const EditProfile: React.FC = () => {
     }
   });
 
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
 	const navigate = useNavigate();
 	const { login, logout } = useAuth();
 
@@ -51,6 +55,21 @@ const EditProfile: React.FC = () => {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setError(null);
+		// Validation
+		if (!userInfo.username.trim()) {
+			setError('Username is required.');
+			return;
+		}
+		if (!userInfo.firstName.trim()) {
+			setError('First name is required.');
+			return;
+		}
+		if (!userInfo.lastName.trim()) {
+			setError('Last name is required.');
+			return;
+		}
+		setIsLoading(true);
 		try {
 			const updatedUser = await updateUserProfile(userInfo);
 			if (updatedUser) {
@@ -62,13 +81,15 @@ const EditProfile: React.FC = () => {
 				});
 				setTimeout(() => navigate("/dashboard"), 1500);
 			}
-		} catch (error) {
+		} catch (error: any) {
 			setNotification({
 				type: "error",
-				message: "Failed to update profile",
+				message: error.response?.data?.message || error.message || "Failed to update profile",
 				isVisible: true,
 			});
+			setError(error.response?.data?.message || error.message || 'Failed to update profile');
 		}
+		setIsLoading(false);
 	};
 
 	const Notification = () => {
@@ -226,6 +247,8 @@ const EditProfile: React.FC = () => {
             </label>
           </div>
         </div>
+        {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
+        {isLoading && <div>Saving...</div>}
         <div className="flex justify-between">
           <button
             type="button"

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitApplication } from '../../services/application';
 import { Event, ArtistProfile } from '../../types';
+import ErrorAlert from '../common/ErrorAlert';
 
 interface ApplicationFormProps {
   event: Event;
@@ -31,7 +32,16 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
+    if (!formData.coverLetter.trim()) {
+      setError('Cover letter is required.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (formData.proposedRate < 0) {
+      setError('Proposed rate must be non-negative.');
+      setIsSubmitting(false);
+      return;
+    }
     try {
       await submitApplication({
         eventPostingId: event._id,
@@ -40,8 +50,8 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
       });
       onSuccess?.();
       navigate('/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit application');
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to submit application');
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +81,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
         />
       </div>
 
-      {error && <div className="text-error">{error}</div>}
+      {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
       <div className="flex justify-end space-x-4">
         <button

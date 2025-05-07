@@ -6,10 +6,11 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-
 router.get('/user', authMiddleware, getUserArtistProfiles);
+router.get('/my', authMiddleware, getUserArtistProfiles);
 router.post('/', authMiddleware, createArtistProfile);
 router.get('/search', searchArtistProfiles);
+router.get('/', searchArtistProfiles);
 router.get('/:id', getArtistProfile);
 router.put('/:id', authMiddleware, updateArtistProfile);
 router.delete('/:id', authMiddleware, deleteArtistProfile);

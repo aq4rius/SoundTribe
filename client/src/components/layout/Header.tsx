@@ -19,6 +19,7 @@ const Header: React.FC = () => {
               <Link to="/dashboard" className="btn btn-ghost btn-sm">Dashboard</Link>
               <Link to="/artists" className="btn btn-ghost btn-sm">Artists</Link>
               <Link to="/events" className="btn btn-ghost btn-sm">Events</Link>
+              <Link to="/chat" className="btn btn-ghost btn-sm">Messenger</Link>
               <button onClick={logout} className="btn btn-error btn-sm">Logout</button>
             </>
           ) : (

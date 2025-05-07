@@ -2,6 +2,7 @@
 
 export interface User {
     _id: string;
+    username: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -18,6 +19,8 @@ export interface User {
       showEmail: boolean;
       showLocation: boolean;
     };
+    profileCompleted?: boolean;
+    artistProfileCompleted?: boolean;
   }
 
   export interface Genre {
@@ -123,5 +126,13 @@ export interface EventFilterType {
     status: string;
 }
 
+// Centralized types for API and component props
 
-  
+export interface ApiError {
+  message: string;
+  status?: number;
+}
+
+// Add more types as needed for API responses, requests, and component props
+
+

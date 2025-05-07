@@ -24,6 +24,7 @@ import AllArtists from './pages/AllArtists';
 import ArtistDetails from "./components/artists/ArtistDetails";
 import EventDetails from "./components/events/EventDetails";
 import AllEvents from "./pages/AllEvents";
+import ChatPage from './pages/Chat';
 
 interface PrivateRouteProps {
 	element: React.ReactElement;
@@ -80,6 +81,7 @@ function App() {
 						<Route path="/events" element={<AllEvents />} />
 						<Route path="/artists/:id" element={<ArtistDetails />} />
 						<Route path="/events/:id" element={<EventDetails />} />
+						<Route path="/chat" element={<PrivateRoute element={<ChatPage />} />} />
 					</Routes>
 				</Layout>
 			</Router>

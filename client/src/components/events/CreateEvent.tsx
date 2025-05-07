@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllGenres } from '../../services/genre';
 import { createEvent } from '../../services/event';
+import ErrorAlert from '../common/ErrorAlert';
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ const CreateEvent: React.FC = () => {
     applicationDeadline: '',
     status: 'open' as 'open' | 'closed' | 'filled'
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGenres = async () => {
@@ -33,6 +36,25 @@ const CreateEvent: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    // Validation
+    if (!eventInfo.title.trim()) {
+      setError('Title is required.');
+      return;
+    }
+    if (!eventInfo.description.trim()) {
+      setError('Description is required.');
+      return;
+    }
+    if (selectedGenres.length === 0) {
+      setError('At least one genre must be selected.');
+      return;
+    }
+    if (!eventInfo.location.trim()) {
+      setError('Location is required.');
+      return;
+    }
+    setIsLoading(true);
     try {
       await createEvent({
         ...eventInfo,
@@ -41,9 +63,10 @@ const CreateEvent: React.FC = () => {
         applicationDeadline: new Date(eventInfo.applicationDeadline)
       });
       navigate('/dashboard');
-    } catch (error) {
-      console.error('Error creating event posting:', error);
+    } catch (error: any) {
+      setError(error.response?.data?.message || error.message || 'Error creating event posting');
     }
+    setIsLoading(false);
   };
 
   const handleGenreChange = (genreId: string) => {
@@ -58,6 +81,9 @@ const CreateEvent: React.FC = () => {
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto py-8 space-y-4">
       <h2 className="text-2xl font-semibold mb-6">Create New Event</h2>
       
+      {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
+      {isLoading && <div>Saving...</div>}
+
       <div>
         <label className="block text-sm font-medium mb-1">Title</label>
         <input

@@ -1,8 +1,9 @@
 // client/src/components/applications/ApplicationsList.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Application } from '../../types';
 import { updateApplicationStatus } from '../../services/application';
+import ErrorAlert from '../common/ErrorAlert';
 
 interface ApplicationsListProps {
   applications: Application[];
@@ -15,17 +16,26 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
   isEventOwner = false,
   onStatusUpdate
 }) => {
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleStatusUpdate = async (applicationId: string, status: 'accepted' | 'rejected') => {
+    setIsLoading(true);
+    setError(null);
     try {
       await updateApplicationStatus(applicationId, status);
       onStatusUpdate?.();
-    } catch (error) {
-      console.error('Failed to update application status:', error);
+    } catch (error: any) {
+      setError(error.response?.data?.message || error.message || 'Failed to update application status');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="space-y-4">
+      {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
+      {isLoading && <div>Updating...</div>}
       {applications.map((application) => (
         <div key={application._id} className="bg-base-100 rounded-lg shadow p-6">
           <div className="flex justify-between items-center">

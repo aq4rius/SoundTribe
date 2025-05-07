@@ -7,6 +7,7 @@ import { getUserApplications, getApplicationsForEvent } from '../../services/app
 import { getUserArtistProfiles } from '../../services/artistProfile';
 import ApplicationForm from './ApplicationForm';
 import ApplicationsList from './ApplicationsList';
+import ErrorAlert from '../common/ErrorAlert';
 
 interface EventApplicationProps {
   event: Event;
@@ -19,6 +20,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
   const [userApplication, setUserApplication] = useState<Application | null>(null);
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,8 +39,8 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
         if (artistProfilesData.length > 0) {
           setArtistProfile(artistProfilesData[0]);
         }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch (error: any) {
+        setError(error.response?.data?.message || error.message || 'Error fetching data');
       } finally {
         setIsLoading(false);
       }
@@ -51,6 +53,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
   const canApply = event.status === 'open' && !isEventOwner && !userApplication && artistProfile;
 
   if (isLoading) return <div>Loading...</div>;
+  if (error) return <ErrorAlert message={error} />;
 
   return (
     <div className="mt-8 space-y-6">

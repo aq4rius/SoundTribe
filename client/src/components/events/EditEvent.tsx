@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getEventById, updateEvent } from '../../services/event';
 import { getAllGenres } from '../../services/genre';
 import { Event, Genre } from '../../types';
+import ErrorAlert from '../common/ErrorAlert';
 
 const EditEvent: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,8 @@ const EditEvent: React.FC = () => {
     message: string;
     isVisible: boolean;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,23 +36,43 @@ const EditEvent: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    if (!event) return;
+    // Validation
+    if (!event.title.trim()) {
+      setError('Title is required.');
+      return;
+    }
+    if (!event.description.trim()) {
+      setError('Description is required.');
+      return;
+    }
+    if (!event.genres || event.genres.length === 0) {
+      setError('At least one genre must be selected.');
+      return;
+    }
+    if (!event.location.trim()) {
+      setError('Location is required.');
+      return;
+    }
+    setIsLoading(true);
     try {
-      if (event && id) {
-        await updateEvent(id, event);
-        setNotification({
-          type: 'success',
-          message: 'Event updated successfully!',
-          isVisible: true,
-        });
-        setTimeout(() => navigate('/dashboard'), 1500);
-      }
-    } catch (error) {
+      await updateEvent(id!, event);
       setNotification({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Failed to update event',
+        type: 'success',
+        message: 'Event updated successfully!',
         isVisible: true,
       });
+      setTimeout(() => navigate('/dashboard'), 1500);
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || error.message || 'Failed to update event',
+        isVisible: true,
+      });
+      setError(error.response?.data?.message || error.message || 'Failed to update event');
     }
+    setIsLoading(false);
   };
 
   const handleGenreChange = (genreId: string) => {
@@ -89,6 +112,8 @@ const EditEvent: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto py-8 space-y-4">
       <Notification />
+      {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
+      {isLoading && <div>Saving...</div>}
       <h2 className="text-2xl font-semibold mb-6">Edit Event</h2>
       
       <div>

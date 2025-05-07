@@ -8,6 +8,7 @@ import {
 	getArtistProfileById,
 } from "../../services/artistProfile";
 import { getAllGenres } from "../../services/genre";
+import ErrorAlert from '../common/ErrorAlert';
 
 const EditArtistProfile: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
@@ -21,6 +22,8 @@ const EditArtistProfile: React.FC = () => {
 		message: string;
 		isVisible: boolean;
 	} | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -38,25 +41,40 @@ const EditArtistProfile: React.FC = () => {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-
+		setError(null);
+		if (!profile) return;
+		// Validation
+		if (!profile.stageName.trim()) {
+			setError('Stage name is required.');
+			return;
+		}
+		if (!profile.location.trim()) {
+			setError('Location is required.');
+			return;
+		}
+		if (!profile.genres || profile.genres.length === 0) {
+			setError('At least one genre must be selected.');
+			return;
+		}
+		setIsLoading(true);
 		try {
-			if (profile && id) {
-				await updateArtistProfile(id, profile);
-				setNotification({
-					type: "success",
-					message: "Profile updated successfully!",
-					isVisible: true,
-				});
-				setTimeout(() => navigate("/dashboard"), 1500);
-			}
-		} catch (err) {
+			await updateArtistProfile(id!, profile);
 			setNotification({
-				type: "error",
-				message:
-					err instanceof Error ? err.message : "Failed to update profile",
+				type: "success",
+				message: "Profile updated successfully!",
 				isVisible: true,
 			});
+			setTimeout(() => navigate("/dashboard"), 1500);
+		} catch (err: any) {
+			setNotification({
+				type: "error",
+				message: err.response?.data?.message || err.message || "Failed to update profile",
+				isVisible: true,
+			});
+			setError(err.response?.data?.message || err.message || 'Failed to update profile');
 			setTimeout(() => setNotification(null), 3000);
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
@@ -118,6 +136,8 @@ const EditArtistProfile: React.FC = () => {
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
 			<Notification />
+			{error && <ErrorAlert message={error} onClose={() => setError(null)} />}
+			{isLoading && <div>Saving...</div>}
 			<input
 				type="text"
 				name="stageName"

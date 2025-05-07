@@ -3,8 +3,14 @@
 import mongoose, { Types, Document, Schema } from 'mongoose';
 
 export interface IMessage extends Document {
-    sender: Types.ObjectId;
-    receiver: Types.ObjectId;
+    sender: {
+        id: Types.ObjectId;
+        type: 'ArtistProfile' | 'Event';
+    };
+    receiver: {
+        id: Types.ObjectId;
+        type: 'ArtistProfile' | 'Event';
+    };
     text?: string;
     attachment?: string;
     createdAt: Date;
@@ -13,14 +19,28 @@ export interface IMessage extends Document {
 
 const MessageSchema: Schema = new Schema({
     sender: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      id: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        refPath: 'sender.type',
+      },
+      type: {
+        type: String,
+        required: true,
+        enum: ['ArtistProfile', 'Event'],
+      },
     },
     receiver: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      id: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        refPath: 'receiver.type',
+      },
+      type: {
+        type: String,
+        required: true,
+        enum: ['ArtistProfile', 'Event'],
+      },
     },
     text: {
       type: String,

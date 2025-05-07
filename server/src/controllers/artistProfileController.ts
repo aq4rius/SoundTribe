@@ -83,7 +83,8 @@ export const getUserArtistProfiles = async (req: AuthRequest, res: Response, nex
       .populate('genres', 'name');
     res.json(artistProfiles);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching artist profiles' });
+    console.error('Error in getUserArtistProfiles:', error); // Log the real error
+    res.status(500).json({ message: 'Error fetching artist profiles', error: error instanceof Error ? error.message : error });
   }
 };
 

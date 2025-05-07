@@ -7,6 +7,7 @@ import { getAllGenres } from "../services/genre";
 import { Event, Genre, EventFilterType } from "../types";
 import EventCard from "../components/events/EventCard";
 import Pagination from "../components/common/Pagination";
+import ErrorAlert from '../components/common/ErrorAlert';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -104,7 +105,7 @@ const AllEvents: React.FC = () => {
 	};
 
 	if (isLoading) return <div>Loading...</div>;
-	if (error) return <div className="text-red-500">{error}</div>;
+	if (error) return <ErrorAlert message={error} />;
 
 	const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 

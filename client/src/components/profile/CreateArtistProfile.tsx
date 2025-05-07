@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { createArtistProfile } from "../../services/artistProfile";
 import { getAllGenres } from "../../services/genre";
 import { updateUserProfile } from "../../services/user";
+import ErrorAlert from '../common/ErrorAlert';
 
 const CreateArtistProfile: React.FC = () => {
 	const navigate = useNavigate();
@@ -42,6 +43,8 @@ const CreateArtistProfile: React.FC = () => {
 		},
 		ratePerHour: 0,
 	});
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchGenres = async () => {
@@ -126,6 +129,21 @@ const CreateArtistProfile: React.FC = () => {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setError(null);
+		// Validation
+		if (!artistInfo.stageName.trim()) {
+			setError('Stage name is required.');
+			return;
+		}
+		if (!artistInfo.location.trim()) {
+			setError('Location is required.');
+			return;
+		}
+		if (selectedGenres.length === 0) {
+			setError('At least one genre must be selected.');
+			return;
+		}
+		setIsLoading(true);
 		try {
 			// Filter out empty portfolio items
 			const validPortfolioItems = portfolioItems.filter(
@@ -139,13 +157,17 @@ const CreateArtistProfile: React.FC = () => {
 			});
 			await updateUserProfile({ artistProfileCompleted: true });
 			navigate("/dashboard");
-		} catch (error) {
-			console.error("Error creating artist profile:", error);
+		} catch (error: any) {
+			setError(error.response?.data?.message || error.message || 'Error creating artist profile');
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
+			{error && <ErrorAlert message={error} onClose={() => setError(null)} />}
+			{isLoading && <div>Saving...</div>}
 			<input
 				type="text"
 				name="stageName"

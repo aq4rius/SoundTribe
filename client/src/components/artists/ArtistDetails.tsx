@@ -1,15 +1,17 @@
 // client/src/components/artists/ArtistDetails.tsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getArtistProfileById } from '../../services/artistProfile';
 import { ArtistProfile } from '../../types';
+import ErrorAlert from '../common/ErrorAlert';
 
 const ArtistDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [artist, setArtist] = useState<ArtistProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchArtist = async () => {
@@ -29,7 +31,7 @@ const ArtistDetails: React.FC = () => {
   }, [id]);
 
   if (isLoading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  if (error) return <ErrorAlert message={error} />;
   if (!artist) return <div>Artist not found</div>;
 
   return (
@@ -48,7 +50,14 @@ const ArtistDetails: React.FC = () => {
             />
           )}
         </div>
-
+        <div className="mb-4 text-right">
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate(`/chat?targetId=${artist._id}&targetType=ArtistProfile&targetName=${encodeURIComponent(artist.stageName)}`)}
+          >
+            Send Message
+          </button>
+        </div>
         <div className="space-y-6">
           <section>
             <h2 className="text-xl font-semibold text-primary mb-2">About</h2>
