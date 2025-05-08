@@ -184,14 +184,6 @@ const Dashboard: React.FC = () => {
 				<ApplicationsList applications={userApplications} />
 			</div>
 			{deleteError && <ErrorAlert message={deleteError} onClose={() => setDeleteError(null)} />}
-
-			{/* Chat Section */}
-			<div className="mb-8">
-				<h2 className="text-xl font-semibold mb-2">Chat</h2>
-				<div className="max-w-2xl mx-auto">
-					<Chat />
-				</div>
-			</div>
 		</div>
 	);
 };

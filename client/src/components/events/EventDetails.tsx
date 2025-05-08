@@ -6,6 +6,7 @@ import { getEventById } from '../../services/event';
 import { Event } from '../../types';
 import EventApplication from '../applications/EventApplication';
 import ErrorAlert from '../common/ErrorAlert';
+import { useAuth } from '../../hooks/useAuth';
 
 const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,7 @@ const EventDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -35,18 +37,25 @@ const EventDetails: React.FC = () => {
   if (error) return <ErrorAlert message={error} />;
   if (!event) return <div>Event not found</div>;
 
+  // Check if this is the current user's own event
+  const isOwnEvent = user && (
+    (typeof event.postedBy === 'string' && event.postedBy === user._id) ||
+    (typeof event.postedBy === 'object' && event.postedBy._id === user._id)
+  );
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="bg-base-100 rounded-lg shadow-lg p-6">
         <div className="flex items-start justify-between mb-6">
           <h1 className="text-3xl font-bold mb-4 text-primary">{event.title}</h1>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate(`/chat?targetId=${event._id}&targetType=Event&targetName=${encodeURIComponent(event.title)}`)}
-          >
-            Send Message
-          </button>
+          {!isOwnEvent && (
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate(`/chat?targetId=${event._id}&targetType=Event&targetName=${encodeURIComponent(event.title)}`)}
+            >
+              Send Message
+            </button>
+          )}
         </div>
         
         <div className="grid grid-cols-2 gap-6">

@@ -5,12 +5,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getArtistProfileById } from '../../services/artistProfile';
 import { ArtistProfile } from '../../types';
 import ErrorAlert from '../common/ErrorAlert';
+import { useAuth } from '../../hooks/useAuth';
 
 const ArtistDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [artist, setArtist] = useState<ArtistProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,6 +36,12 @@ const ArtistDetails: React.FC = () => {
   if (error) return <ErrorAlert message={error} />;
   if (!artist) return <div>Artist not found</div>;
 
+  // Check if this is the current user's own profile
+  const isOwnProfile = user && (
+    (typeof artist.user === 'string' && artist.user === user._id) ||
+    (typeof artist.user === 'object' && artist.user._id === user._id)
+  );
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="bg-base-100 rounded-lg shadow-lg p-6">
@@ -51,12 +59,14 @@ const ArtistDetails: React.FC = () => {
           )}
         </div>
         <div className="mb-4 text-right">
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate(`/chat?targetId=${artist._id}&targetType=ArtistProfile&targetName=${encodeURIComponent(artist.stageName)}`)}
-          >
-            Send Message
-          </button>
+          {!isOwnProfile && (
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate(`/chat?targetId=${artist._id}&targetType=ArtistProfile&targetName=${encodeURIComponent(artist.stageName)}`)}
+            >
+              Send Message
+            </button>
+          )}
         </div>
         <div className="space-y-6">
           <section>
