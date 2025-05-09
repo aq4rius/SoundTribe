@@ -1,7 +1,7 @@
 // client/src/types/index.ts
 
 export interface User {
-    _id: string;
+    id: string;
     username: string;
     email: string;
     firstName: string;

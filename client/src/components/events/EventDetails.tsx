@@ -38,10 +38,7 @@ const EventDetails: React.FC = () => {
   if (!event) return <div>Event not found</div>;
 
   // Check if this is the current user's own event
-  const isOwnEvent = user && (
-    (typeof event.postedBy === 'string' && event.postedBy === user._id) ||
-    (typeof event.postedBy === 'object' && event.postedBy._id === user._id)
-  );
+  const isOwnEvent = user && event.postedBy && event.postedBy.id === user.id;
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">

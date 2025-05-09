@@ -40,6 +40,10 @@ const Chat: React.FC = () => {
   const socketRef = useRef<Socket | null>(null);
   const prevSenderRef = useRef<string | null>(null);
   const [sidebarMenuOpen, setSidebarMenuOpen] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const chatAreaRef = useRef<HTMLDivElement | null>(null);
 
   // Helper: fetch all conversations for the selected sender
   const fetchConversations = async (sender: Entity) => {
@@ -106,8 +110,8 @@ const Chat: React.FC = () => {
   useEffect(() => {
     if (selectedSender && selectedConversation) {
       setLoading(true);
-      getMessages(selectedSender, selectedConversation.entity).then(msgs => {
-        setMessages(msgs);
+      getMessages(selectedSender, selectedConversation.entity).then(res => {
+        setMessages(res.messages);
         setLoading(false);
       });
     } else {
@@ -186,12 +190,28 @@ const Chat: React.FC = () => {
     return false;
   });
 
-  // Delete conversation (frontend only)
-  const handleDeleteConversation = (conv: Conversation) => {
-    setConversations(prev => prev.filter(c => c.entity._id !== conv.entity._id || c.entity.type !== conv.entity.type));
-    if (selectedConversation && selectedConversation.entity._id === conv.entity._id && selectedConversation.entity.type === conv.entity.type) {
-      setSelectedConversation(null);
-      setMessages([]);
+  // Delete conversation (frontend + backend)
+  const handleDeleteConversation = async (conv: Conversation) => {
+    if (!selectedSender) return;
+    const token = localStorage.getItem('token');
+    const params = new URLSearchParams({
+      senderId: selectedSender._id,
+      senderType: selectedSender.type,
+      receiverId: conv.entity._id,
+      receiverType: conv.entity.type
+    });
+    const res = await fetch(`/api/messages/convo?${params.toString()}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (res.ok) {
+      setConversations(prev => prev.filter(c => c.entity._id !== conv.entity._id || c.entity.type !== conv.entity.type));
+      if (selectedConversation && selectedConversation.entity._id === conv.entity._id && selectedConversation.entity.type === conv.entity.type) {
+        setSelectedConversation(null);
+        setMessages([]);
+      }
     }
     setSidebarMenuOpen(null);
   };
@@ -211,6 +231,47 @@ const Chat: React.FC = () => {
       );
     });
   };
+
+  // Fetch messages with pagination
+  const fetchMessages = async (pageNum = 1, append = false) => {
+    if (!selectedSender || !selectedConversation) return;
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+    const res = await getMessages(selectedSender, selectedConversation.entity, pageNum, 50);
+    setHasMore(res.hasMore);
+    setPage(pageNum);
+    if (append) {
+      setMessages(prev => [...res.messages, ...prev]);
+    } else {
+      setMessages(res.messages);
+    }
+    setLoading(false);
+    setLoadingMore(false);
+  };
+
+  // Fetch first page when conversation changes
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    if (selectedSender && selectedConversation) {
+      fetchMessages(1, false);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedSender, selectedConversation]);
+
+  // Infinite scroll: fetch more when scrolled to top
+  useEffect(() => {
+    const chatArea = chatAreaRef.current;
+    if (!chatArea) return;
+    const handleScroll = () => {
+      if (chatArea.scrollTop === 0 && hasMore && !loadingMore) {
+        fetchMessages(page + 1, true);
+      }
+    };
+    chatArea.addEventListener('scroll', handleScroll);
+    return () => chatArea.removeEventListener('scroll', handleScroll);
+  }, [hasMore, loadingMore, page, selectedSender, selectedConversation]);
 
   return (
     <div className="flex h-[600px] max-w-4xl mx-auto bg-white border rounded shadow overflow-hidden">
@@ -305,16 +366,19 @@ const Chat: React.FC = () => {
             <span className="text-gray-400">Select a conversation</span>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-4 bg-gray-50" ref={chatAreaRef}>
           {loading ? (
             <div>Loading messages...</div>
           ) : (
-            messages.map(msg => (
-              <div key={msg._id} className={`mb-1 ${msg.sender.id === selectedSender?._id ? 'text-right' : 'text-left'}`}>
-                <span className="inline-block px-2 py-1 rounded bg-blue-100">{msg.text}</span>
-                <div className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString()}</div>
-              </div>
-            ))
+            <>
+              {loadingMore && <div className="text-center text-xs text-gray-400 mb-2">Loading more...</div>}
+              {messages.map(msg => (
+                <div key={msg._id} className={`mb-1 ${msg.sender.id === selectedSender?._id ? 'text-right' : 'text-left'}`}>
+                  <span className="inline-block px-2 py-1 rounded bg-blue-100">{msg.text}</span>
+                  <div className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString()}</div>
+                </div>
+              ))}
+            </>
           )}
         </div>
         <div className="flex gap-2 p-4 border-t bg-white">

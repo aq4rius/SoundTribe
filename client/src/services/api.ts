@@ -62,17 +62,24 @@ export async function getChatTargets(selectedSender: { _id: string, type: string
   return [...profiles, ...events].filter(ent => ent._id !== selectedSender._id);
 }
 
-// Fetch messages between two entities
-export async function getMessages(sender: { _id: string, type: string }, receiver: { _id: string, type: string }) {
-  const res = await api.get('/messages/convo', {
-    params: {
-      senderId: sender._id,
-      senderType: sender.type,
-      receiverId: receiver._id,
-      receiverType: receiver.type,
-    },
+// Fetch messages between two entities, with optional pagination
+export async function getMessages(sender: { _id: string, type: string }, receiver: { _id: string, type: string }, page?: number, limit?: number) {
+  const token = localStorage.getItem('token');
+  const params = new URLSearchParams({
+    senderId: sender._id,
+    senderType: sender.type,
+    receiverId: receiver._id,
+    receiverType: receiver.type,
   });
-  return res.data;
+  if (page) params.append('page', String(page));
+  if (limit) params.append('limit', String(limit));
+  const res = await fetch(`/api/messages/convo?${params.toString()}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  if (!res.ok) throw new Error('Failed to fetch messages');
+  return await res.json();
 }
 
 // Send a message

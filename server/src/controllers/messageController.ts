@@ -27,16 +27,31 @@ export const getMessages = async (req: AuthRequest, res: Response, next: NextFun
   try {
     // sender and receiver info should be passed as query params or body
     const { senderId, senderType, receiverId, receiverType } = req.query;
+    let { page, limit } = req.query;
     if (!senderId || !senderType || !receiverId || !receiverType) {
       throw new AppError('Missing sender/receiver info', 400);
     }
-    const messages = await Message.find({
+    // Pagination defaults
+    const pageNum = parseInt(page as string) > 0 ? parseInt(page as string) : 1;
+    const limitNum = parseInt(limit as string) > 0 ? parseInt(limit as string) : 50;
+    const skip = (pageNum - 1) * limitNum;
+    // Query for messages between the two entities
+    const query = {
       $or: [
         { 'sender.id': senderId, 'sender.type': senderType, 'receiver.id': receiverId, 'receiver.type': receiverType },
         { 'sender.id': receiverId, 'sender.type': receiverType, 'receiver.id': senderId, 'receiver.type': senderType }
       ]
-    }).sort({ createdAt: 1 });
-    res.status(200).json(messages);
+    };
+    const total = await Message.countDocuments(query);
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 }) // newest first
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+    // Reverse to chronological order for display
+    messages.reverse();
+    const hasMore = skip + messages.length < total;
+    res.status(200).json({ messages, hasMore });
   } catch (error) {
     next(error);
   }
@@ -56,7 +71,7 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
       if (!profile) throw new AppError('You do not own this artist profile', 403);
     } else if (senderType === 'Event') {
       const Event = (await import('../models/Event')).default;
-      const event = await Event.findOne({ _id: senderId, owner: userId });
+      const event = await Event.findOne({ _id: senderId, postedBy: userId });
       if (!event) throw new AppError('You do not own this event', 403);
     } else {
       throw new AppError('Invalid sender type', 400);
@@ -147,6 +162,40 @@ export const getConversations = async (req: AuthRequest, res: Response, next: Ne
       }
     }
     res.status(200).json(entitiesToFetch);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete all messages between two entities
+export const deleteConversation = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { senderId, senderType, receiverId, receiverType } = req.query;
+    if (!senderId || !senderType || !receiverId || !receiverType) {
+      throw new AppError('Missing sender/receiver info', 400);
+    }
+    // Only allow if the user owns the sender entity
+    const userId = req.user?._id;
+    if (!userId) throw new AppError('User not authenticated', 401);
+    let ownsSender = false;
+    if (senderType === 'ArtistProfile') {
+      const ArtistProfile = (await import('../models/ArtistProfile')).default;
+      const profile = await ArtistProfile.findOne({ _id: senderId, user: userId });
+      if (profile) ownsSender = true;
+    } else if (senderType === 'Event') {
+      const Event = (await import('../models/Event')).default;
+      const event = await Event.findOne({ _id: senderId, postedBy: userId });
+      if (event) ownsSender = true;
+    }
+    if (!ownsSender) throw new AppError('You do not own this sender entity', 403);
+    // Delete all messages between the two entities
+    await Message.deleteMany({
+      $or: [
+        { 'sender.id': senderId, 'sender.type': senderType, 'receiver.id': receiverId, 'receiver.type': receiverType },
+        { 'sender.id': receiverId, 'sender.type': receiverType, 'receiver.id': senderId, 'receiver.type': senderType }
+      ]
+    });
+    res.status(200).json({ success: true });
   } catch (error) {
     next(error);
   }
