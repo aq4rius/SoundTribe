@@ -82,16 +82,34 @@ export async function getMessages(sender: { _id: string, type: string }, receive
   return await res.json();
 }
 
-// Send a message
-export async function sendMessage(sender: { _id: string, type: string }, receiver: { _id: string, type: string }, text: string) {
-  const res = await api.post('/messages', {
-    senderId: sender._id,
-    senderType: sender.type,
-    receiverId: receiver._id,
-    receiverType: receiver.type,
-    text,
+// Send a message with optional file attachment
+export async function sendMessage(
+  sender: { _id: string, type: string },
+  receiver: { _id: string, type: string },
+  text: string,
+  file?: File | null
+) {
+  const formData = new FormData();
+  formData.append('senderId', sender._id);
+  formData.append('senderType', sender.type);
+  formData.append('receiverId', receiver._id);
+  formData.append('receiverType', receiver.type);
+  formData.append('text', text);
+  if (file) {
+    formData.append('file', file);
+  }
+  const token = localStorage.getItem('token');
+  const res = await fetch(`/api/messages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+      // 'Content-Type' is set automatically by the browser for FormData
+    },
+    body: formData
   });
-  return res.data.message;
+  if (!res.ok) throw new Error('Failed to send message');
+  const data = await res.json();
+  return data.message;
 }
 
 export default api;

@@ -7,6 +7,7 @@ import Message from '../models/Message';
 import cloudinary from '../utils/cloudinary';
 import { AppError } from '../utils/errorHandler';
 import { getIO } from '../server';
+import type { Request } from 'express';
 
 export const getUsersForSidebar = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -51,16 +52,16 @@ export const getMessages = async (req: AuthRequest, res: Response, next: NextFun
     // Reverse to chronological order for display
     messages.reverse();
     const hasMore = skip + messages.length < total;
-    res.status(200).json({ messages, hasMore });
+    res.status(200).json({ messages, hasMore, total });
   } catch (error) {
     next(error);
   }
 };
 
-export const sendMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const sendMessage = async (req: AuthRequest & { file?: any }, res: Response, next: NextFunction) => {
   try {
-    const { text, attachment, senderId, senderType, receiverId, receiverType } = req.body;
-    const userId = req.user?._id;
+    const { text, senderId, senderType, receiverId, receiverType } = req.body;
+    const userId = req.user && (req.user._id || req.user.id);
     if (!userId) {
       throw new AppError('User not authenticated', 401);
     }
@@ -77,8 +78,18 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
       throw new AppError('Invalid sender type', 400);
     }
     let attachmentUrl;
-    if (attachment) {
-      const uploadResponse = await cloudinary.uploader.upload(attachment);
+    if (req.file) {
+      // Upload buffer to cloudinary using a Promise wrapper
+      attachmentUrl = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+          if (error || !result) return reject(new AppError('File upload failed', 500));
+          resolve(result.secure_url);
+        });
+        stream.end(req.file.buffer);
+      });
+    } else if (req.body.attachment) {
+      // fallback for base64 string
+      const uploadResponse = await cloudinary.uploader.upload(req.body.attachment);
       attachmentUrl = uploadResponse.secure_url;
     }
     const newMessage = new Message({
@@ -88,7 +99,6 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
       receiver: { id: receiverId, type: receiverType }
     });
     await newMessage.save();
-
     // Emit real-time message to both sender and receiver rooms
     const io = getIO();
     if (io) {
@@ -99,7 +109,6 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
         io.to(receiverRoom).emit('new-message', newMessage);
       }
     }
-
     res.status(201).json({ message: newMessage });
   } catch (error) {
     next(error);
@@ -175,7 +184,7 @@ export const deleteConversation = async (req: AuthRequest, res: Response, next: 
       throw new AppError('Missing sender/receiver info', 400);
     }
     // Only allow if the user owns the sender entity
-    const userId = req.user?._id;
+    const userId = req.user && (req.user._id || req.user.id);
     if (!userId) throw new AppError('User not authenticated', 401);
     let ownsSender = false;
     if (senderType === 'ArtistProfile') {

@@ -44,6 +44,7 @@ const Chat: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const chatAreaRef = useRef<HTMLDivElement | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   // Helper: fetch all conversations for the selected sender
   const fetchConversations = async (sender: Entity) => {
@@ -217,11 +218,10 @@ const Chat: React.FC = () => {
   };
 
   const handleSend = async () => {
-    if (!input.trim() || !selectedSender || !selectedConversation) return;
-    const msg = await sendMessage(selectedSender, selectedConversation.entity, input);
-    // setMessages(prev => [...prev, msg]);
+    if ((!input.trim() && !file) || !selectedSender || !selectedConversation) return;
+    const msg = await sendMessage(selectedSender, selectedConversation.entity, input, file);
     setInput('');
-    // Optionally, update conversations list with new last message
+    setFile(null);
     setConversations(prev => {
       if (!selectedConversation) return prev;
       return prev.map(c =>
@@ -235,26 +235,49 @@ const Chat: React.FC = () => {
   // Fetch messages with pagination
   const fetchMessages = async (pageNum = 1, append = false) => {
     if (!selectedSender || !selectedConversation) return;
+    const chatArea = chatAreaRef.current;
+    let prevScrollHeight = chatArea ? chatArea.scrollHeight : 0;
     if (pageNum === 1) setLoading(true);
     else setLoadingMore(true);
     const res = await getMessages(selectedSender, selectedConversation.entity, pageNum, 50);
     setHasMore(res.hasMore);
     setPage(pageNum);
     if (append) {
-      setMessages(prev => [...res.messages, ...prev]);
+      setMessages(prev => {
+        // After state update, adjust scroll to preserve position
+        setTimeout(() => {
+          if (chatArea) {
+            chatArea.scrollTop = chatArea.scrollHeight - prevScrollHeight;
+          }
+        }, 0);
+        return [...res.messages, ...prev];
+      });
     } else {
       setMessages(res.messages);
+      // After state update, scroll to bottom
+      setTimeout(() => {
+        if (chatArea) {
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }
+      }, 0);
     }
     setLoading(false);
     setLoadingMore(false);
   };
 
-  // Fetch first page when conversation changes
+  // Fetch last page when conversation changes
   useEffect(() => {
     setPage(1);
     setHasMore(true);
     if (selectedSender && selectedConversation) {
-      fetchMessages(1, false);
+      // Fetch total message count to determine last page
+      (async () => {
+        const res = await getMessages(selectedSender, selectedConversation.entity, 1, 1); // Only get count
+        const totalMessages = res.total || 0;
+        const pageSize = 50;
+        const lastPage = totalMessages > 0 ? Math.ceil(totalMessages / pageSize) : 1;
+        fetchMessages(lastPage, false);
+      })();
     } else {
       setMessages([]);
     }
@@ -374,7 +397,20 @@ const Chat: React.FC = () => {
               {loadingMore && <div className="text-center text-xs text-gray-400 mb-2">Loading more...</div>}
               {messages.map(msg => (
                 <div key={msg._id} className={`mb-1 ${msg.sender.id === selectedSender?._id ? 'text-right' : 'text-left'}`}>
-                  <span className="inline-block px-2 py-1 rounded bg-blue-100">{msg.text}</span>
+                  {msg.attachment && (
+                    <div className="mb-1">
+                      {msg.attachment.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                        <img src={msg.attachment} alt="attachment" className="max-w-xs max-h-40 rounded border mb-1 inline-block" />
+                      ) : msg.attachment.match(/\.(mp3|wav|ogg)$/i) ? (
+                        <audio controls src={msg.attachment} className="mb-1 max-w-xs" />
+                      ) : (
+                        <a href={msg.attachment} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Download file</a>
+                      )}
+                    </div>
+                  )}
+                  {msg.text && (
+                    <span className="inline-block px-2 py-1 rounded bg-blue-100">{msg.text}</span>
+                  )}
                   <div className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString()}</div>
                 </div>
               ))}
@@ -395,10 +431,19 @@ const Chat: React.FC = () => {
               }
             }}
           />
+          <input
+            type="file"
+            onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+            disabled={!selectedSender || !selectedConversation}
+            className="border rounded px-2 py-1"
+          />
+          {file && (
+            <span className="text-xs text-gray-600 max-w-[120px] truncate">{file.name}</span>
+          )}
           <button
             className="bg-blue-500 text-white px-4 py-1 rounded disabled:opacity-50"
             onClick={handleSend}
-            disabled={!input.trim() || !selectedSender || !selectedConversation}
+            disabled={(!input.trim() && !file) || !selectedSender || !selectedConversation}
           >
             Send
           </button>
