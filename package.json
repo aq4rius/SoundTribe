@@ -6,7 +6,8 @@
   "scripts": {
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +28,9 @@
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
-    "@types/multer": "^1.4.12"
+    "@types/multer": "^1.4.12",
+    "eslint": "^9.26.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3"
   }
 }
