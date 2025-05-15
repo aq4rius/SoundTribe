@@ -8,6 +8,7 @@ import cloudinary from '../utils/cloudinary';
 import { AppError } from '../utils/errorHandler';
 import { getIO } from '../server';
 import type { Request } from 'express';
+import Notification from '../models/Notification';
 
 export const getUsersForSidebar = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -108,6 +109,18 @@ export const sendMessage = async (req: AuthRequest & { file?: any }, res: Respon
       if (receiverRoom !== senderRoom) {
         io.to(receiverRoom).emit('new-message', newMessage);
       }
+    }
+    // Create notification for receiver
+    try {
+      await Notification.create({
+        recipient: receiverId,
+        type: 'new_message',
+        content: text ? `New message: ${text.substring(0, 100)}` : 'New file received',
+        relatedEntity: { id: newMessage._id, type: 'Message' },
+      });
+    } catch (err) {
+      // Log but don't block message send
+      console.error('Notification creation failed', err);
     }
     res.status(201).json({ message: newMessage });
   } catch (error) {

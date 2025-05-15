@@ -8,6 +8,7 @@ import artistProfileRoutes from './artistProfileRoutes';
 import eventPostingRoutes from './eventRoutes';
 import applicationRoutes from './applicationRoutes';
 import messageRoutes from './messageRoutes';
+import notificationRoutes from './notificationRoutes';
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use('/artist-profiles', artistProfileRoutes);
 router.use('/event-postings', eventPostingRoutes);
 router.use('/applications', applicationRoutes);
 router.use('/messages', messageRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;
