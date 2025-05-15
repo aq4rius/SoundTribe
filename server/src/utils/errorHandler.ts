@@ -2,12 +2,7 @@
 
 import { Response, Request, NextFunction } from 'express';
 
-export const errorHandler = (
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   handleError(err, res);
 };
 
@@ -28,13 +23,13 @@ export const handleError = (err: Error, res: Response) => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       status: 'error',
-      message: err.message
+      message: err.message,
     });
   }
 
   console.error('ERROR 💥', err);
   return res.status(500).json({
     status: 'error',
-    message: 'Something went wrong'
+    message: 'Something went wrong',
   });
 };

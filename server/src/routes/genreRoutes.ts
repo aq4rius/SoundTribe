@@ -1,7 +1,12 @@
 // server/src/routes/genreRoutes.ts
 
 import express from 'express';
-import { getAllGenres, createGenre, updateGenre, deleteGenre } from '../controllers/genreController';
+import {
+  getAllGenres,
+  createGenre,
+  updateGenre,
+  deleteGenre,
+} from '../controllers/genreController';
 import { authMiddleware, roleMiddleware } from '../middleware/authMiddleware';
 import { UserRole } from '../models/User';
 

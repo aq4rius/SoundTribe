@@ -26,4 +26,3 @@ export const deleteUserProfile = async () => {
   const response = await api.delete('/users/profile');
   return response.data;
 };
-

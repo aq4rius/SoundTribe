@@ -17,15 +17,18 @@ export interface IApplication extends Document {
   updatedAt: Date;
 }
 
-const ApplicationSchema: Schema = new Schema({
-  applicant: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  artistProfile: { type: Schema.Types.ObjectId, ref: 'ArtistProfile', required: true },
-  eventPosting: { type: Schema.Types.ObjectId, ref: 'EventPosting', required: true },
-  coverLetter: { type: String, required: true },
-  status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
-  proposedRate: { type: Number },
-  availability: [{ type: Date }],
-}, { timestamps: true });
+const ApplicationSchema: Schema = new Schema(
+  {
+    applicant: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    artistProfile: { type: Schema.Types.ObjectId, ref: 'ArtistProfile', required: true },
+    eventPosting: { type: Schema.Types.ObjectId, ref: 'EventPosting', required: true },
+    coverLetter: { type: String, required: true },
+    status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+    proposedRate: { type: Number },
+    availability: [{ type: Date }],
+  },
+  { timestamps: true },
+);
 
 const Application = mongoose.model<IApplication>('Application', ApplicationSchema);
 

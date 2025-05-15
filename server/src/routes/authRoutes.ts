@@ -16,17 +16,21 @@ router.post('/create-admin', async (req, res, next) => {
   }
 });
 
-router.post('/register', registerValidation, async (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  try {
-    await register(req, res, next);
-  } catch (error) {
-    next(error);
-  }
-});
+router.post(
+  '/register',
+  registerValidation,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    try {
+      await register(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 router.post('/login', loginValidation, async (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);

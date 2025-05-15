@@ -17,13 +17,13 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
   event,
   artistProfile,
   onSuccess,
-  onCancel
+  onCancel,
 }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     coverLetter: '',
     proposedRate: event.paymentAmount,
-    availability: [] as Date[]
+    availability: [] as Date[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
       await submitApplication({
         eventPostingId: event._id,
         artistProfileId: artistProfile._id,
-        ...formData
+        ...formData,
       });
       onSuccess?.();
       navigate('/dashboard');
@@ -71,7 +71,9 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1 text-base-content">Proposed Rate (${event.paymentType})</label>
+        <label className="block text-sm font-medium mb-1 text-base-content">
+          Proposed Rate (${event.paymentType})
+        </label>
         <input
           type="number"
           value={formData.proposedRate}
@@ -84,18 +86,10 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
       <div className="flex justify-end space-x-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="btn btn-ghost"
-        >
+        <button type="button" onClick={onCancel} className="btn btn-ghost">
           Cancel
         </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="btn btn-primary"
-        >
+        <button type="submit" disabled={isSubmitting} className="btn btn-primary">
           {isSubmitting ? 'Submitting...' : 'Submit Application'}
         </button>
       </div>

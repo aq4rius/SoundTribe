@@ -35,34 +35,39 @@ export interface IArtistProfile extends Document {
   updatedAt: Date;
 }
 
-const ArtistProfileSchema: Schema = new Schema({
-  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  stageName: { type: String, required: true },
-  biography: { type: String },
-  genres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],
-  instruments: [{ type: String }],
-  yearsOfExperience: { type: Number, required: true },
-  location: { type: String, required: true },
-  websiteUrl: { type: String },
-  socialMediaLinks: {
-    facebook: { type: String },
-    instagram: { type: String },
-    twitter: { type: String },
-    youtube: { type: String },
+const ArtistProfileSchema: Schema = new Schema(
+  {
+    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    stageName: { type: String, required: true },
+    biography: { type: String },
+    genres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],
+    instruments: [{ type: String }],
+    yearsOfExperience: { type: Number, required: true },
+    location: { type: String, required: true },
+    websiteUrl: { type: String },
+    socialMediaLinks: {
+      facebook: { type: String },
+      instagram: { type: String },
+      twitter: { type: String },
+      youtube: { type: String },
+    },
+    profileImage: { type: String },
+    portfolioItems: [
+      {
+        title: { type: String, required: true },
+        description: { type: String },
+        mediaUrl: { type: String, required: true },
+        mediaType: { type: String, enum: ['audio', 'video', 'image'], required: true },
+      },
+    ],
+    availability: {
+      isAvailable: { type: Boolean, default: true },
+      availableDates: [{ type: Date }],
+    },
+    ratePerHour: { type: Number },
   },
-  profileImage: { type: String },
-  portfolioItems: [{
-    title: { type: String, required: true },
-    description: { type: String },
-    mediaUrl: { type: String, required: true },
-    mediaType: { type: String, enum: ['audio', 'video', 'image'], required: true },
-  }],
-  availability: {
-    isAvailable: { type: Boolean, default: true },
-    availableDates: [{ type: Date }],
-  },
-  ratePerHour: { type: Number },
-}, { timestamps: true });
+  { timestamps: true },
+);
 
 const ArtistProfile = mongoose.model<IArtistProfile>('ArtistProfile', ArtistProfileSchema);
 

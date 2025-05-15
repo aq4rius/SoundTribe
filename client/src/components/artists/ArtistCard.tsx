@@ -10,11 +10,7 @@ interface ArtistCardProps {
   className?: string;
 }
 
-const ArtistCard: React.FC<ArtistCardProps> = ({ 
-  artist, 
-  mode = 'compact',
-  className = '' 
-}) => {
+const ArtistCard: React.FC<ArtistCardProps> = ({ artist, mode = 'compact', className = '' }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -22,7 +18,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
   };
 
   return (
-    <div 
+    <div
       onClick={handleClick}
       className={`bg-base-100 p-4 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer ${className}`}
     >
@@ -39,16 +35,15 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
           />
         )}
       </div>
-      
+
       <p className="text-sm mt-2 text-base-content">
-        {artist.biography 
-          ? artist.biography.slice(0, mode === 'compact' ? 150 : 300) + '...' 
-          : 'No biography provided'
-        }
+        {artist.biography
+          ? artist.biography.slice(0, mode === 'compact' ? 150 : 300) + '...'
+          : 'No biography provided'}
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {artist.genres.map(genre => (
+        {artist.genres.map((genre) => (
           <span
             key={genre._id}
             className="px-2 py-1 bg-secondary text-secondary-content text-xs rounded-full"
@@ -64,9 +59,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
           <p className="text-sm text-base-content">Rate: ${artist.ratePerHour}/hour</p>
         )}
         {artist.instruments.length > 0 && (
-          <p className="text-sm text-base-content">
-            Instruments: {artist.instruments.join(', ')}
-          </p>
+          <p className="text-sm text-base-content">Instruments: {artist.instruments.join(', ')}</p>
         )}
       </div>
 

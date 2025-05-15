@@ -21,7 +21,7 @@ const CreateEvent: React.FC = () => {
     paymentType: 'fixed' as 'fixed' | 'hourly',
     requiredExperience: 0,
     applicationDeadline: '',
-    status: 'open' as 'open' | 'closed' | 'filled'
+    status: 'open' as 'open' | 'closed' | 'filled',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +60,7 @@ const CreateEvent: React.FC = () => {
         ...eventInfo,
         genres: selectedGenres,
         eventDate: new Date(eventInfo.eventDate),
-        applicationDeadline: new Date(eventInfo.applicationDeadline)
+        applicationDeadline: new Date(eventInfo.applicationDeadline),
       });
       navigate('/dashboard');
     } catch (error: any) {
@@ -70,17 +70,15 @@ const CreateEvent: React.FC = () => {
   };
 
   const handleGenreChange = (genreId: string) => {
-    setSelectedGenres(prev => 
-      prev.includes(genreId) 
-        ? prev.filter(id => id !== genreId)
-        : [...prev, genreId]
+    setSelectedGenres((prev) =>
+      prev.includes(genreId) ? prev.filter((id) => id !== genreId) : [...prev, genreId],
     );
   };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto py-8 space-y-4">
       <h2 className="text-2xl font-semibold mb-6">Create New Event</h2>
-      
+
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
       {isLoading && <div>Saving...</div>}
 
@@ -109,7 +107,7 @@ const CreateEvent: React.FC = () => {
       <div>
         <label className="block text-sm font-medium mb-1">Genres</label>
         <div className="space-y-2">
-          {availableGenres.map(genre => (
+          {availableGenres.map((genre) => (
             <label key={genre._id} className="flex items-center">
               <input
                 type="checkbox"
@@ -128,10 +126,12 @@ const CreateEvent: React.FC = () => {
         <input
           type="text"
           value={eventInfo.requiredInstruments.join(', ')}
-          onChange={(e) => setEventInfo({ 
-            ...eventInfo, 
-            requiredInstruments: e.target.value.split(',').map(item => item.trim()) 
-          })}
+          onChange={(e) =>
+            setEventInfo({
+              ...eventInfo,
+              requiredInstruments: e.target.value.split(',').map((item) => item.trim()),
+            })
+          }
           className="w-full px-3 py-2 border rounded"
           placeholder="Enter instruments separated by commas"
           required
@@ -188,7 +188,9 @@ const CreateEvent: React.FC = () => {
           <label className="block text-sm font-medium mb-1">Payment Type</label>
           <select
             value={eventInfo.paymentType}
-            onChange={(e) => setEventInfo({ ...eventInfo, paymentType: e.target.value as 'fixed' | 'hourly' })}
+            onChange={(e) =>
+              setEventInfo({ ...eventInfo, paymentType: e.target.value as 'fixed' | 'hourly' })
+            }
             className="w-full px-3 py-2 border rounded"
             required
           >
@@ -203,7 +205,9 @@ const CreateEvent: React.FC = () => {
         <input
           type="number"
           value={eventInfo.requiredExperience}
-          onChange={(e) => setEventInfo({ ...eventInfo, requiredExperience: Number(e.target.value) })}
+          onChange={(e) =>
+            setEventInfo({ ...eventInfo, requiredExperience: Number(e.target.value) })
+          }
           className="w-full px-3 py-2 border rounded"
           min="0"
         />

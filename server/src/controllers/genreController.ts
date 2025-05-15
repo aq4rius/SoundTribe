@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import Genre, { IGenre } from '../models/Genre';
 import { AppError } from '../utils/errorHandler';
 
-
 export const getAllGenres = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const genres = await Genre.find();
@@ -26,7 +25,11 @@ export const createGenre = async (req: Request, res: Response, next: NextFunctio
 export const updateGenre = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, description } = req.body;
-    const genre = await Genre.findByIdAndUpdate(req.params.id, { name, description }, { new: true });
+    const genre = await Genre.findByIdAndUpdate(
+      req.params.id,
+      { name, description },
+      { new: true },
+    );
     if (!genre) {
       throw new AppError('Genre not found', 404);
     }

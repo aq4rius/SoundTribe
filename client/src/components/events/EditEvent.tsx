@@ -23,10 +23,7 @@ const EditEvent: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (id) {
-        const [fetchedEvent, genres] = await Promise.all([
-          getEventById(id),
-          getAllGenres()
-        ]);
+        const [fetchedEvent, genres] = await Promise.all([getEventById(id), getAllGenres()]);
         setEvent(fetchedEvent);
         setAvailableGenres(genres);
       }
@@ -77,13 +74,13 @@ const EditEvent: React.FC = () => {
 
   const handleGenreChange = (genreId: string) => {
     if (!event) return;
-    
-    setEvent(prev => {
+
+    setEvent((prev) => {
       if (!prev) return null;
-      const genres = prev.genres.map(g => g._id);
+      const genres = prev.genres.map((g) => g._id);
       const newGenres = genres.includes(genreId)
-        ? prev.genres.filter(g => g._id !== genreId)
-        : [...prev.genres, availableGenres.find(g => g._id === genreId)!];
+        ? prev.genres.filter((g) => g._id !== genreId)
+        : [...prev.genres, availableGenres.find((g) => g._id === genreId)!];
 
       return {
         ...prev,
@@ -96,17 +93,12 @@ const EditEvent: React.FC = () => {
 
   const Notification = () => {
     if (!notification?.isVisible) return null;
-  
-    const baseStyles = "fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg z-50";
-    const typeStyles = notification.type === "success" 
-      ? "bg-green-500 text-white" 
-      : "bg-red-500 text-white";
-  
-    return (
-      <div className={`${baseStyles} ${typeStyles}`}>
-        {notification.message}
-      </div>
-    );
+
+    const baseStyles = 'fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg z-50';
+    const typeStyles =
+      notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white';
+
+    return <div className={`${baseStyles} ${typeStyles}`}>{notification.message}</div>;
   };
 
   return (
@@ -115,7 +107,7 @@ const EditEvent: React.FC = () => {
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
       {isLoading && <div>Saving...</div>}
       <h2 className="text-2xl font-semibold mb-6">Edit Event</h2>
-      
+
       <div>
         <label className="block text-sm font-medium mb-1">Title</label>
         <input
@@ -141,11 +133,11 @@ const EditEvent: React.FC = () => {
       <div>
         <label className="block text-sm font-medium mb-1">Genres</label>
         <div className="space-y-2">
-          {availableGenres.map(genre => (
+          {availableGenres.map((genre) => (
             <label key={genre._id} className="flex items-center">
               <input
                 type="checkbox"
-                checked={event.genres.some(g => g._id === genre._id)}
+                checked={event.genres.some((g) => g._id === genre._id)}
                 onChange={() => handleGenreChange(genre._id)}
                 className="mr-2"
               />
@@ -160,10 +152,12 @@ const EditEvent: React.FC = () => {
         <input
           type="text"
           value={event.requiredInstruments.join(', ')}
-          onChange={(e) => setEvent({ 
-            ...event, 
-            requiredInstruments: e.target.value.split(',').map(item => item.trim()) 
-          })}
+          onChange={(e) =>
+            setEvent({
+              ...event,
+              requiredInstruments: e.target.value.split(',').map((item) => item.trim()),
+            })
+          }
           className="w-full px-3 py-2 border rounded"
           placeholder="Enter instruments separated by commas"
           required
@@ -220,7 +214,9 @@ const EditEvent: React.FC = () => {
           <label className="block text-sm font-medium mb-1">Payment Type</label>
           <select
             value={event.paymentType}
-            onChange={(e) => setEvent({ ...event, paymentType: e.target.value as 'fixed' | 'hourly' })}
+            onChange={(e) =>
+              setEvent({ ...event, paymentType: e.target.value as 'fixed' | 'hourly' })
+            }
             className="w-full px-3 py-2 border rounded"
             required
           >

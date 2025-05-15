@@ -27,24 +27,26 @@ export const deleteEvent = async (eventId: string) => {
   return response.data;
 };
 
-export const searchEventPostings = async (filters: {
-  searchTerm?: string;
-  selectedGenres?: string[];
-  instruments?: string[];
-  location?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  paymentMin?: number;
-  paymentMax?: number;
-  paymentType?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
-}, signal?: AbortSignal) => {
-  const response = await api.get('/event-postings/search', { 
+export const searchEventPostings = async (
+  filters: {
+    searchTerm?: string;
+    selectedGenres?: string[];
+    instruments?: string[];
+    location?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    paymentMin?: number;
+    paymentMax?: number;
+    paymentType?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  },
+  signal?: AbortSignal,
+) => {
+  const response = await api.get('/event-postings/search', {
     params: filters,
-    signal 
+    signal,
   });
   return response.data;
 };
-

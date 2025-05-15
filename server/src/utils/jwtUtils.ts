@@ -10,6 +10,6 @@ export const generateToken = (userId: Types.ObjectId, role: UserRole) => {
   });
 };
 
-export const verifyToken = (token: string): { id: string, role: UserRole } => {
-  return jwt.verify(token, process.env.JWT_SECRET!) as { id: string, role: UserRole };
+export const verifyToken = (token: string): { id: string; role: UserRole } => {
+  return jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role: UserRole };
 };

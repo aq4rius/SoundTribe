@@ -48,30 +48,52 @@ const EventDetails: React.FC = () => {
           {!isOwnEvent && (
             <button
               className="btn btn-primary"
-              onClick={() => navigate(`/chat?targetId=${event._id}&targetType=Event&targetName=${encodeURIComponent(event.title)}`)}
+              onClick={() =>
+                navigate(
+                  `/chat?targetId=${event._id}&targetType=Event&targetName=${encodeURIComponent(event.title)}`,
+                )
+              }
             >
               Send Message
             </button>
           )}
         </div>
-        
+
         <div className="grid grid-cols-2 gap-6">
           <div>
             <h2 className="text-xl font-semibold mb-2 text-primary">Event Details</h2>
             <div className="space-y-2 text-base-content">
-              <p><span className="font-medium">Location:</span> {event.location}</p>
-              <p><span className="font-medium">Date:</span> {new Date(event.eventDate).toLocaleDateString()}</p>
-              <p><span className="font-medium">Duration:</span> {event.duration} hours</p>
-              <p><span className="font-medium">Payment:</span> ${event.paymentAmount} ({event.paymentType})</p>
-              <p><span className="font-medium">Status:</span> <span className="capitalize">{event.status}</span></p>
+              <p>
+                <span className="font-medium">Location:</span> {event.location}
+              </p>
+              <p>
+                <span className="font-medium">Date:</span>{' '}
+                {new Date(event.eventDate).toLocaleDateString()}
+              </p>
+              <p>
+                <span className="font-medium">Duration:</span> {event.duration} hours
+              </p>
+              <p>
+                <span className="font-medium">Payment:</span> ${event.paymentAmount} (
+                {event.paymentType})
+              </p>
+              <p>
+                <span className="font-medium">Status:</span>{' '}
+                <span className="capitalize">{event.status}</span>
+              </p>
             </div>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold mb-2 text-primary">Requirements</h2>
             <div className="space-y-2 text-base-content">
-              <p><span className="font-medium">Experience:</span> {event.requiredExperience} years</p>
-              <p><span className="font-medium">Application Deadline:</span> {new Date(event.applicationDeadline).toLocaleDateString()}</p>
+              <p>
+                <span className="font-medium">Experience:</span> {event.requiredExperience} years
+              </p>
+              <p>
+                <span className="font-medium">Application Deadline:</span>{' '}
+                {new Date(event.applicationDeadline).toLocaleDateString()}
+              </p>
             </div>
           </div>
         </div>
@@ -95,18 +117,20 @@ const EventDetails: React.FC = () => {
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-2 text-primary">Genres</h2>
           <div className="flex flex-wrap gap-2">
-            {event.genres.map(genre => (
-              <span key={genre._id} className="px-3 py-1 bg-base-200 text-base-content rounded-full">
+            {event.genres.map((genre) => (
+              <span
+                key={genre._id}
+                className="px-3 py-1 bg-base-200 text-base-content rounded-full"
+              >
                 {genre.name}
               </span>
             ))}
           </div>
         </div>
-      
       </div>
       <div className="mt-8">
-          <EventApplication event={event} />
-        </div>
+        <EventApplication event={event} />
+      </div>
     </div>
   );
 };

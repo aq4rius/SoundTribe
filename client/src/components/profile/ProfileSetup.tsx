@@ -1,9 +1,9 @@
 // client/src/components/profile/ProfileSetup.tsx
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { updateUserProfile } from "../../services/user";
-import { useAuth } from "../../contexts/AuthContext";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { updateUserProfile } from '../../services/user';
+import { useAuth } from '../../contexts/AuthContext';
 import ErrorAlert from '../common/ErrorAlert';
 
 const ProfileSetup: React.FC = () => {
@@ -12,21 +12,21 @@ const ProfileSetup: React.FC = () => {
   const { login } = useAuth();
 
   const [basicInfo, setBasicInfo] = useState({
-    username: user?.username || "",
-    firstName: "",
-    lastName: "",
-    location: "",
-    bio: "",
+    username: user?.username || '',
+    firstName: '',
+    lastName: '',
+    location: '',
+    bio: '',
     favoriteGenres: [] as string[],
     preferredContentTypes: [] as string[],
     notificationPreferences: {
       email: true,
-      push: true
+      push: true,
     },
     privacySettings: {
       showEmail: false,
-      showLocation: true
-    }
+      showLocation: true,
+    },
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -52,15 +52,15 @@ const ProfileSetup: React.FC = () => {
     try {
       const updatedUser = await updateUserProfile(basicInfo);
       if (updatedUser) {
-        login(localStorage.getItem("token") || "", updatedUser);
+        login(localStorage.getItem('token') || '', updatedUser);
         if (updatedUser.basicProfileCompleted) {
-          navigate("/dashboard");
+          navigate('/dashboard');
         } else {
-          setError("Please fill in all required fields for the basic profile.");
+          setError('Please fill in all required fields for the basic profile.');
         }
       }
     } catch (error: any) {
-      setError(error.response?.data?.message || error.message || "Failed to update profile.");
+      setError(error.response?.data?.message || error.message || 'Failed to update profile.');
     }
     setIsLoading(false);
   };
@@ -123,13 +123,15 @@ const ProfileSetup: React.FC = () => {
               <input
                 type="checkbox"
                 checked={basicInfo.notificationPreferences.email}
-                onChange={(e) => setBasicInfo({
-                  ...basicInfo,
-                  notificationPreferences: {
-                    ...basicInfo.notificationPreferences,
-                    email: e.target.checked
-                  }
-                })}
+                onChange={(e) =>
+                  setBasicInfo({
+                    ...basicInfo,
+                    notificationPreferences: {
+                      ...basicInfo.notificationPreferences,
+                      email: e.target.checked,
+                    },
+                  })
+                }
                 className="mr-2"
               />
               Email Notifications
@@ -138,13 +140,15 @@ const ProfileSetup: React.FC = () => {
               <input
                 type="checkbox"
                 checked={basicInfo.notificationPreferences.push}
-                onChange={(e) => setBasicInfo({
-                  ...basicInfo,
-                  notificationPreferences: {
-                    ...basicInfo.notificationPreferences,
-                    push: e.target.checked
-                  }
-                })}
+                onChange={(e) =>
+                  setBasicInfo({
+                    ...basicInfo,
+                    notificationPreferences: {
+                      ...basicInfo.notificationPreferences,
+                      push: e.target.checked,
+                    },
+                  })
+                }
                 className="mr-2"
               />
               Push Notifications
@@ -158,13 +162,15 @@ const ProfileSetup: React.FC = () => {
               <input
                 type="checkbox"
                 checked={basicInfo.privacySettings.showEmail}
-                onChange={(e) => setBasicInfo({
-                  ...basicInfo,
-                  privacySettings: {
-                    ...basicInfo.privacySettings,
-                    showEmail: e.target.checked
-                  }
-                })}
+                onChange={(e) =>
+                  setBasicInfo({
+                    ...basicInfo,
+                    privacySettings: {
+                      ...basicInfo.privacySettings,
+                      showEmail: e.target.checked,
+                    },
+                  })
+                }
                 className="mr-2"
               />
               Show Email
@@ -173,13 +179,15 @@ const ProfileSetup: React.FC = () => {
               <input
                 type="checkbox"
                 checked={basicInfo.privacySettings.showLocation}
-                onChange={(e) => setBasicInfo({
-                  ...basicInfo,
-                  privacySettings: {
-                    ...basicInfo.privacySettings,
-                    showLocation: e.target.checked
-                  }
-                })}
+                onChange={(e) =>
+                  setBasicInfo({
+                    ...basicInfo,
+                    privacySettings: {
+                      ...basicInfo.privacySettings,
+                      showLocation: e.target.checked,
+                    },
+                  })
+                }
                 className="mr-2"
               />
               Show Location

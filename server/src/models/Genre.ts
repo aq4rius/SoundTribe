@@ -9,7 +9,7 @@ export interface IGenre extends Document {
 
 const GenreSchema: Schema = new Schema({
   name: { type: String, required: true, unique: true },
-  description: { type: String }
+  description: { type: String },
 });
 
 const Genre = mongoose.model<IGenre>('Genre', GenreSchema);

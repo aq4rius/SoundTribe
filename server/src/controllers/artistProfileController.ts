@@ -6,30 +6,27 @@ import ArtistProfile, { IArtistProfile } from '../models/ArtistProfile';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../utils/errorHandler';
 
-
 export const createArtistProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?._id;
 
     const newProfile: IArtistProfile = new ArtistProfile({
       ...req.body,
-      user: userId
+      user: userId,
     });
-    
+
     await newProfile.save();
 
-    res.status(201).json({ artistProfile: newProfile});
+    res.status(201).json({ artistProfile: newProfile });
   } catch (error) {
     console.error('Error creating artist profile:', error);
     if (error instanceof Error) {
-      next(error);  
+      next(error);
     } else {
-      next(error);  
+      next(error);
     }
   }
 };
-
-
 
 export const getArtistProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -53,7 +50,9 @@ export const updateArtistProfile = async (req: AuthRequest, res: Response, next:
       throw new AppError('Not authorized to update this profile', 403);
     }
 
-    const updatedProfile = await ArtistProfile.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedProfile = await ArtistProfile.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     res.json(updatedProfile);
   } catch (error) {
     next(error);
@@ -77,20 +76,29 @@ export const deleteArtistProfile = async (req: AuthRequest, res: Response, next:
   }
 };
 
-export const getUserArtistProfiles = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getUserArtistProfiles = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const artistProfiles = await ArtistProfile.find({ user: req.user?._id })
-      .populate('genres', 'name');
+    const artistProfiles = await ArtistProfile.find({ user: req.user?._id }).populate(
+      'genres',
+      'name',
+    );
     res.json(artistProfiles);
   } catch (error) {
     console.error('Error in getUserArtistProfiles:', error); // Log the real error
-    res.status(500).json({ message: 'Error fetching artist profiles', error: error instanceof Error ? error.message : error });
+    res.status(500).json({
+      message: 'Error fetching artist profiles',
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };
 
 export const searchArtistProfiles = async (req: Request, res: Response) => {
   try {
-    const { 
+    const {
       searchTerm,
       selectedGenres,
       instruments,
@@ -99,7 +107,7 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
       rateMax,
       location,
       page = 1,
-      limit = 9
+      limit = 9,
     } = req.query;
 
     let query: any = {};
@@ -107,7 +115,7 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
     if (searchTerm) {
       query.$or = [
         { stageName: new RegExp(searchTerm as string, 'i') },
-        { biography: new RegExp(searchTerm as string, 'i') }
+        { biography: new RegExp(searchTerm as string, 'i') },
       ];
     }
 
@@ -135,7 +143,7 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
     }
 
     const skip = (Number(page) - 1) * Number(limit);
-    
+
     const [artists, total] = await Promise.all([
       ArtistProfile.find(query)
         .populate('genres')
@@ -143,14 +151,14 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
         .lean()
         .skip(skip)
         .limit(Number(limit)),
-      ArtistProfile.countDocuments(query)
+      ArtistProfile.countDocuments(query),
     ]);
 
     res.json({
       data: artists,
       total,
       currentPage: Number(page),
-      totalPages: Math.ceil(total / Number(limit))
+      totalPages: Math.ceil(total / Number(limit)),
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -159,7 +167,3 @@ export const searchArtistProfiles = async (req: Request, res: Response) => {
     throw new AppError('Error searching artist profiles', 500);
   }
 };
-
-
-
-

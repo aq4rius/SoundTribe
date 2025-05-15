@@ -35,7 +35,10 @@ const RegisterForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card w-full max-w-md mx-auto bg-base-100 shadow-md p-8 space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="card w-full max-w-md mx-auto bg-base-100 shadow-md p-8 space-y-4"
+    >
       <h2 className="text-2xl font-bold text-center">Register</h2>
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
       <div className="form-control">

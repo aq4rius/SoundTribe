@@ -28,13 +28,15 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
         const [applicationsData, userApplicationsData, artistProfilesData] = await Promise.all([
           user?.email === event.postedBy.email ? getApplicationsForEvent(event._id) : [],
           getUserApplications(),
-          getUserArtistProfiles()
+          getUserArtistProfiles(),
         ]);
 
         setApplications(applicationsData);
-        const userApp = userApplicationsData.find((app: Application) => app.eventPosting._id === event._id);
+        const userApp = userApplicationsData.find(
+          (app: Application) => app.eventPosting._id === event._id,
+        );
         setUserApplication(userApp || null);
-        
+
         // Get the first artist profile (assuming one profile per user for now)
         if (artistProfilesData.length > 0) {
           setArtistProfile(artistProfilesData[0]);
@@ -80,7 +82,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
             artistProfile={artistProfile}
             onSuccess={() => {
               setShowApplicationForm(false);
-              getUserApplications().then(apps => {
+              getUserApplications().then((apps) => {
                 const userApp = apps.find((app: Application) => app.eventPosting._id === event._id);
                 setUserApplication(userApp || null);
               });
@@ -100,7 +102,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
       {isEventOwner && applications.length > 0 && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-4">Applications ({applications.length})</h2>
-          <ApplicationsList 
+          <ApplicationsList
             applications={applications}
             isEventOwner={true}
             onStatusUpdate={() => {

@@ -63,11 +63,14 @@ const Chat: React.FC = () => {
   // Helper: fetch all conversations for the selected sender
   const fetchConversations = async (sender: Entity) => {
     const token = localStorage.getItem('token');
-    const res = await fetch(`/api/messages/conversations?senderId=${sender._id}&senderType=${sender.type}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const res = await fetch(
+      `/api/messages/conversations?senderId=${sender._id}&senderType=${sender.type}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
     if (!res.ok) {
       setConversations([]);
       setSelectedConversation(null);
@@ -80,20 +83,24 @@ const Chat: React.FC = () => {
     const targetName = searchParams.get('targetName');
     let conversations = data;
     // If target is not in the conversation list, add it as a pending conversation
-    if (targetId && targetType && !data.some((c: Conversation) => c.entity._id === targetId && c.entity.type === targetType)) {
+    if (
+      targetId &&
+      targetType &&
+      !data.some((c: Conversation) => c.entity._id === targetId && c.entity.type === targetType)
+    ) {
       conversations = [
         {
           entity: { _id: targetId, type: targetType, name: targetName || 'Unknown' },
-          lastMessage: undefined
+          lastMessage: undefined,
         },
-        ...data
+        ...data,
       ];
     }
     setConversations(conversations);
     // Pre-select the target if present
     if (targetId && targetType) {
       const found = conversations.find(
-        (c: Conversation) => c.entity._id === targetId && c.entity.type === targetType
+        (c: Conversation) => c.entity._id === targetId && c.entity.type === targetType,
       );
       if (found) setSelectedConversation(found);
       else setSelectedConversation(null);
@@ -103,7 +110,7 @@ const Chat: React.FC = () => {
   };
 
   useEffect(() => {
-    getMyProfilesAndEvents().then(entities => {
+    getMyProfilesAndEvents().then((entities) => {
       setMyEntities(entities);
       if (entities.length === 1) {
         setSelectedSender(entities[0]);
@@ -125,7 +132,7 @@ const Chat: React.FC = () => {
   useEffect(() => {
     if (selectedSender && selectedConversation) {
       setLoading(true);
-      getMessages(selectedSender, selectedConversation.entity).then(res => {
+      getMessages(selectedSender, selectedConversation.entity).then((res) => {
         setMessages(res.messages);
         setLoading(false);
       });
@@ -168,14 +175,19 @@ const Chat: React.FC = () => {
       if (
         selectedSender &&
         selectedConversation &&
-        ((msg.sender.id === selectedSender._id && msg.receiver.id === selectedConversation.entity._id) ||
-         (msg.receiver.id === selectedSender._id && msg.sender.id === selectedConversation.entity._id))
+        ((msg.sender.id === selectedSender._id &&
+          msg.receiver.id === selectedConversation.entity._id) ||
+          (msg.receiver.id === selectedSender._id &&
+            msg.sender.id === selectedConversation.entity._id))
       ) {
-        setMessages(prev => [...prev, msg]);
+        setMessages((prev) => [...prev, msg]);
       } else {
         // Otherwise, increment unread count for the relevant conversation
-        const key = msg.sender.id === selectedSender?._id ? `${msg.receiver.type}:${msg.receiver.id}` : `${msg.sender.type}:${msg.sender.id}`;
-        setUnread(prev => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
+        const key =
+          msg.sender.id === selectedSender?._id
+            ? `${msg.receiver.type}:${msg.receiver.id}`
+            : `${msg.sender.type}:${msg.sender.id}`;
+        setUnread((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
       }
     };
     socket.on('new-message', handleNewMessage);
@@ -188,19 +200,24 @@ const Chat: React.FC = () => {
   useEffect(() => {
     if (selectedConversation) {
       const key = `${selectedConversation.entity.type}:${selectedConversation.entity._id}`;
-      setUnread(prev => ({ ...prev, [key]: 0 }));
+      setUnread((prev) => ({ ...prev, [key]: 0 }));
     }
   }, [selectedConversation]);
 
   // Filter sender dropdown to only show artist profiles/events owned by the current user
-  const filteredEntities = myEntities.filter(ent => {
+  const filteredEntities = myEntities.filter((ent) => {
     if (ent.type === 'ArtistProfile') {
       // @ts-ignore
       return ent.user === user?._id || ent.user?._id === user?._id;
     }
     if (ent.type === 'Event') {
       // @ts-ignore
-      return ent.owner === user?._id || ent.owner?._id === user?._id || ent.postedBy === user?._id || ent.postedBy?._id === user?._id;
+      return (
+        ent.owner === user?._id ||
+        ent.owner?._id === user?._id ||
+        ent.postedBy === user?._id ||
+        ent.postedBy?._id === user?._id
+      );
     }
     return false;
   });
@@ -213,17 +230,23 @@ const Chat: React.FC = () => {
       senderId: selectedSender._id,
       senderType: selectedSender.type,
       receiverId: conv.entity._id,
-      receiverType: conv.entity.type
+      receiverType: conv.entity.type,
     });
     const res = await fetch(`/api/messages/convo?${params.toString()}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     if (res.ok) {
-      setConversations(prev => prev.filter(c => c.entity._id !== conv.entity._id || c.entity.type !== conv.entity.type));
-      if (selectedConversation && selectedConversation.entity._id === conv.entity._id && selectedConversation.entity.type === conv.entity.type) {
+      setConversations((prev) =>
+        prev.filter((c) => c.entity._id !== conv.entity._id || c.entity.type !== conv.entity.type),
+      );
+      if (
+        selectedConversation &&
+        selectedConversation.entity._id === conv.entity._id &&
+        selectedConversation.entity.type === conv.entity.type
+      ) {
         setSelectedConversation(null);
         setMessages([]);
       }
@@ -236,12 +259,13 @@ const Chat: React.FC = () => {
     const msg = await sendMessage(selectedSender, selectedConversation.entity, input, file);
     setInput('');
     setFile(null);
-    setConversations(prev => {
+    setConversations((prev) => {
       if (!selectedConversation) return prev;
-      return prev.map(c =>
-        c.entity._id === selectedConversation.entity._id && c.entity.type === selectedConversation.entity.type
+      return prev.map((c) =>
+        c.entity._id === selectedConversation.entity._id &&
+        c.entity.type === selectedConversation.entity.type
           ? { ...c, lastMessage: msg }
-          : c
+          : c,
       );
     });
   };
@@ -257,7 +281,7 @@ const Chat: React.FC = () => {
     setHasMore(res.hasMore);
     setPage(pageNum);
     if (append) {
-      setMessages(prev => {
+      setMessages((prev) => {
         // After state update, adjust scroll to preserve position
         setTimeout(() => {
           if (chatArea) {
@@ -324,13 +348,13 @@ const Chat: React.FC = () => {
   // Mark notification as read
   const markNotificationRead = async (id: string) => {
     await api.put(`/notifications/${id}`);
-    setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+    setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, read: true } : n)));
   };
 
   // Delete notification
   const deleteNotification = async (id: string) => {
     await api.delete(`/notifications/${id}`);
-    setNotifications(prev => prev.filter(n => n._id !== id));
+    setNotifications((prev) => prev.filter((n) => n._id !== id));
   };
 
   // Fetch on mount and when dropdown opens
@@ -347,15 +371,15 @@ const Chat: React.FC = () => {
           <select
             className="w-full border rounded px-2 py-1"
             value={selectedSender?._id || ''}
-            onChange={e => {
-              const entity = filteredEntities.find(ent => ent._id === e.target.value);
+            onChange={(e) => {
+              const entity = filteredEntities.find((ent) => ent._id === e.target.value);
               setSelectedSender(entity || null);
               setSelectedConversation(null);
               setMessages([]);
             }}
           >
             <option value="">Select profile/event</option>
-            {filteredEntities.map(ent => (
+            {filteredEntities.map((ent) => (
               <option key={ent._id} value={ent._id}>
                 {ent.type === 'ArtistProfile' ? '🎤' : '🎫'} {ent.name}
               </option>
@@ -366,14 +390,17 @@ const Chat: React.FC = () => {
           {conversations.length === 0 ? (
             <div className="p-4 text-gray-400 text-center text-sm">No conversations yet.</div>
           ) : (
-            conversations.map(conv => {
+            conversations.map((conv) => {
               const key = `${conv.entity.type}:${conv.entity._id}`;
               return (
                 <div
                   key={conv.entity._id + conv.entity.type}
                   className={`relative px-4 py-3 cursor-pointer border-b hover:bg-blue-50 ${
-                    selectedConversation && conv.entity._id === selectedConversation.entity._id && conv.entity.type === selectedConversation.entity.type
-                      ? 'bg-blue-100' : ''
+                    selectedConversation &&
+                    conv.entity._id === selectedConversation.entity._id &&
+                    conv.entity.type === selectedConversation.entity.type
+                      ? 'bg-blue-100'
+                      : ''
                   }`}
                   onClick={() => setSelectedConversation(conv)}
                 >
@@ -386,7 +413,7 @@ const Chat: React.FC = () => {
                     )}
                     <button
                       className="ml-auto px-2 py-1 text-gray-500 hover:text-gray-800"
-                      onClick={e => {
+                      onClick={(e) => {
                         e.stopPropagation();
                         setSidebarMenuOpen(key === sidebarMenuOpen ? null : key);
                       }}
@@ -399,7 +426,7 @@ const Chat: React.FC = () => {
                     <div className="absolute right-4 top-8 z-10 bg-white border rounded shadow p-2">
                       <button
                         className="block w-full text-left px-2 py-1 hover:bg-gray-100"
-                        onClick={e => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConversation(conv);
                         }}
@@ -409,7 +436,11 @@ const Chat: React.FC = () => {
                     </div>
                   )}
                   <div className="text-xs text-gray-500 truncate">
-                    {conv.lastMessage?.text ? conv.lastMessage.text : conv.lastMessage === undefined ? 'Start a conversation...' : '[Attachment]'}
+                    {conv.lastMessage?.text
+                      ? conv.lastMessage.text
+                      : conv.lastMessage === undefined
+                        ? 'Start a conversation...'
+                        : '[Attachment]'}
                   </div>
                   <div className="text-xs text-gray-400 text-right">
                     {conv.lastMessage && new Date(conv.lastMessage.createdAt).toLocaleString()}
@@ -425,7 +456,8 @@ const Chat: React.FC = () => {
         <div className="border-b px-4 py-3 bg-gray-100 font-semibold flex justify-between items-center">
           {selectedConversation ? (
             <>
-              {selectedConversation.entity.type === 'ArtistProfile' ? '🎤' : '🎫'} {selectedConversation.entity.name}
+              {selectedConversation.entity.type === 'ArtistProfile' ? '🎤' : '🎫'}{' '}
+              {selectedConversation.entity.name}
             </>
           ) : (
             <span className="text-gray-400">Select a conversation</span>
@@ -433,11 +465,11 @@ const Chat: React.FC = () => {
           <div className="relative">
             <button
               className="relative px-3 py-2"
-              onClick={() => setShowNotifications(v => !v)}
+              onClick={() => setShowNotifications((v) => !v)}
               aria-label="Notifications"
             >
               <span className="material-icons align-middle">notifications</span>
-              {notifications.some(n => !n.read) && (
+              {notifications.some((n) => !n.read) && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               )}
             </button>
@@ -449,16 +481,31 @@ const Chat: React.FC = () => {
                 ) : notifications.length === 0 ? (
                   <div className="p-4 text-center text-gray-400">No notifications</div>
                 ) : (
-                  notifications.map(n => (
-                    <div key={n._id} className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-white' : 'bg-blue-50'}`}>
+                  notifications.map((n) => (
+                    <div
+                      key={n._id}
+                      className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-white' : 'bg-blue-50'}`}
+                    >
                       <div className="flex-1">
                         <div className="font-medium text-sm">{n.content}</div>
-                        <div className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">
+                          {new Date(n.createdAt).toLocaleString()}
+                        </div>
                       </div>
                       {!n.read && (
-                        <button className="text-xs text-blue-600 mr-2" onClick={() => markNotificationRead(n._id)}>Mark as read</button>
+                        <button
+                          className="text-xs text-blue-600 mr-2"
+                          onClick={() => markNotificationRead(n._id)}
+                        >
+                          Mark as read
+                        </button>
                       )}
-                      <button className="text-xs text-gray-400 hover:text-red-500" onClick={() => deleteNotification(n._id)}>&times;</button>
+                      <button
+                        className="text-xs text-gray-400 hover:text-red-500"
+                        onClick={() => deleteNotification(n._id)}
+                      >
+                        &times;
+                      </button>
                     </div>
                   ))
                 )}
@@ -471,24 +518,42 @@ const Chat: React.FC = () => {
             <div>Loading messages...</div>
           ) : (
             <>
-              {loadingMore && <div className="text-center text-xs text-gray-400 mb-2">Loading more...</div>}
-              {messages.map(msg => (
-                <div key={msg._id} className={`mb-1 ${msg.sender.id === selectedSender?._id ? 'text-right' : 'text-left'}`}>
+              {loadingMore && (
+                <div className="text-center text-xs text-gray-400 mb-2">Loading more...</div>
+              )}
+              {messages.map((msg) => (
+                <div
+                  key={msg._id}
+                  className={`mb-1 ${msg.sender.id === selectedSender?._id ? 'text-right' : 'text-left'}`}
+                >
                   {msg.attachment && (
                     <div className="mb-1">
                       {msg.attachment.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                        <img src={msg.attachment} alt="attachment" className="max-w-xs max-h-40 rounded border mb-1 inline-block" />
+                        <img
+                          src={msg.attachment}
+                          alt="attachment"
+                          className="max-w-xs max-h-40 rounded border mb-1 inline-block"
+                        />
                       ) : msg.attachment.match(/\.(mp3|wav|ogg)$/i) ? (
                         <audio controls src={msg.attachment} className="mb-1 max-w-xs" />
                       ) : (
-                        <a href={msg.attachment} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Download file</a>
+                        <a
+                          href={msg.attachment}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          Download file
+                        </a>
                       )}
                     </div>
                   )}
                   {msg.text && (
                     <span className="inline-block px-2 py-1 rounded bg-blue-100">{msg.text}</span>
                   )}
-                  <div className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString()}</div>
+                  <div className="text-xs text-gray-400">
+                    {new Date(msg.createdAt).toLocaleString()}
+                  </div>
                 </div>
               ))}
             </>
@@ -498,10 +563,10 @@ const Chat: React.FC = () => {
           <input
             className="flex-1 border rounded px-2 py-1"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
             disabled={!selectedSender || !selectedConversation}
-            onKeyDown={e => {
+            onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSend();
@@ -510,7 +575,7 @@ const Chat: React.FC = () => {
           />
           <input
             type="file"
-            onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
             disabled={!selectedSender || !selectedConversation}
             className="border rounded px-2 py-1"
           />

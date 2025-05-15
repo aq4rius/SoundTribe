@@ -24,8 +24,8 @@ export const getApplicationsForEvent = async (eventId: string) => {
 };
 
 export const updateApplicationStatus = async (
-  applicationId: string, 
-  status: 'accepted' | 'rejected'
+  applicationId: string,
+  status: 'accepted' | 'rejected',
 ) => {
   const response = await api.patch(`/applications/${applicationId}/status`, { status });
   return response.data;

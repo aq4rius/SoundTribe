@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 export enum UserRole {
   USER = 'user',
   ARTIST = 'artist',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
 }
 
 export interface IUser extends Document {
@@ -51,12 +51,12 @@ const UserSchema: Schema = new Schema({
   preferredContentTypes: [{ type: String }],
   notificationPreferences: {
     email: { type: Boolean, default: true },
-    push: { type: Boolean, default: true }
+    push: { type: Boolean, default: true },
   },
   privacySettings: {
     showEmail: { type: Boolean, default: false },
-    showLocation: { type: Boolean, default: true }
-  }
+    showLocation: { type: Boolean, default: true },
+  },
 });
 
 UserSchema.pre<IUser>('save', async function (next) {

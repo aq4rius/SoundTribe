@@ -9,7 +9,7 @@ import { AppError } from '../utils/errorHandler';
 
 export const createAdmin = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password, adminSecret } = req.body;
-  
+
   // Check if the provided admin secret matches the environment variable
   if (adminSecret !== process.env.ADMIN_SECRET) {
     throw new AppError('Invalid admin secret', 403);
@@ -44,15 +44,15 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     const user: IUser = new User({ username, email, password });
     await user.save();
     const token = generateToken(user._id, user.role);
-    res.status(201).json({ 
-      token, 
+    res.status(201).json({
+      token,
       user: {
         id: user._id,
         username: user.username,
         email: user.email,
         role: user.role,
-        profileCompleted: user.profileCompleted
-      } 
+        profileCompleted: user.profileCompleted,
+      },
     });
   } catch (error: any) {
     console.error('Registration error:', error);
@@ -68,15 +68,15 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       throw new AppError('Invalid email or password', 401);
     }
     const token = generateToken(user._id, user.role);
-    res.status(200).json({ 
-      token, 
+    res.status(200).json({
+      token,
       user: {
         id: user._id,
         username: user.username,
         email: user.email,
         role: user.role,
-        profileCompleted: user.profileCompleted
-      } 
+        profileCompleted: user.profileCompleted,
+      },
     });
   } catch (error: any) {
     console.error('Login error:', error);
@@ -95,7 +95,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response, next: Next
       username: user.username,
       email: user.email,
       role: user.role,
-      profileCompleted: user.profileCompleted
+      profileCompleted: user.profileCompleted,
     });
   } catch (error: any) {
     console.error('Get current user error:', error);

@@ -17,7 +17,9 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response, next: 
       throw new AppError('User not authenticated', 401);
     }
     // Instead of users, return artist profiles and events owned by the user
-    const artistProfiles = await (await import('../models/ArtistProfile')).default.find({ user: loggedInUserId });
+    const artistProfiles = await (
+      await import('../models/ArtistProfile')
+    ).default.find({ user: loggedInUserId });
     const events = await (await import('../models/Event')).default.find({ owner: loggedInUserId });
     res.status(200).json({ artistProfiles, events });
   } catch (error) {
@@ -40,9 +42,19 @@ export const getMessages = async (req: AuthRequest, res: Response, next: NextFun
     // Query for messages between the two entities
     const query = {
       $or: [
-        { 'sender.id': senderId, 'sender.type': senderType, 'receiver.id': receiverId, 'receiver.type': receiverType },
-        { 'sender.id': receiverId, 'sender.type': receiverType, 'receiver.id': senderId, 'receiver.type': senderType }
-      ]
+        {
+          'sender.id': senderId,
+          'sender.type': senderType,
+          'receiver.id': receiverId,
+          'receiver.type': receiverType,
+        },
+        {
+          'sender.id': receiverId,
+          'sender.type': receiverType,
+          'receiver.id': senderId,
+          'receiver.type': senderType,
+        },
+      ],
     };
     const total = await Message.countDocuments(query);
     const messages = await Message.find(query)
@@ -59,7 +71,11 @@ export const getMessages = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-export const sendMessage = async (req: AuthRequest & { file?: any }, res: Response, next: NextFunction) => {
+export const sendMessage = async (
+  req: AuthRequest & { file?: any },
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { text, senderId, senderType, receiverId, receiverType } = req.body;
     const userId = req.user && (req.user._id || req.user.id);
@@ -82,10 +98,13 @@ export const sendMessage = async (req: AuthRequest & { file?: any }, res: Respon
     if (req.file) {
       // Upload buffer to cloudinary using a Promise wrapper
       attachmentUrl = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
-          if (error || !result) return reject(new AppError('File upload failed', 500));
-          resolve(result.secure_url);
-        });
+        const stream = cloudinary.uploader.upload_stream(
+          { resource_type: 'auto' },
+          (error, result) => {
+            if (error || !result) return reject(new AppError('File upload failed', 500));
+            resolve(result.secure_url);
+          },
+        );
         stream.end(req.file.buffer);
       });
     } else if (req.body.attachment) {
@@ -97,7 +116,7 @@ export const sendMessage = async (req: AuthRequest & { file?: any }, res: Respon
       text,
       attachment: attachmentUrl,
       sender: { id: senderId, type: senderType },
-      receiver: { id: receiverId, type: receiverType }
+      receiver: { id: receiverId, type: receiverType },
     });
     await newMessage.save();
     // Emit real-time message to both sender and receiver rooms
@@ -139,8 +158,8 @@ export const getConversations = async (req: AuthRequest, res: Response, next: Ne
     const messages = await Message.find({
       $or: [
         { 'sender.id': senderId, 'sender.type': senderType },
-        { 'receiver.id': senderId, 'receiver.type': senderType }
-      ]
+        { 'receiver.id': senderId, 'receiver.type': senderType },
+      ],
     }).sort({ createdAt: -1 }); // newest first
 
     // Group by the other entity (conversation partner)
@@ -157,18 +176,24 @@ export const getConversations = async (req: AuthRequest, res: Response, next: Ne
       if (!conversationsMap.has(key)) {
         conversationsMap.set(key, {
           entity: { _id: partner.id, type: partner.type, name: undefined },
-          lastMessage: msg
+          lastMessage: msg,
         });
       }
     }
     // Fetch names for all partners (could be ArtistProfile or Event)
     const entitiesToFetch = Array.from(conversationsMap.values());
-    const artistIds = entitiesToFetch.filter(e => e.entity.type === 'ArtistProfile').map(e => e.entity._id);
-    const eventIds = entitiesToFetch.filter(e => e.entity.type === 'Event').map(e => e.entity._id);
+    const artistIds = entitiesToFetch
+      .filter((e) => e.entity.type === 'ArtistProfile')
+      .map((e) => e.entity._id);
+    const eventIds = entitiesToFetch
+      .filter((e) => e.entity.type === 'Event')
+      .map((e) => e.entity._id);
     let artistProfiles: any[] = [];
     let events: any[] = [];
     if (artistIds.length > 0) {
-      artistProfiles = await (await import('../models/ArtistProfile')).default.find({ _id: { $in: artistIds } });
+      artistProfiles = await (
+        await import('../models/ArtistProfile')
+      ).default.find({ _id: { $in: artistIds } });
     }
     if (eventIds.length > 0) {
       events = await (await import('../models/Event')).default.find({ _id: { $in: eventIds } });
@@ -176,7 +201,9 @@ export const getConversations = async (req: AuthRequest, res: Response, next: Ne
     // Attach names
     for (const conv of entitiesToFetch) {
       if (conv.entity.type === 'ArtistProfile') {
-        const found = artistProfiles.find((a: any) => a._id.toString() === conv.entity._id.toString());
+        const found = artistProfiles.find(
+          (a: any) => a._id.toString() === conv.entity._id.toString(),
+        );
         conv.entity.name = found ? found.stageName : 'Unknown Artist';
       } else if (conv.entity.type === 'Event') {
         const found = events.find((e: any) => e._id.toString() === conv.entity._id.toString());
@@ -213,9 +240,19 @@ export const deleteConversation = async (req: AuthRequest, res: Response, next: 
     // Delete all messages between the two entities
     await Message.deleteMany({
       $or: [
-        { 'sender.id': senderId, 'sender.type': senderType, 'receiver.id': receiverId, 'receiver.type': receiverType },
-        { 'sender.id': receiverId, 'sender.type': receiverType, 'receiver.id': senderId, 'receiver.type': senderType }
-      ]
+        {
+          'sender.id': senderId,
+          'sender.type': senderType,
+          'receiver.id': receiverId,
+          'receiver.type': receiverType,
+        },
+        {
+          'sender.id': receiverId,
+          'sender.type': receiverType,
+          'receiver.id': senderId,
+          'receiver.type': senderType,
+        },
+      ],
     });
     res.status(200).json({ success: true });
   } catch (error) {

@@ -8,7 +8,7 @@ export const createEventPosting = async (req: AuthRequest, res: Response, next: 
   try {
     const newEventPosting: IEventPosting = new EventPosting({
       ...req.body,
-      postedBy: req.user?.id
+      postedBy: req.user?.id,
     });
     await newEventPosting.save();
     res.status(201).json(newEventPosting);
@@ -39,7 +39,9 @@ export const updateEventPosting = async (req: AuthRequest, res: Response, next: 
       throw new AppError('Not authorized to update this event posting', 403);
     }
 
-    const updatedEventPosting = await EventPosting.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedEventPosting = await EventPosting.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     res.json(updatedEventPosting);
   } catch (error) {
     next(error);
@@ -65,7 +67,7 @@ export const deleteEventPosting = async (req: AuthRequest, res: Response, next: 
 
 export const searchEventPostings = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { 
+    const {
       searchTerm,
       selectedGenres,
       instruments,
@@ -77,7 +79,7 @@ export const searchEventPostings = async (req: Request, res: Response, next: Nex
       paymentType,
       status,
       page = 1,
-      limit = 9
+      limit = 9,
     } = req.query;
 
     let query: any = {};
@@ -85,7 +87,7 @@ export const searchEventPostings = async (req: Request, res: Response, next: Nex
     if (searchTerm) {
       query.$or = [
         { title: new RegExp(searchTerm as string, 'i') },
-        { description: new RegExp(searchTerm as string, 'i') }
+        { description: new RegExp(searchTerm as string, 'i') },
       ];
     }
 
@@ -95,8 +97,8 @@ export const searchEventPostings = async (req: Request, res: Response, next: Nex
     }
 
     if (instruments) {
-      query.requiredInstruments = { 
-        $in: Array.isArray(instruments) ? instruments : [instruments] 
+      query.requiredInstruments = {
+        $in: Array.isArray(instruments) ? instruments : [instruments],
       };
     }
 
@@ -125,7 +127,7 @@ export const searchEventPostings = async (req: Request, res: Response, next: Nex
     }
 
     const skip = (Number(page) - 1) * Number(limit);
-    
+
     const [events, total] = await Promise.all([
       EventPosting.find(query)
         .populate('genres')
@@ -133,25 +135,23 @@ export const searchEventPostings = async (req: Request, res: Response, next: Nex
         .lean()
         .skip(skip)
         .limit(Number(limit)),
-      EventPosting.countDocuments(query)
+      EventPosting.countDocuments(query),
     ]);
 
     res.json({
       data: events,
       total,
       currentPage: Number(page),
-      totalPages: Math.ceil(total / Number(limit))
+      totalPages: Math.ceil(total / Number(limit)),
     });
   } catch (error: any) {
     next(new AppError(`Error searching event postings: ${error.message || 'Unknown error'}`, 500));
   }
 };
 
-
 export const getUserEvents = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const events = await EventPosting.find({ postedBy: req.user?._id })
-      .populate('genres postedBy');
+    const events = await EventPosting.find({ postedBy: req.user?._id }).populate('genres postedBy');
     res.json(events);
   } catch (error) {
     next(error);

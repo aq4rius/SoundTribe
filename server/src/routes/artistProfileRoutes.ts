@@ -1,7 +1,14 @@
 // server/src/routes/artistProfileRoutes.ts
 
 import express from 'express';
-import { createArtistProfile, getArtistProfile, updateArtistProfile, deleteArtistProfile, getUserArtistProfiles, searchArtistProfiles } from '../controllers/artistProfileController';
+import {
+  createArtistProfile,
+  getArtistProfile,
+  updateArtistProfile,
+  deleteArtistProfile,
+  getUserArtistProfiles,
+  searchArtistProfiles,
+} from '../controllers/artistProfileController';
 import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router();

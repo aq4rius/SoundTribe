@@ -22,7 +22,7 @@ export const markNotificationRead = async (req: AuthRequest, res: Response, next
     const notification = await Notification.findOneAndUpdate(
       { _id: notificationId, recipient: userId },
       { read: true },
-      { new: true }
+      { new: true },
     );
     if (!notification) throw new AppError('Notification not found', 404);
     res.json(notification);
@@ -36,7 +36,10 @@ export const deleteNotification = async (req: AuthRequest, res: Response, next: 
     const userId = req.user?._id;
     const { notificationId } = req.params;
     if (!userId) throw new AppError('User not authenticated', 401);
-    const notification = await Notification.findOneAndDelete({ _id: notificationId, recipient: userId });
+    const notification = await Notification.findOneAndDelete({
+      _id: notificationId,
+      recipient: userId,
+    });
     if (!notification) throw new AppError('Notification not found', 404);
     res.json({ success: true });
   } catch (error) {

@@ -1,6 +1,10 @@
 import express, { NextFunction, Request, Response } from 'express';
 import User, { UserRole } from '../models/User';
-import { getUserProfile, updateUserProfile, deleteUserProfile } from '../controllers/userController';
+import {
+  getUserProfile,
+  updateUserProfile,
+  deleteUserProfile,
+} from '../controllers/userController';
 import { authMiddleware, roleMiddleware, AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../utils/errorHandler';
 
@@ -10,29 +14,40 @@ router.get('/profile', authMiddleware, getUserProfile);
 router.put('/profile', authMiddleware, updateUserProfile);
 router.delete('/profile', authMiddleware, deleteUserProfile);
 
-
 // Get all users (admin only)
-router.get('/', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const users = await User.find().select('-password');
-    res.json(users);
-  } catch (error) {
-    next(new AppError('Server error', 500));
-  }
-});
+router.get(
+  '/',
+  authMiddleware,
+  roleMiddleware(UserRole.ADMIN),
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const users = await User.find().select('-password');
+      res.json(users);
+    } catch (error) {
+      next(new AppError('Server error', 500));
+    }
+  },
+);
 
 // Update user role (admin only)
-router.put('/:id/role', authMiddleware, roleMiddleware(UserRole.ADMIN), async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { role } = req.body;
-    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
-    if (!user) {
-      return next(new AppError('User not found', 404));
+router.put(
+  '/:id/role',
+  authMiddleware,
+  roleMiddleware(UserRole.ADMIN),
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { role } = req.body;
+      const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select(
+        '-password',
+      );
+      if (!user) {
+        return next(new AppError('User not found', 404));
+      }
+      res.json(user);
+    } catch (error) {
+      next(new AppError('Server error', 500));
     }
-    res.json(user);
-  } catch (error) {
-    next(new AppError('Server error', 500));
-  }
-});
+  },
+);
 
 export default router;
