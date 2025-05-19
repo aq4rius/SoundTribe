@@ -12,6 +12,7 @@ async function getArtist(id: string) {
 }
 
 export default async function ArtistDetailsPage({ params }: { params: { id: string } }) {
+  if (params.id === 'create') return notFound();
   const artist = await getArtist(params.id);
   if (!artist) return notFound();
   return (

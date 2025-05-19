@@ -18,8 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-black text-white min-h-screen">
-        <Navbar />
         <Providers>
+          <Navbar />
           <section className="pt-24 min-h-[80vh]">{children}</section>
         </Providers>
         <Footer />

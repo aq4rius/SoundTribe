@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation';
 import EventCard from '@/components/events/EventCard';
 import Link from 'next/link';
+import EventApplication from '@/components/applications/EventApplication';
 
 async function getEvent(id: string) {
   const res = await fetch(
@@ -12,6 +13,7 @@ async function getEvent(id: string) {
 }
 
 export default async function EventDetailsPage({ params }: { params: { id: string } }) {
+  if (params.id === 'create') return notFound();
   const event = await getEvent(params.id);
   if (!event) return notFound();
   return (
@@ -74,10 +76,8 @@ export default async function EventDetailsPage({ params }: { params: { id: strin
         <button className="px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition">
           Send Message
         </button>
-        <button className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition">
-          Apply
-        </button>
       </div>
+      <EventApplication event={event} />
       {/* TODO: Integrate chat and application components here */}
     </div>
   );
