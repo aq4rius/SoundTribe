@@ -1,7 +1,7 @@
-// Chat migrated from client/src/components/common/Chat.tsx
+// Chat rewritten from scratch to guarantee hook order and avoid conditional hooks
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useMyEntities } from '@/hooks/useMyEntities';
 import { useConversations, useMessages } from '@/hooks/useChat';
@@ -13,55 +13,74 @@ import { useQueryClient } from '@tanstack/react-query';
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000';
 
 const Chat = () => {
+  // All hooks at the top, no early returns
   const { user, token } = useAuth();
   const safeToken = token || undefined;
   const { data: myEntities = [], isLoading: entitiesLoading } = useMyEntities(safeToken);
   const [selectedSender, setSelectedSender] = useState<any>(null);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
-  const { data: conversations = [], isLoading: convLoading } = useConversations(
-    selectedSender,
-    safeToken,
-  );
-  const { data: messagesData = { messages: [] }, isLoading: msgLoading } = useMessages(
-    selectedSender,
-    selectedConversation?.entity,
-    safeToken,
-  );
+  const { data: conversations = [], isLoading: convLoading } = useConversations(selectedSender, safeToken);
+  const { data: messagesData = { messages: [] }, isLoading: msgLoading } = useMessages(selectedSender, selectedConversation?.entity, safeToken);
   const [input, setInput] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [unread, setUnread] = useState<{ [key: string]: number }>({});
-  const socketRef = useRef<Socket | null>(null);
-  const prevSenderRef = useRef<string | null>(null);
-  const [sidebarMenuOpen, setSidebarMenuOpen] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const chatAreaRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const sendMessageMutation = useSendMessage(safeToken);
   const queryClient = useQueryClient();
+  const chatAreaRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Set default sender
+  // Set default sender and conversation
   useEffect(() => {
     if (!selectedSender && myEntities.length === 1) setSelectedSender(myEntities[0]);
   }, [myEntities, selectedSender]);
-
-  // Set default conversation
   useEffect(() => {
-    if (conversations.length > 0 && !selectedConversation)
-      setSelectedConversation(conversations[0]);
+    if (conversations.length > 0 && !selectedConversation) setSelectedConversation(conversations[0]);
   }, [conversations, selectedConversation]);
 
-  // Defensive: fallback values for messages and conversations
+  // Socket.io real-time updates
+  useEffect(() => {
+    if (!selectedSender) return;
+    const socket: Socket = io(SOCKET_URL, { withCredentials: true });
+    socket.emit('join-entity', { entityId: selectedSender._id, entityType: selectedSender.type });
+    socket.on('new-message', (msg: any) => {
+      if (
+        selectedConversation &&
+        ((msg.sender.id === selectedSender._id && msg.receiver.id === selectedConversation.entity._id) ||
+          (msg.receiver.id === selectedSender._id && msg.sender.id === selectedConversation.entity._id))
+      ) {
+        queryClient.invalidateQueries({
+          queryKey: ['messages', selectedSender._id, selectedSender.type, selectedConversation.entity._id, selectedConversation.entity.type],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: ['conversations', selectedSender._id, selectedSender.type],
+        });
+      }
+    });
+    return () => {
+      socket.emit('leave-entity', { entityId: selectedSender._id, entityType: selectedSender.type });
+      socket.disconnect();
+    };
+  }, [selectedSender, selectedConversation, queryClient]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    const chatArea = chatAreaRef.current;
+    if (!chatArea) return;
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, [messagesData.messages, selectedConversation]);
+
+  // Focus input after sending
+  useEffect(() => {
+    if (!sendMessageMutation.isPending && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [sendMessageMutation.isPending]);
+
+  // Defensive: fallback values
   const safeConversations = Array.isArray(conversations) ? conversations : [];
   const safeMessages = Array.isArray(messagesData?.messages) ? messagesData.messages : [];
 
-  // Only now, after all hooks:
-  if (entitiesLoading) {
-    return <div className="text-center text-white/80 py-12">Loading chat...</div>;
-  }
-
+  // Send message handler
   const handleSend = () => {
     if ((!input.trim() && !file) || !selectedSender || !selectedConversation) return;
     sendMessageMutation.mutate(
@@ -80,71 +99,10 @@ const Chat = () => {
     );
   };
 
-  // Scroll to bottom when messages change (unless user scrolled up)
-  useEffect(() => {
-    const chatArea = chatAreaRef.current;
-    if (!chatArea) return;
-    // If user is near the bottom, scroll to bottom
-    const isNearBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 100;
-    if (isNearBottom) {
-      chatArea.scrollTop = chatArea.scrollHeight;
-    }
-  }, [messagesData.messages, selectedConversation]);
-
-  // Focus input after sending
-  useEffect(() => {
-    if (!sendMessageMutation.isPending && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [sendMessageMutation.isPending]);
-
-  // Focus input on conversation change
-  useEffect(() => {
-    if (inputRef.current) inputRef.current.focus();
-  }, [selectedConversation]);
-
-  // Socket.io real-time updates
-  useEffect(() => {
-    if (!selectedSender) return;
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
-      withCredentials: true,
-    });
-    const room = `${selectedSender.type}:${selectedSender._id}`;
-    socket.emit('join-entity', { entityId: selectedSender._id, entityType: selectedSender.type });
-    socket.on('new-message', (msg: any) => {
-      // Only update if for this conversation
-      if (
-        selectedConversation &&
-        ((msg.sender.id === selectedSender._id &&
-          msg.receiver.id === selectedConversation.entity._id) ||
-          (msg.receiver.id === selectedSender._id &&
-            msg.sender.id === selectedConversation.entity._id))
-      ) {
-        // Invalidate messages query
-        queryClient.invalidateQueries({
-          queryKey: [
-            'messages',
-            selectedSender._id,
-            selectedSender.type,
-            selectedConversation.entity._id,
-            selectedConversation.entity.type,
-          ],
-        });
-      } else {
-        // Invalidate conversations for unread badge
-        queryClient.invalidateQueries({
-          queryKey: ['conversations', selectedSender._id, selectedSender.type],
-        });
-      }
-    });
-    return () => {
-      socket.emit('leave-entity', {
-        entityId: selectedSender._id,
-        entityType: selectedSender.type,
-      });
-      socket.disconnect();
-    };
-  }, [selectedSender, selectedConversation]);
+  // Render
+  if (entitiesLoading) {
+    return <div className="text-center text-white/80 py-12">Loading chat...</div>;
+  }
 
   return (
     <div className="flex h-[600px] max-w-4xl mx-auto bg-white border rounded shadow overflow-hidden">
@@ -155,14 +113,14 @@ const Chat = () => {
           <select
             className="w-full border rounded px-2 py-1"
             value={selectedSender?._id || ''}
-            onChange={(e) => {
-              const entity = myEntities.find((ent) => ent._id === e.target.value);
+            onChange={e => {
+              const entity = myEntities.find(ent => ent._id === e.target.value);
               setSelectedSender(entity || null);
               setSelectedConversation(null);
             }}
           >
             <option value="">Select profile/event</option>
-            {myEntities.map((ent) => (
+            {myEntities.map(ent => (
               <option key={ent._id} value={ent._id}>
                 {ent.type === 'ArtistProfile' ? '🎤' : '🎫'} {ent.name}
               </option>
@@ -227,9 +185,7 @@ const Chat = () => {
           {msgLoading ? (
             <div className="text-center text-white/60">Loading messages...</div>
           ) : !selectedSender || !selectedConversation ? (
-            <div className="text-center text-white/60">
-              Select a sender and conversation to start chatting.
-            </div>
+            <div className="text-center text-white/60">Select a sender and conversation to start chatting.</div>
           ) : (
             <AnimatePresence initial={false}>
               {safeMessages.map((msg: any) => (
@@ -284,10 +240,10 @@ const Chat = () => {
             ref={inputRef}
             className="flex-1 border rounded px-2 py-1 bg-gray-900 text-white focus:ring-2 focus:ring-fuchsia-700 transition-all duration-150"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={e => setInput(e.target.value)}
             placeholder="Type a message..."
             disabled={!selectedSender || !selectedConversation || sendMessageMutation.isPending}
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSend();
@@ -297,7 +253,7 @@ const Chat = () => {
           />
           <input
             type="file"
-            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+            onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
             disabled={!selectedSender || !selectedConversation || sendMessageMutation.isPending}
             className="border rounded px-2 py-1 bg-gray-900 text-white"
           />
@@ -307,12 +263,7 @@ const Chat = () => {
           <button
             className="bg-gradient-to-r from-fuchsia-700 to-cyan-700 text-white px-4 py-1 rounded shadow hover:scale-105 hover:from-fuchsia-600 hover:to-cyan-600 transition-all duration-150 disabled:opacity-50"
             onClick={handleSend}
-            disabled={
-              (!input.trim() && !file) ||
-              !selectedSender ||
-              !selectedConversation ||
-              sendMessageMutation.isPending
-            }
+            disabled={(!input.trim() && !file) || !selectedSender || !selectedConversation || sendMessageMutation.isPending}
           >
             {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
           </button>

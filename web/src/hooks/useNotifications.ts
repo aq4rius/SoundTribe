@@ -22,7 +22,6 @@ export function useNotifications(token?: string) {
       return res.json();
     },
     enabled: !!token,
-    refetchInterval: 10000, // Poll every 10s for new notifications
   });
 }
 

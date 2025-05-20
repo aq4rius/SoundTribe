@@ -5,12 +5,13 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { UserRole } from '../models/User';
 import { isPopulatedEventPosting, isPopulatedUser } from '../utils/typeGuards';
 import { AppError } from '../utils/errorHandler';
+import Notification from '../models/Notification';
 
 export const submitApplication = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { eventPostingId, artistProfileId, coverLetter, proposedRate, availability } = req.body;
 
-    const eventPosting = await EventPosting.findById(eventPostingId);
+    const eventPosting = await EventPosting.findById(eventPostingId).populate('postedBy');
     if (!eventPosting || eventPosting.status !== 'open') {
       throw new AppError('Invalid or closed event posting', 400);
     }
@@ -32,6 +33,17 @@ export const submitApplication = async (req: AuthRequest, res: Response, next: N
       availability,
     });
     await newApplication.save();
+
+    // Notify event owner
+    if (eventPosting && eventPosting.postedBy && eventPosting.postedBy._id) {
+      await Notification.create({
+        recipient: eventPosting.postedBy._id,
+        type: 'application_submitted',
+        content: `New application for your event: "${eventPosting.title}"`,
+        relatedEntity: { id: newApplication._id, type: 'Application' },
+      });
+    }
+
     res.status(201).json(newApplication);
   } catch (error) {
     next(error);
@@ -82,9 +94,9 @@ export const updateApplicationStatus = async (
       path: 'eventPosting',
       populate: {
         path: 'postedBy',
-        select: '_id email',
+        select: '_id email title',
       },
-    });
+    }).populate('applicant');
 
     if (!application) {
       throw new AppError('Application not found', 404);
@@ -103,6 +115,21 @@ export const updateApplicationStatus = async (
 
     application.status = status;
     await application.save();
+
+    // Notify applicant
+    let eventTitle = '';
+    if (isPopulatedEventPosting(application.eventPosting) && typeof application.eventPosting !== 'string') {
+      eventTitle = (application.eventPosting as any).title || '';
+    }
+    if (application.applicant && application.applicant._id) {
+      await Notification.create({
+        recipient: application.applicant._id,
+        type: 'application_status',
+        content: `Your application for event "${eventTitle}" was ${status}.`,
+        relatedEntity: { id: application._id, type: 'Application' },
+      });
+    }
+
     res.json(application);
   } catch (error) {
     console.error('Update status error:', error);

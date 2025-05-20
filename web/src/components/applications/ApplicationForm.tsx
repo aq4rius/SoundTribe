@@ -40,12 +40,30 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
       return;
     }
     try {
-      // TODO: Replace with TanStack Query mutation and correct API call
-      // await submitApplication({
-      //   eventPostingId: event._id,
-      //   artistProfileId: artistProfile._id,
-      //   ...formData,
-      // });
+      // Submit application to backend
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/applications`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')!).token : '' : ''}`,
+          },
+          body: JSON.stringify({
+            eventPostingId: event._id,
+            artistProfileId: artistProfile._id,
+            coverLetter: formData.coverLetter,
+            proposedRate: formData.proposedRate,
+            availability: formData.availability,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.message || 'Failed to submit application');
+        setIsSubmitting(false);
+        return;
+      }
       onSuccess?.();
     } catch (err: any) {
       setError(err.message || 'Failed to submit application');

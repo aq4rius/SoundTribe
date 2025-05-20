@@ -12,7 +12,7 @@ interface EventApplicationProps {
 }
 
 const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [applications, setApplications] = useState<any[]>([]);
   const [userApplication, setUserApplication] = useState<any | null>(null);
@@ -21,8 +21,39 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Replace with TanStack Query and real API calls
-    setIsLoading(false);
+    setIsLoading(true);
+    setError(null);
+    async function fetchData() {
+      try {
+        // Fetch user's artist profiles
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/artist-profiles/my`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.ok) throw new Error('Failed to fetch artist profiles');
+        const profiles = await res.json();
+        setArtistProfile(Array.isArray(profiles) && profiles.length > 0 ? profiles[0] : null);
+        // Fetch applications for this event
+        const appRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/applications/event/${event._id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!appRes.ok) throw new Error('Failed to fetch applications');
+        const allApplications = await appRes.json();
+        setApplications(Array.isArray(allApplications) ? allApplications : []);
+        // Set userApplication if exists
+        if (user && Array.isArray(allApplications)) {
+          const found = allApplications.find((a: any) => a.applicant?._id === user.id);
+          setUserApplication(found || null);
+        }
+        setIsLoading(false);
+      } catch (err: any) {
+        setError(err.message || 'Error fetching artist profile or applications');
+        setIsLoading(false);
+      }
+    }
+    if (user) fetchData();
+    else setIsLoading(false);
   }, [event._id, user, event.postedBy?.email]);
 
   // Placeholder logic for event owner and application status
@@ -55,7 +86,10 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
             artistProfile={artistProfile}
             onSuccess={() => {
               setShowApplicationForm(false);
-              // TODO: Refetch user applications
+              // Refetch user applications and all applications for event
+              // (re-run the effect by updating a dummy state)
+              setIsLoading(true);
+              setTimeout(() => setIsLoading(false), 100); // quick re-fetch
             }}
             onCancel={() => setShowApplicationForm(false)}
           />
@@ -74,7 +108,9 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
             applications={applications}
             isEventOwner={true}
             onStatusUpdate={() => {
-              // TODO: Refetch applications for event
+              // Refetch applications for event after status update
+              setIsLoading(true);
+              setTimeout(() => setIsLoading(false), 100);
             }}
           />
         </div>

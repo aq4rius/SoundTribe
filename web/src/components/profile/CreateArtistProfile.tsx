@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function CreateArtistProfile() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({
     stageName: '',
@@ -37,9 +37,11 @@ export default function CreateArtistProfile() {
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/artist-profiles`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ ...form, user: user.id }),
-          credentials: 'include',
         },
       );
       if (!res.ok) {

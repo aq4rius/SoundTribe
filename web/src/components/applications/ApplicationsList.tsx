@@ -3,6 +3,8 @@
 
 import { useState } from 'react';
 import ErrorAlert from '../common/ErrorAlert';
+import { useUpdateApplicationStatus } from '@/hooks/useUpdateApplicationStatus';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ApplicationsListProps {
   applications: any[];
@@ -15,6 +17,9 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
   isEventOwner = false,
   onStatusUpdate,
 }) => {
+  const { token } = useAuth();
+  const safeToken = token || undefined;
+  const updateStatusMutation = useUpdateApplicationStatus(safeToken);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,8 +27,7 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: Replace with TanStack Query mutation and correct API call
-      // await updateApplicationStatus(applicationId, status);
+      await updateStatusMutation.mutateAsync({ applicationId, status });
       onStatusUpdate?.();
     } catch (error: any) {
       setError(error.message || 'Failed to update application status');
