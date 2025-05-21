@@ -2,6 +2,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import EditEventForm from '@/components/events/EditEventForm';
 
 export default function EditEventPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -9,9 +10,8 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   return (
     <div className="max-w-2xl mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4 text-white">Edit Event</h1>
-      {/* TODO: Implement event edit form */}
       <div className="bg-black/80 rounded-lg shadow p-6 border border-cyan-900 text-white">
-        Event edit form coming soon.
+        <EditEventForm eventId={params.id} />
       </div>
     </div>
   );

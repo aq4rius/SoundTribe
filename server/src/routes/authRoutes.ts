@@ -1,7 +1,7 @@
 // server/src/routes/authRoutes.ts
 
 import express, { Request, Response, NextFunction } from 'express';
-import { register, login, getCurrentUser, createAdmin } from '../controllers/authController';
+import { register, login, getCurrentUser, createAdmin, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail } from '../controllers/authController';
 import { registerValidation, loginValidation } from '../validation/userValidation';
 import { validationResult } from 'express-validator';
 import { authMiddleware } from '../middleware/authMiddleware';
@@ -43,6 +43,11 @@ router.post('/login', loginValidation, async (req: Request, res: Response, next:
     next(error);
   }
 });
+
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+router.get('/verify-email', verifyEmail);
+router.post('/resend-verification-email', resendVerificationEmail);
 
 router.get('/me', authMiddleware, getCurrentUser);
 

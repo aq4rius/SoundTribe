@@ -41,9 +41,12 @@ export default function DashboardPage() {
         ]);
         if (!artistRes.ok || !eventRes.ok || !appRes.ok)
           throw new Error('Failed to load dashboard data');
-        setArtistProfiles(await artistRes.json());
-        setEvents(await eventRes.json());
-        setApplications(await appRes.json());
+        const artistProfilesData = await artistRes.json();
+        const eventsData = await eventRes.json();
+        const applicationsData = await appRes.json();
+        setArtistProfiles(artistProfilesData);
+        setEvents(eventsData);
+        setApplications(applicationsData);
       } catch (err: any) {
         setError(err.message || 'Failed to load dashboard data');
       } finally {
@@ -114,28 +117,28 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="font-semibold text-black/80">Username:</p>
-              <p className="text-black/90">{user.username}</p>
+              <p className="font-semibold ">Username:</p>
+              <p className="">{user.username}</p>
             </div>
             <div>
-              <p className="font-semibold text-black/80">Email:</p>
-              <p className="text-black/90">{user.email}</p>
+              <p className="font-semibold ">Email:</p>
+              <p className="">{user.email}</p>
             </div>
             <div>
-              <p className="font-semibold text-black/80">First Name:</p>
-              <p className="text-black/90">{user.firstName || 'Not specified'}</p>
+              <p className="font-semibold ">First Name:</p>
+              <p className="">{user.firstName || 'Not specified'}</p>
             </div>
             <div>
-              <p className="font-semibold text-black/80">Last Name:</p>
-              <p className="text-black/90">{user.lastName || 'Not specified'}</p>
+              <p className="font-semibold ">Last Name:</p>
+              <p className="">{user.lastName || 'Not specified'}</p>
             </div>
             <div>
-              <p className="font-semibold text-black/80">Location:</p>
-              <p className="text-black/90">{user.location || 'Not specified'}</p>
+              <p className="font-semibold ">Location:</p>
+              <p className="">{user.location || 'Not specified'}</p>
             </div>
             <div>
-              <p className="font-semibold text-black/80">Bio:</p>
-              <p className="text-black/90">{user.bio || 'No bio provided'}</p>
+              <p className="font-semibold ">Bio:</p>
+              <p className="">{user.bio || 'No bio provided'}</p>
             </div>
           </div>
         </div>

@@ -3,12 +3,19 @@
 // useAuth hook for Next.js app using Zustand authStore
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { shallow } from 'zustand/shallow';
 
 export function useAuth() {
-  const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
-  const setAuth = useAuthStore((state) => state.setAuth);
-  const clearAuth = useAuthStore((state) => state.clearAuth);
+  // Use shallow comparison to prevent unnecessary rerenders
+  const { user, token, setAuth, clearAuth } = useAuthStore(
+    (state) => ({
+      user: state.user,
+      token: state.token,
+      setAuth: state.setAuth,
+      clearAuth: state.clearAuth,
+    }),
+    shallow,
+  );
 
   // Hydrate auth state from localStorage on mount (client only)
   useEffect(() => {
@@ -16,20 +23,24 @@ export function useAuth() {
       const auth = localStorage.getItem('auth');
       if (auth) {
         try {
-          const { user, token } = JSON.parse(auth);
-          if (user && token)
+          const { user: storedUser, token: storedToken } = JSON.parse(auth);
+          // Only set if different
+          const userChanged = JSON.stringify(storedUser) !== JSON.stringify(user);
+          const tokenChanged = storedToken !== token;
+          if (storedUser && storedToken && (userChanged || tokenChanged)) {
             setAuth(
               {
-                ...user,
-                basicProfileCompleted: user.basicProfileCompleted ?? undefined,
-                artistProfileCompleted: user.artistProfileCompleted ?? undefined,
+                ...storedUser,
+                basicProfileCompleted: storedUser.basicProfileCompleted ?? undefined,
+                artistProfileCompleted: storedUser.artistProfileCompleted ?? undefined,
               },
-              token,
+              storedToken,
             );
+          }
         } catch {}
       }
     }
-  }, [setAuth]);
+  }, [setAuth, user, token]);
 
   return { user, token, setAuth, clearAuth };
 }

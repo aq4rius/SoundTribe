@@ -32,6 +32,12 @@ export interface IUser extends Document {
     showEmail: boolean;
     showLocation: boolean;
   };
+  // Add password reset and email verification fields
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
+  emailVerified?: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
 
@@ -57,6 +63,12 @@ const UserSchema: Schema = new Schema({
     showEmail: { type: Boolean, default: false },
     showLocation: { type: Boolean, default: true },
   },
+  // Password reset and email verification fields
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+  emailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
+  emailVerificationExpires: { type: Date },
 });
 
 UserSchema.pre<IUser>('save', async function (next) {

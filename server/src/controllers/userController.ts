@@ -57,8 +57,26 @@ export const updateUserProfile = async (req: AuthRequest, res: Response, next: N
     user.profileCompleted =
       user.basicProfileCompleted && (user.role !== UserRole.ARTIST || user.artistProfileCompleted);
 
+    // --- Ensure profileCompleted is set to true after update if all required fields are present ---
+    // (already handled above)
+
     const updatedUser = await user.save();
-    res.json(updatedUser.toObject({ virtuals: true }));
+    res.json({
+      id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      profileCompleted: updatedUser.profileCompleted,
+      artistProfileCompleted: updatedUser.artistProfileCompleted,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      location: updatedUser.location,
+      bio: updatedUser.bio,
+      favoriteGenres: updatedUser.favoriteGenres,
+      preferredContentTypes: updatedUser.preferredContentTypes,
+      notificationPreferences: updatedUser.notificationPreferences,
+      privacySettings: updatedUser.privacySettings,
+    });
   } catch (error) {
     console.error('Error updating user profile:', error);
     next(new AppError('Server error', 500));

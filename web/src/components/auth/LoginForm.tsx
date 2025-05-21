@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { motion } from 'framer-motion';
+import ResendVerification from './ResendVerification';
 
 const schema = z.object({
   email: z.string().email('Please provide a valid email'),
@@ -106,7 +107,18 @@ export default function LoginForm() {
             <p className="text-fuchsia-400 text-sm mt-1">{errors.password.message}</p>
           )}
         </div>
-        {error && <div className="text-red-400 text-center text-sm">{error}</div>}
+        {error && (
+          <div className="text-red-400 text-center text-sm">
+            {error}
+            {/* Show resend verification if error is about verification */}
+            {error.toLowerCase().includes('verify your email') && (
+              <ResendVerification email={
+                // Use the email from the form state
+                (document.getElementById('email') as HTMLInputElement | null)?.value || ''
+              } />
+            )}
+          </div>
+        )}
         <button
           type="submit"
           disabled={isLoading}
@@ -114,6 +126,14 @@ export default function LoginForm() {
         >
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
+        <div className="text-right mt-2">
+          <a
+            href="/auth/forgot-password"
+            className="text-cyan-300 hover:underline text-sm font-semibold transition-colors duration-150"
+          >
+            Forgot password?
+          </a>
+        </div>
       </form>
       <div className="mt-6 text-center text-white/70">
         Don&apos;t have an account?{' '}

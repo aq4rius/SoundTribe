@@ -55,10 +55,11 @@ export default function ProfileSetup() {
         return;
       }
       const updated = await res.json();
-      setAuth(
-        updated,
-        localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')!).token : '',
-      );
+      // Update Zustand and localStorage with the new user state
+      setAuth(updated, token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth', JSON.stringify({ user: updated, token }));
+      }
       router.push('/dashboard');
     } catch (e: any) {
       setError(e.message || 'Profile update failed');
