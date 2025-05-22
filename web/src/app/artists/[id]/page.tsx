@@ -60,19 +60,23 @@ export default async function ArtistDetailsPage({ params }: { params: { id: stri
           {artist.socialMediaLinks && (
             <div>
               <span className="font-semibold">Socials:</span>{' '}
-              {Object.entries(artist.socialMediaLinks).map(([platform, url]) =>
-                typeof url === 'string' ? (
+              {Object.entries(artist.socialMediaLinks).map(([platform, url]) => {
+                if (typeof url !== 'string' || !url) return null;
+                const safeUrl = url.startsWith('http://') || url.startsWith('https://')
+                  ? url
+                  : `https://${url}`;
+                return (
                   <a
                     key={platform}
-                    href={url}
+                    href={safeUrl}
                     className="ml-2 text-cyan-400 underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     {platform}
                   </a>
-                ) : null,
-              )}
+                );
+              })}
             </div>
           )}
         </div>

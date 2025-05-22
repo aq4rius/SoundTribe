@@ -12,9 +12,10 @@ async function getEvent(id: string) {
   return res.json();
 }
 
-export default async function EventDetailsPage({ params }: { params: { id: string } }) {
-  if (params.id === 'create') return notFound();
-  const event = await getEvent(params.id);
+export default async function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (id === 'create') return notFound();
+  const event = await getEvent(id);
   if (!event) return notFound();
   return (
     <div className="max-w-2xl mx-auto py-8">

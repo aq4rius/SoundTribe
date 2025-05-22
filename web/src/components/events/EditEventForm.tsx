@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import ErrorAlert from '../common/ErrorAlert';
+import { useAuth } from '@/hooks/useAuth';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -30,6 +31,7 @@ async function fetchGenres() {
 }
 
 export default function EditEventForm({ eventId, onSuccess }: { eventId: string, onSuccess?: () => void }) {
+  const { token } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [genres, setGenres] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,17 +77,26 @@ export default function EditEventForm({ eventId, onSuccess }: { eventId: string,
     fetchData();
   }, [eventId, setValue]);
 
+  useEffect(() => {
+    if (!token) {
+      setError('You must be logged in to edit events.');
+    }
+  }, [token]);
+
   const onSubmit = async (data: EventFormValues) => {
     setError(null);
     setSuccess(false);
+    if (!token) {
+      setError('You must be logged in to edit events.');
+      return;
+    }
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/event-postings/${eventId}`,
         {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             ...data,
