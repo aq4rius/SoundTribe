@@ -1,5 +1,5 @@
 // Zustand store for authentication state in Next.js app
-import { create } from 'zustand';
+import { createWithEqualityFn } from 'zustand/traditional'
 import type { AuthUser } from '@/hooks/useAuth';
 
 interface AuthState {
@@ -9,7 +9,7 @@ interface AuthState {
   clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = createWithEqualityFn<AuthState>((set) => ({
   user: null,
   token: null,
   setAuth: (user, token) => set({ user, token }),

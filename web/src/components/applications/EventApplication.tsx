@@ -19,6 +19,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
   const [artistProfile, setArtistProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     setIsLoading(true);
@@ -33,18 +34,33 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
         if (!res.ok) throw new Error('Failed to fetch artist profiles');
         const profiles = await res.json();
         setArtistProfile(Array.isArray(profiles) && profiles.length > 0 ? profiles[0] : null);
-        // Fetch applications for this event
-        const appRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/applications/event/${event._id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!appRes.ok) throw new Error('Failed to fetch applications');
-        const allApplications = await appRes.json();
-        setApplications(Array.isArray(allApplications) ? allApplications : []);
-        // Set userApplication if exists
-        if (user && Array.isArray(allApplications)) {
-          const found = allApplications.find((a: any) => a.applicant?._id === user.id);
-          setUserApplication(found || null);
+        // Determine if user is event owner
+        const isOwner = user && event.postedBy && (user.email === event.postedBy.email || user.id === event.postedBy._id);
+        let allApplications: any[] = [];
+        let userApp: any = null;
+        if (isOwner) {
+          // Fetch all applications for this event
+          const appRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/applications/event/${event._id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (!appRes.ok) throw new Error('Failed to fetch applications');
+          allApplications = await appRes.json();
+          setApplications(Array.isArray(allApplications) ? allApplications : []);
+        } else if (user) {
+          // Fetch only user's applications
+          const myAppRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/applications/my-applications`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (myAppRes.ok) {
+            const myApps = await myAppRes.json();
+            userApp = myApps.find((a: any) => a.eventPosting?._id === event._id);
+            setUserApplication(userApp || null);
+          }
+        }
+        if (isOwner) {
+          setUserApplication(null); // Owners don't apply
         }
         setIsLoading(false);
       } catch (err: any) {
@@ -54,7 +70,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
     }
     if (user) fetchData();
     else setIsLoading(false);
-  }, [event._id, user, event.postedBy?.email]);
+  }, [event._id, user, event.postedBy?.email, event.postedBy?._id, refreshKey]);
 
   // Placeholder logic for event owner and application status
   const isEventOwner = user && event.postedBy && user.email === event.postedBy.email;
@@ -86,10 +102,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
             artistProfile={artistProfile}
             onSuccess={() => {
               setShowApplicationForm(false);
-              // Refetch user applications and all applications for event
-              // (re-run the effect by updating a dummy state)
-              setIsLoading(true);
-              setTimeout(() => setIsLoading(false), 100); // quick re-fetch
+              setRefreshKey((k) => k + 1); // force refetch
             }}
             onCancel={() => setShowApplicationForm(false)}
           />
@@ -108,9 +121,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
             applications={applications}
             isEventOwner={true}
             onStatusUpdate={() => {
-              // Refetch applications for event after status update
-              setIsLoading(true);
-              setTimeout(() => setIsLoading(false), 100);
+              setRefreshKey((k) => k + 1); // force refetch
             }}
           />
         </div>

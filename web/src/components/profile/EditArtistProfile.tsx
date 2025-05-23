@@ -5,6 +5,19 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getAllGenres } from '@/services/genre';
 
+function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void }) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-8 max-w-sm w-full text-center border border-fuchsia-400">
+        <h2 className="text-2xl font-bold mb-2 text-fuchsia-700 dark:text-fuchsia-300">Success!</h2>
+        <p className="mb-4 text-zinc-700 dark:text-zinc-200">Your artist profile was updated successfully.</p>
+        <button className="btn btn-primary" onClick={onClose}>OK</button>
+      </div>
+    </div>
+  );
+}
+
 export default function EditArtistProfile({ artistId }: { artistId: string }) {
   const { token } = useAuth();
   const router = useRouter();
@@ -12,6 +25,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [genreOptions, setGenreOptions] = useState<any[]>([]);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -101,7 +115,11 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
         }
       );
       if (!res.ok) throw new Error('Failed to update artist profile');
-      router.push('/dashboard');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        router.push('/dashboard');
+      }, 1400);
     } catch (err: any) {
       setError(err.message || 'Failed to update artist profile');
     } finally {
@@ -114,111 +132,120 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
   if (!profile) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block mb-1 font-medium">Stage Name</label>
-        <input
-          name="stageName"
-          value={profile.stageName || ''}
-          onChange={handleChange}
-          className="input input-bordered w-full"
-          placeholder="Stage Name"
-        />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Biography</label>
-        <textarea
-          name="biography"
-          value={profile.biography || ''}
-          onChange={handleChange}
-          className="textarea textarea-bordered w-full"
-          placeholder="Biography"
-        />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Location</label>
-        <input
-          name="location"
-          value={profile.location || ''}
-          onChange={handleChange}
-          className="input input-bordered w-full"
-          placeholder="Location"
-        />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Instruments (comma separated)</label>
-        <input
-          name="instruments"
-          value={Array.isArray(profile.instruments) ? profile.instruments.join(', ') : profile.instruments || ''}
-          onChange={e => setProfile((p: any) => ({ ...p, instruments: e.target.value.split(',').map((i: string) => i.trim()) }))}
-          className="input input-bordered w-full"
-          placeholder="Instruments (comma separated)"
-        />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Years of Experience</label>
-        <input
-          name="yearsOfExperience"
-          type="number"
-          value={profile.yearsOfExperience || ''}
-          onChange={handleChange}
-          className="input input-bordered w-full"
-          placeholder="Years of Experience"
-          min="0"
-        />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Website URL</label>
-        <input
-          name="websiteUrl"
-          value={profile.websiteUrl || ''}
-          onChange={handleChange}
-          className="input input-bordered w-full"
-          placeholder="Website URL"
-        />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Social Media Links</label>
-        <div className="grid grid-cols-2 gap-2">
-          {['facebook', 'instagram', 'twitter', 'youtube', 'tiktok', 'other'].map((platform) => (
-            <input
-              key={platform}
-              name={platform}
-              value={profile.socialMediaLinks?.[platform] || ''}
-              onChange={e => setProfile((p: any) => ({
-                ...p,
-                socialMediaLinks: {
-                  ...p.socialMediaLinks,
-                  [platform]: e.target.value
-                }
-              }))}
-              className="input input-bordered w-full"
-              placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
-            />
-          ))}
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block mb-1 font-medium">Stage Name</label>
+          <input
+            name="stageName"
+            value={profile.stageName || ''}
+            onChange={handleChange}
+            className="input input-bordered w-full"
+            placeholder="Stage Name"
+          />
         </div>
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Genres</label>
-        <div className="flex flex-wrap gap-2">
-          {genreOptions.map((genre) => (
-            <label key={genre._id} className="flex items-center gap-1">
+        <div>
+          <label className="block mb-1 font-medium">Biography</label>
+          <textarea
+            name="biography"
+            value={profile.biography || ''}
+            onChange={handleChange}
+            className="textarea textarea-bordered w-full"
+            placeholder="Biography"
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Location</label>
+          <input
+            name="location"
+            value={profile.location || ''}
+            onChange={handleChange}
+            className="input input-bordered w-full"
+            placeholder="Location"
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Instruments (comma separated)</label>
+          <input
+            name="instruments"
+            value={Array.isArray(profile.instruments) ? profile.instruments.join(', ') : profile.instruments || ''}
+            onChange={e => setProfile((p: any) => ({ ...p, instruments: e.target.value.split(',').map((i: string) => i.trim()) }))}
+            className="input input-bordered w-full"
+            placeholder="Instruments (comma separated)"
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Years of Experience</label>
+          <input
+            name="yearsOfExperience"
+            type="number"
+            value={profile.yearsOfExperience || ''}
+            onChange={handleChange}
+            className="input input-bordered w-full"
+            placeholder="Years of Experience"
+            min="0"
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Website URL</label>
+          <input
+            name="websiteUrl"
+            value={profile.websiteUrl || ''}
+            onChange={handleChange}
+            className="input input-bordered w-full"
+            placeholder="Website URL"
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Social Media Links</label>
+          <div className="grid grid-cols-2 gap-2">
+            {['facebook', 'instagram', 'twitter', 'youtube', 'tiktok', 'other'].map((platform) => (
               <input
-                type="checkbox"
-                checked={Array.isArray(profile.genres) && profile.genres.includes(genre._id)}
-                onChange={() => handleGenreChange(genre._id)}
-                className="checkbox checkbox-sm"
+                key={platform}
+                name={platform}
+                value={profile.socialMediaLinks?.[platform] || ''}
+                onChange={e => setProfile((p: any) => ({
+                  ...p,
+                  socialMediaLinks: {
+                    ...p.socialMediaLinks,
+                    [platform]: e.target.value
+                  }
+                }))}
+                className="input input-bordered w-full"
+                placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
               />
-              <span>{genre.name}</span>
-            </label>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="flex gap-2 justify-end">
-        <button type="submit" className="btn btn-primary" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Changes'}
-        </button>
-      </div>
-    </form>
+        <div>
+          <label className="block mb-1 font-medium">Genres</label>
+          <div className="flex flex-wrap gap-2">
+            {genreOptions.map((genre) => (
+              <label key={genre._id} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={Array.isArray(profile.genres) && profile.genres.includes(genre._id)}
+                  onChange={() => handleGenreChange(genre._id)}
+                  className="checkbox checkbox-sm"
+                />
+                <span>{genre.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button type="button" className="btn btn-ghost" onClick={() => router.push('/dashboard')}>
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
+      <SuccessModal show={showSuccess} onClose={() => {
+        setShowSuccess(false);
+        router.push('/dashboard');
+      }} />
+    </>
   );
 }
