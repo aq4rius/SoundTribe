@@ -31,8 +31,6 @@ export function useAuth() {
             setAuth(
               {
                 ...storedUser,
-                basicProfileCompleted: storedUser.basicProfileCompleted ?? undefined,
-                artistProfileCompleted: storedUser.artistProfileCompleted ?? undefined,
               },
               storedToken,
             );
@@ -50,11 +48,36 @@ export interface AuthUser {
   id: string;
   username: string;
   email: string;
-  role: string;
-  profileCompleted?: boolean;
-  artistProfileCompleted?: boolean;
   firstName?: string;
   lastName?: string;
   location?: string;
   bio?: string;
+  roles?: string[];
+  onboardingStep?: number;
+  onboardingComplete?: boolean;
+  preferences?: {
+    genres?: string[];
+    instruments?: string[];
+    influences?: string[];
+    eventTypes?: string[];
+    skills?: string[];
+  };
+  locationDetails?: {
+    city?: string;
+    region?: string;
+    willingToTravel?: number;
+  };
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+  };
+  privacySettings?: {
+    showEmail: boolean;
+    showLocation: boolean;
+  };
+  emailVerified?: boolean;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
 }

@@ -35,7 +35,7 @@ export const updateEventPosting = async (req: AuthRequest, res: Response, next: 
     if (!eventPosting) {
       throw new AppError('Event posting not found', 404);
     }
-    if (eventPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
+    if (eventPosting.postedBy.toString() !== req.user?.id && !(req.user?.roles && req.user.roles.includes(UserRole.ADMIN))) {
       throw new AppError('Not authorized to update this event posting', 403);
     }
 
@@ -54,7 +54,7 @@ export const deleteEventPosting = async (req: AuthRequest, res: Response, next: 
     if (!eventPosting) {
       throw new AppError('Event posting not found', 404);
     }
-    if (eventPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
+    if (eventPosting.postedBy.toString() !== req.user?.id && !(req.user?.roles && req.user.roles.includes(UserRole.ADMIN))) {
       throw new AppError('Not authorized to delete this event posting', 403);
     }
 

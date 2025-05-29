@@ -27,10 +27,11 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
     if (existingUser) {
       throw new AppError('User already exists', 400);
     }
-    const user = new User({ email, password, role: UserRole.ADMIN });
+    // Fix: use roles[0] or UserRole.USER for token, and return roles array
+    const user = new User({ email, password, roles: [UserRole.ADMIN] });
     await user.save();
-    const token = generateToken(user._id, user.role);
-    res.status(201).send({ token, role: user.role });
+    const token = generateToken(user._id, user.roles[0] || UserRole.USER);
+    res.status(201).send({ token, roles: user.roles });
   } catch (error) {
     next(error);
   }
@@ -122,15 +123,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     if (!user.emailVerified) {
       return res.status(403).json({ message: 'Please verify your email before logging in.' });
     }
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.roles[0] || UserRole.USER);
     res.status(200).json({
       token,
       user: {
         id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role,
-        profileCompleted: user.profileCompleted,
+        roles: user.roles,
       },
     });
   } catch (error: any) {
@@ -149,8 +149,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response, next: Next
       id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role,
-      profileCompleted: user.profileCompleted,
+      roles: user.roles,
     });
   } catch (error: any) {
     console.error('Get current user error:', error);

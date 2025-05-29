@@ -37,11 +37,8 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 
 export const roleMiddleware = (role: UserRole) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role as UserRole)) {
+    if (!req.user || !Array.isArray(req.user.roles) || !req.user.roles.includes(role)) {
       return next(new AppError('Access denied', 403));
-    }
-    if (req.user.role !== role) {
-      return next(new AppError('Insufficient privileges', 403));
     }
     next();
   };

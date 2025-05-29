@@ -45,7 +45,7 @@ export default function ProfileSetup() {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ ...form, basicProfileCompleted: true }),
+          body: JSON.stringify({ ...form }),
           credentials: 'include',
         },
       );

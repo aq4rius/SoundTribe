@@ -1,17 +1,18 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import ProfileSetup from '@/components/profile/ProfileSetup';
 import CreateArtistProfile from '@/components/profile/CreateArtistProfile';
 import ArtistCard from '@/components/artists/ArtistCard';
 import EventCard from '@/components/events/EventCard';
 import ApplicationsList from '@/components/applications/ApplicationsList';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 export default function DashboardPage() {
   const { user, token, setAuth } = useAuth();
   const router = useRouter();
+  const { onboarding, loading: onboardingLoading } = useOnboarding();
   const [artistProfiles, setArtistProfiles] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
@@ -26,18 +27,9 @@ export default function DashboardPage() {
       setError(null);
       try {
         const [artistRes, eventRes, appRes] = await Promise.all([
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/artist-profiles/my`,
-            { headers: { Authorization: `Bearer ${token}` } },
-          ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/event-postings/user`,
-            { headers: { Authorization: `Bearer ${token}` } },
-          ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/applications/my-applications`,
-            { headers: { Authorization: `Bearer ${token}` } },
-          ),
+          fetch('/api/artist-profiles/my', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/event-postings/user', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/applications/my-applications', { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         if (!artistRes.ok || !eventRes.ok || !appRes.ok)
           throw new Error('Failed to load dashboard data');
@@ -56,9 +48,14 @@ export default function DashboardPage() {
     fetchData();
   }, [user, token]);
 
-  // Profile completion logic
-  if (user && user.profileCompleted === false) {
-    return <ProfileSetup />;
+  useEffect(() => {
+    if (!onboardingLoading && onboarding && onboarding.onboardingComplete === false) {
+      router.push('/onboarding');
+    }
+  }, [onboarding, onboardingLoading, router]);
+
+  if (onboardingLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   if (isLoading) return <div className="text-center text-white/80 py-12">Loading dashboard...</div>;
@@ -71,7 +68,7 @@ export default function DashboardPage() {
     if (!window.confirm('Are you sure you want to delete this artist profile?')) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/artist-profiles/${profileId}`,
+        `/api/artist-profiles/${profileId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
@@ -87,7 +84,7 @@ export default function DashboardPage() {
     if (!window.confirm('Are you sure you want to delete this event?')) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/event-postings/${eventId}`,
+        `/api/event-postings/${eventId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
@@ -110,9 +107,9 @@ export default function DashboardPage() {
             <h2 className="card-title text-white">Basic Information</h2>
             <button
               className="btn btn-outline btn-primary btn-sm"
-              onClick={() => router.push('/dashboard/edit-profile')}
+              onClick={() => router.push('/dashboard/account-settings')}
             >
-              Edit Profile
+              Account Settings
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,12 +130,36 @@ export default function DashboardPage() {
               <p className="">{user.lastName || 'Not specified'}</p>
             </div>
             <div>
-              <p className="font-semibold ">Location:</p>
-              <p className="">{user.location || 'Not specified'}</p>
+              <p className="font-semibold ">Bio:</p>
+              <p className="">{user.bio || 'Not specified'}</p>
             </div>
             <div>
-              <p className="font-semibold ">Bio:</p>
-              <p className="">{user.bio || 'No bio provided'}</p>
+              <p className="font-semibold ">Roles:</p>
+              <p className="">{user.roles?.join(', ') || 'Not specified'}</p>
+            </div>
+            <div>
+              <p className="font-semibold ">Location:</p>
+              <p className="">{user.locationDetails?.city || user.location || 'Not specified'}{user.locationDetails?.region ? `, ${user.locationDetails.region}` : ''}</p>
+            </div>
+            <div>
+              <p className="font-semibold ">Willing to travel:</p>
+              <p className="">{user.locationDetails?.willingToTravel ? user.locationDetails.willingToTravel + ' km' : 'Not specified'}</p>
+            </div>
+            <div>
+              <p className="font-semibold ">Genres:</p>
+              <p className="">{user.preferences?.genres?.join(', ') || 'Not specified'}</p>
+            </div>
+            <div>
+              <p className="font-semibold ">Instruments:</p>
+              <p className="">{user.preferences?.instruments?.join(', ') || 'Not specified'}</p>
+            </div>
+            <div>
+              <p className="font-semibold ">Influences:</p>
+              <p className="">{user.preferences?.influences?.join(', ') || 'Not specified'}</p>
+            </div>
+            <div>
+              <p className="font-semibold ">Goals:</p>
+              <p className="">{user.preferences?.eventTypes?.join(', ') || 'Not specified'}</p>
             </div>
           </div>
         </div>
@@ -193,6 +214,8 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      
       {/* Artist Profiles Section */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">

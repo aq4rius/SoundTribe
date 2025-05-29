@@ -4,6 +4,8 @@ import {
   getUserProfile,
   updateUserProfile,
   deleteUserProfile,
+  getUserOnboarding,
+  updateUserOnboarding,
 } from '../controllers/userController';
 import { authMiddleware, roleMiddleware, AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../utils/errorHandler';
@@ -13,6 +15,10 @@ const router = express.Router();
 router.get('/profile', authMiddleware, getUserProfile);
 router.put('/profile', authMiddleware, updateUserProfile);
 router.delete('/profile', authMiddleware, deleteUserProfile);
+
+// Onboarding endpoints
+router.get('/onboarding', authMiddleware, getUserOnboarding);
+router.patch('/onboarding', authMiddleware, updateUserOnboarding);
 
 // Get all users (admin only)
 router.get(

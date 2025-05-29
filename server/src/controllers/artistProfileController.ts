@@ -46,7 +46,7 @@ export const updateArtistProfile = async (req: AuthRequest, res: Response, next:
     if (!profile) {
       throw new AppError('Artist profile not found', 404);
     }
-    if (profile.user.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
+    if (profile.user.toString() !== req.user?.id && !(req.user?.roles && req.user.roles.includes(UserRole.ADMIN))) {
       throw new AppError('Not authorized to update this profile', 403);
     }
 
@@ -65,7 +65,7 @@ export const deleteArtistProfile = async (req: AuthRequest, res: Response, next:
     if (!profile) {
       throw new AppError('Artist profile not found', 404);
     }
-    if (profile.user.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
+    if (profile.user.toString() !== req.user?.id && !(req.user?.roles && req.user.roles.includes(UserRole.ADMIN))) {
       throw new AppError('Not authorized to delete this profile', 403);
     }
 

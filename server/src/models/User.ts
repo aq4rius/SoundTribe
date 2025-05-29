@@ -14,16 +14,25 @@ export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  role: UserRole;
-  basicProfileCompleted: boolean;
-  artistProfileCompleted: boolean;
-  profileCompleted: boolean;
   firstName?: string;
   lastName?: string;
   location?: string;
   bio?: string;
-  favoriteGenres?: Types.ObjectId[];
-  preferredContentTypes?: string[];
+  roles: UserRole[];
+  onboardingStep: number;
+  onboardingComplete: boolean;
+  preferences: {
+    genres?: string[];
+    instruments?: string[];
+    influences?: string[];
+    eventTypes?: string[];
+    skills?: string[];
+  };
+  locationDetails?: {
+    city?: string;
+    region?: string;
+    willingToTravel?: number; // in km
+  };
   notificationPreferences?: {
     email: boolean;
     push: boolean;
@@ -32,10 +41,9 @@ export interface IUser extends Document {
     showEmail: boolean;
     showLocation: boolean;
   };
-  // Add password reset and email verification fields
+  emailVerified?: boolean;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
-  emailVerified?: boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
@@ -45,16 +53,25 @@ const UserSchema: Schema = new Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: Object.values(UserRole), default: UserRole.USER },
-  basicProfileCompleted: { type: Boolean, default: false },
-  artistProfileCompleted: { type: Boolean, default: false },
-  profileCompleted: { type: Boolean, default: false },
   firstName: { type: String },
   lastName: { type: String },
   location: { type: String },
   bio: { type: String },
-  favoriteGenres: [{ type: Schema.Types.ObjectId, ref: 'Genre' }],
-  preferredContentTypes: [{ type: String }],
+  roles: { type: [String], default: [UserRole.USER] },
+  onboardingStep: { type: Number, default: 0 },
+  onboardingComplete: { type: Boolean, default: false },
+  preferences: {
+    genres: [{ type: String }], // Accept genre names as strings
+    instruments: [{ type: String }],
+    influences: [{ type: String }],
+    eventTypes: [{ type: String }],
+    skills: [{ type: String }],
+  },
+  locationDetails: {
+    city: { type: String },
+    region: { type: String },
+    willingToTravel: { type: Number }, // in km
+  },
   notificationPreferences: {
     email: { type: Boolean, default: true },
     push: { type: Boolean, default: true },
@@ -63,10 +80,9 @@ const UserSchema: Schema = new Schema({
     showEmail: { type: Boolean, default: false },
     showLocation: { type: Boolean, default: true },
   },
-  // Password reset and email verification fields
+  emailVerified: { type: Boolean, default: false },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
-  emailVerified: { type: Boolean, default: false },
   emailVerificationToken: { type: String },
   emailVerificationExpires: { type: Date },
 });

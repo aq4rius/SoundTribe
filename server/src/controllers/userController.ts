@@ -26,8 +26,6 @@ export const updateUserProfile = async (req: AuthRequest, res: Response, next: N
       lastName,
       location,
       bio,
-      favoriteGenres,
-      preferredContentTypes,
       notificationPreferences,
       privacySettings,
     } = req.body;
@@ -42,38 +40,20 @@ export const updateUserProfile = async (req: AuthRequest, res: Response, next: N
     if (lastName) user.lastName = lastName;
     if (location) user.location = location;
     if (bio) user.bio = bio;
-    if (favoriteGenres) user.favoriteGenres = favoriteGenres;
-    if (preferredContentTypes) user.preferredContentTypes = preferredContentTypes;
     if (notificationPreferences) user.notificationPreferences = notificationPreferences;
     if (privacySettings) user.privacySettings = privacySettings;
-
-    // Check if all required basic fields are filled
-    const requiredBasicFields = ['username', 'firstName', 'lastName', 'location', 'bio'];
-    user.basicProfileCompleted = requiredBasicFields.every(
-      (field) => user[field as keyof IUser] && (user[field as keyof IUser] as string).trim() !== '',
-    );
-
-    // Update overall profile completion status
-    user.profileCompleted =
-      user.basicProfileCompleted && (user.role !== UserRole.ARTIST || user.artistProfileCompleted);
-
-    // --- Ensure profileCompleted is set to true after update if all required fields are present ---
-    // (already handled above)
 
     const updatedUser = await user.save();
     res.json({
       id: updatedUser._id,
       username: updatedUser.username,
       email: updatedUser.email,
-      role: updatedUser.role,
-      profileCompleted: updatedUser.profileCompleted,
-      artistProfileCompleted: updatedUser.artistProfileCompleted,
+      roles: updatedUser.roles,
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName,
       location: updatedUser.location,
       bio: updatedUser.bio,
-      favoriteGenres: updatedUser.favoriteGenres,
-      preferredContentTypes: updatedUser.preferredContentTypes,
+      preferences: updatedUser.preferences,
       notificationPreferences: updatedUser.notificationPreferences,
       privacySettings: updatedUser.privacySettings,
     });
@@ -96,5 +76,50 @@ export const deleteUserProfile = async (req: AuthRequest, res: Response, next: N
     res.status(200).json({ message: 'Profile deleted successfully' });
   } catch (error) {
     next(new AppError('Error deleting profile', 500));
+  }
+};
+
+// Onboarding: Get onboarding state
+export const getUserOnboarding = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.user?._id).select('roles onboardingStep onboardingComplete preferences locationDetails notificationPreferences firstName lastName location bio');
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+    res.json(user);
+  } catch (error) {
+    next(new AppError('Server error', 500));
+  }
+};
+
+// Onboarding: Update onboarding state
+export const updateUserOnboarding = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { roles, onboardingStep, onboardingComplete, preferences, locationDetails, notificationPreferences } = req.body;
+    console.log('PATCH /api/users/onboarding called');
+    console.log('Request body:', req.body);
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+      console.log('User not found');
+      return next(new AppError('User not found', 404));
+    }
+    if (roles) user.roles = roles;
+    if (typeof onboardingStep === 'number') user.onboardingStep = onboardingStep;
+    if (typeof onboardingComplete === 'boolean') user.onboardingComplete = onboardingComplete;
+    if (preferences) {
+      console.log('Updating preferences:', preferences);
+      user.preferences = preferences;
+    }
+    if (locationDetails) user.locationDetails = locationDetails;
+    if (notificationPreferences) user.notificationPreferences = notificationPreferences;
+    if (req.body.firstName !== undefined) user.firstName = req.body.firstName;
+    if (req.body.lastName !== undefined) user.lastName = req.body.lastName;
+    if (req.body.location !== undefined) user.location = req.body.location;
+    if (req.body.bio !== undefined) user.bio = req.body.bio;
+    await user.save();
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error in updateUserOnboarding:', error);
+    next(new AppError('Server error', 500));
   }
 };

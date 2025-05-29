@@ -59,7 +59,7 @@ export const getApplication = async (req: AuthRequest, res: Response, next: Next
       throw new AppError('Application not found', 404);
     }
 
-    let isAuthorized = req.user?.role === UserRole.ADMIN;
+    let isAuthorized = req.user?.roles?.includes(UserRole.ADMIN);
 
     if (isPopulatedUser(application.applicant)) {
       isAuthorized = isAuthorized || application.applicant._id.toString() === req.user?.id;
@@ -102,7 +102,7 @@ export const updateApplicationStatus = async (
       throw new AppError('Application not found', 404);
     }
 
-    let isAuthorized = req.user?.role === UserRole.ADMIN;
+    let isAuthorized = req.user?.roles?.includes(UserRole.ADMIN);
 
     if (isPopulatedEventPosting(application.eventPosting)) {
       isAuthorized =
@@ -147,7 +147,7 @@ export const getApplicationsForEvent = async (
     if (!eventPosting) {
       throw new AppError('Event posting not found', 404);
     }
-    if (eventPosting.postedBy.toString() !== req.user?.id && req.user?.role !== UserRole.ADMIN) {
+    if (eventPosting.postedBy.toString() !== req.user?.id && !(req.user?.roles && req.user.roles.includes(UserRole.ADMIN))) {
       throw new AppError('Not authorized to view these applications', 403);
     }
     const applications = await Application.find({ eventPosting: req.params.eventId }).populate(
