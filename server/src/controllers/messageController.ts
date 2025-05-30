@@ -1,13 +1,12 @@
 // server/src/controllers/messageController.ts
 
 import { AuthRequest } from '../middleware/authMiddleware';
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User, { IUser } from '../models/User';
 import Message from '../models/Message';
 import cloudinary from '../utils/cloudinary';
 import { AppError } from '../utils/errorHandler';
 import { getIO } from '../server';
-import type { Request } from 'express';
 import Notification from '../models/Notification';
 
 export const getUsersForSidebar = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -79,9 +78,11 @@ export const sendMessage = async (
   try {
     const { text, senderId, senderType, receiverId, receiverType } = req.body;
     const userId = req.user && (req.user._id || req.user.id);
+
     if (!userId) {
       throw new AppError('User not authenticated', 401);
     }
+
     // Validate sender ownership
     if (senderType === 'ArtistProfile') {
       const ArtistProfile = (await import('../models/ArtistProfile')).default;
@@ -94,31 +95,71 @@ export const sendMessage = async (
     } else {
       throw new AppError('Invalid sender type', 400);
     }
+
     let attachmentUrl;
     if (req.file) {
-      // Upload buffer to cloudinary using a Promise wrapper
-      attachmentUrl = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { resource_type: 'auto' },
-          (error, result) => {
-            if (error || !result) return reject(new AppError('File upload failed', 500));
-            resolve(result.secure_url);
-          },
+      // Check file size before uploading to Cloudinary
+      const maxSize = 10 * 1024 * 1024; // 10MB - Cloudinary's limit
+      if (req.file.size > maxSize) {
+        throw new AppError(
+          `File too large. Maximum size is 10MB. Your file is ${(req.file.size / 1024 / 1024).toFixed(1)}MB.`,
+          400
         );
-        stream.end(req.file.buffer);
-      });
+      }
+      
+      console.log('🔄 Starting Cloudinary upload for file:', req.file.originalname, 'Size:', req.file.size);
+      
+      try {
+        // Upload buffer to cloudinary with better configuration
+        attachmentUrl = await new Promise((resolve, reject) => {
+          const uploadOptions = {
+            resource_type: 'auto' as const,
+            timeout: 120000, // 2 minutes timeout
+            chunk_size: 6000000, // 6MB chunks for large files
+            ...(req.file.size > 10 * 1024 * 1024 && {
+              // For files larger than 10MB, use additional options
+              eager_async: true,
+              quality: 'auto:good', // Compress large images
+            })
+          };
+
+          const stream = cloudinary.uploader.upload_stream(
+            uploadOptions,
+            (error, result) => {
+              if (error) {
+                console.error('❌ Cloudinary upload error:', error);
+                return reject(new AppError(`Cloudinary upload failed: ${error.message}`, 500));
+              }
+              if (!result) {
+                console.error('❌ Cloudinary upload failed: No result returned');
+                return reject(new AppError('Cloudinary upload failed: No result', 500));
+              }
+              console.log('✅ Cloudinary upload successful:', result.secure_url);
+              resolve(result.secure_url);
+            },
+          );
+          
+          stream.end(req.file.buffer);
+        });
+      } catch (cloudinaryError: any) {
+        console.error('❌ Cloudinary upload failed:', cloudinaryError);
+        throw new AppError(`File upload failed: ${cloudinaryError.message}`, 500);
+      }
     } else if (req.body.attachment) {
       // fallback for base64 string
       const uploadResponse = await cloudinary.uploader.upload(req.body.attachment);
       attachmentUrl = uploadResponse.secure_url;
     }
+
     const newMessage = new Message({
       text,
       attachment: attachmentUrl,
       sender: { id: senderId, type: senderType },
       receiver: { id: receiverId, type: receiverType },
     });
+
     await newMessage.save();
+
     // Emit real-time message to both sender and receiver rooms
     const io = getIO();
     if (io) {
@@ -129,6 +170,7 @@ export const sendMessage = async (
         io.to(receiverRoom).emit('new-message', newMessage);
       }
     }
+
     // Create notification for receiver
     try {
       await Notification.create({
@@ -141,8 +183,10 @@ export const sendMessage = async (
       // Log but don't block message send
       console.error('Notification creation failed', err);
     }
+
     res.status(201).json({ message: newMessage });
   } catch (error) {
+    console.error('❌ SendMessage error:', error);
     next(error);
   }
 };
@@ -255,6 +299,106 @@ export const deleteConversation = async (req: AuthRequest, res: Response, next: 
       ],
     });
     res.status(200).json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markMessagesAsRead = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { senderId, senderType, receiverId, receiverType } = req.query;
+    
+    await Message.updateMany(
+      {
+        'sender.id': receiverId,
+        'sender.type': receiverType,
+        'receiver.id': senderId,
+        'receiver.type': senderType,
+        status: { $ne: 'read' }
+      },
+      { status: 'read' }
+    );
+    
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addReaction = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { messageId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user?._id;
+    
+    if (!userId) {
+      throw new AppError('User not authenticated', 401);
+    }
+    
+    const message = await Message.findById(messageId);
+    if (!message) {
+      throw new AppError('Message not found', 404);
+    }
+    
+    // Remove existing reaction from this user
+    message.reactions = message.reactions?.filter(r => r.userId?.toString() !== userId.toString()) || [];
+    
+    // Add new reaction
+    message.reactions.push({ userId, emoji, createdAt: new Date() });
+    
+    await message.save();
+
+    // Emit real-time reaction event to both sender and receiver rooms
+    const io = getIO();
+    if (io && message.sender && message.receiver) {
+      const senderRoom = `${message.sender.type}:${message.sender.id}`;
+      const receiverRoom = `${message.receiver.type}:${message.receiver.id}`;
+      const payload = {
+        messageId: message._id,
+        emoji,
+        userId,
+        senderId: message.sender.id,
+        senderType: message.sender.type,
+        receiverId: message.receiver.id,
+        receiverType: message.receiver.type,
+      };
+      io.to(senderRoom).emit('message-reaction', payload);
+      if (receiverRoom !== senderRoom) {
+        io.to(receiverRoom).emit('message-reaction', payload);
+      }
+    }
+    
+    res.json(message);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getUnreadCounts = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { senderId, senderType } = req.query;
+    
+    const unreadCounts = await Message.aggregate([
+      {
+        $match: {
+          'receiver.id': senderId,
+          'receiver.type': senderType,
+          status: { $ne: 'read' }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            senderId: '$sender.id',
+            senderType: '$sender.type'
+          },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    res.json(unreadCounts);
   } catch (error) {
     next(error);
   }

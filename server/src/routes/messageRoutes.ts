@@ -8,6 +8,9 @@ import {
   sendMessage,
   getConversations,
   deleteConversation,
+  markMessagesAsRead,
+  addReaction,
+  getUnreadCounts,
 } from '../controllers/messageController';
 import upload from '../utils/multer';
 import type { Request, Response, NextFunction } from 'express';
@@ -26,6 +29,9 @@ router.post('/', authMiddleware, (req: Request, res: Response, next: NextFunctio
     sendMessage(req, res, next);
   });
 });
+router.put('/mark-read', authMiddleware, markMessagesAsRead);
+router.post('/:messageId/reaction', authMiddleware, addReaction);
+router.get('/unread-counts', authMiddleware, getUnreadCounts);
 router.delete('/convo', authMiddleware, deleteConversation); // expects senderId, senderType, receiverId, receiverType as query params
 
 export default router;

@@ -46,6 +46,13 @@ export default function AccountSettingsPage() {
         notificationPreferences: form.notificationPreferences,
         privacySettings: form.privacySettings,
       });
+      // Fetch latest user profile and update Zustand/localStorage
+      const { getUserProfile } = await import('@/services/getUserProfile');
+      const updatedUser = await getUserProfile(token || '');
+      setAuth(updatedUser, token || '');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth', JSON.stringify({ user: updatedUser, token: token || '' }));
+      }
       setSuccess(true);
     } catch (err) {
       setError('Failed to update settings.');

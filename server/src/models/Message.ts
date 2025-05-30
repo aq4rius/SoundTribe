@@ -13,6 +13,12 @@ export interface IMessage extends Document {
   };
   text?: string;
   attachment?: string;
+  status: 'sent' | 'delivered' | 'read';
+  reactions: {
+    userId: Types.ObjectId;
+    emoji: string;
+    createdAt: Date;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,6 +55,18 @@ const MessageSchema: Schema = new Schema(
     attachment: {
       type: String,
     },
+    status: {
+      type: String,
+      enum: ['sent', 'delivered', 'read'],
+      default: 'sent',
+    },
+    reactions: [
+      {
+        userId: { type: Schema.Types.ObjectId, ref: 'User' },
+        emoji: { type: String },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true },
 );

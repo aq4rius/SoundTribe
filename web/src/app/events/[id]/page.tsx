@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import EventCard from '@/components/events/EventCard';
 import Link from 'next/link';
 import EventApplication from '@/components/applications/EventApplication';
+import SendMessageButton from '@/components/events/SendMessageButton';
 
 async function getEvent(id: string) {
   const res = await fetch(
@@ -17,11 +18,13 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
   if (id === 'create') return notFound();
   const event = await getEvent(id);
   if (!event) return notFound();
+
   return (
     <div className="max-w-2xl mx-auto py-8">
       <div className="mb-6">
         <EventCard event={event} mode="full" />
       </div>
+      
       <div className="bg-black/60 rounded-xl p-6 border border-white/10 mb-6">
         <h2 className="text-xl font-bold mb-2 text-cyan-300">Event Details</h2>
         <div className="space-y-2 text-white/90">
@@ -72,14 +75,12 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
           </div>
         </div>
       </div>
+      
       <div className="flex gap-4 mb-6">
-        {/* Placeholder for Send Message and Apply actions */}
-        <button className="px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition">
-          Send Message
-        </button>
+        <SendMessageButton event={event} />
       </div>
+      
       <EventApplication event={event} />
-      {/* TODO: Integrate chat and application components here */}
     </div>
   );
 }

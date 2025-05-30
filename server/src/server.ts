@@ -46,8 +46,8 @@ app.use(
 app.use('/api/', apiLimiter);
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Use routes
 app.use('/api', routes);
@@ -76,15 +76,54 @@ async function startServer(): Promise<void> {
 
     // Socket.io connection logic
     io.on('connection', (socket) => {
+      console.log('User connected:', socket.id);
+
       // Client should emit 'join-entity' for each sender entity they want to join
       socket.on('join-entity', ({ entityId, entityType }) => {
         const room = `${entityType}:${entityId}`;
         socket.join(room);
+        console.log(`Socket ${socket.id} joined room: ${room}`);
       });
+
       // Optionally, handle leaving rooms
       socket.on('leave-entity', ({ entityId, entityType }) => {
         const room = `${entityType}:${entityId}`;
         socket.leave(room);
+        console.log(`Socket ${socket.id} left room: ${room}`);
+      });
+
+      // Handle typing events
+      socket.on('typing', (data) => {
+        const { senderId, senderType, receiverId, receiverType } = data;
+        const receiverRoom = `${receiverType}:${receiverId}`;
+        socket.to(receiverRoom).emit('user-typing', {
+          senderId,
+          senderType,
+          conversationId: receiverId,
+        });
+      });
+
+      socket.on('stop-typing', (data) => {
+        const { senderId, senderType, receiverId, receiverType } = data;
+        const receiverRoom = `${receiverType}:${receiverId}`;
+        socket.to(receiverRoom).emit('user-stopped-typing', {
+          senderId,
+          senderType,
+          conversationId: receiverId,
+        });
+      });
+
+      // Handle mark messages as read
+      socket.on('mark-messages-read', (data) => {
+        const { senderId, senderType, receiverId, receiverType } = data;
+        const senderRoom = `${senderType}:${senderId}`;
+        socket.to(senderRoom).emit('messages-read', {
+          conversationId: receiverId,
+        });
+      });
+
+      socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
       });
     });
 
