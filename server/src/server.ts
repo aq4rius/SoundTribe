@@ -76,20 +76,19 @@ async function startServer(): Promise<void> {
 
     // Socket.io connection logic
     io.on('connection', (socket) => {
-      console.log('User connected:', socket.id);
+      // Clean up: Remove all console.log except for error logs
 
       // Client should emit 'join-entity' for each sender entity they want to join
       socket.on('join-entity', ({ entityId, entityType }) => {
         const room = `${entityType}:${entityId}`;
         socket.join(room);
-        console.log(`Socket ${socket.id} joined room: ${room}`);
+        // Mark messages as delivered when user comes online
+        socket.emit('mark-delivered', { entityId, entityType });
       });
 
-      // Optionally, handle leaving rooms
       socket.on('leave-entity', ({ entityId, entityType }) => {
         const room = `${entityType}:${entityId}`;
         socket.leave(room);
-        console.log(`Socket ${socket.id} left room: ${room}`);
       });
 
       // Handle typing events
@@ -113,17 +112,94 @@ async function startServer(): Promise<void> {
         });
       });
 
-      // Handle mark messages as read
-      socket.on('mark-messages-read', (data) => {
+      // Handle conversation opened (mark as read)
+      socket.on('conversation-opened', async (data) => {
         const { senderId, senderType, receiverId, receiverType } = data;
-        const senderRoom = `${senderType}:${senderId}`;
-        socket.to(senderRoom).emit('messages-read', {
-          conversationId: receiverId,
-        });
+        try {
+          // Mark messages as read
+          const Message = (await import('./models/Message')).default;
+          const updatedMessages = await Message.find({
+            'sender.id': receiverId,
+            'sender.type': receiverType,
+            'receiver.id': senderId,
+            'receiver.type': senderType,
+            status: { $ne: 'read' },
+          });
+          const updateResult = await Message.updateMany(
+            {
+              'sender.id': receiverId,
+              'sender.type': receiverType,
+              'receiver.id': senderId,
+              'receiver.type': senderType,
+              status: { $ne: 'read' },
+            },
+            { status: 'read' },
+          );
+
+          // Notify sender that messages were read
+          const senderRoom = `${receiverType}:${receiverId}`;
+          if (io && updatedMessages.length > 0) {
+            io.to(senderRoom).emit('messages-read', {
+              conversationId: senderId,
+              senderType,
+              receiverId,
+              receiverType,
+            });
+          }
+
+          // Emit to current user to update unread counts
+          socket.emit('messages-marked-read', {
+            senderId,
+            senderType,
+            receiverId,
+            receiverType,
+          });
+        } catch (error) {
+          console.error('Error marking messages as read:', error);
+        }
+      });
+
+      // Handle mark messages as delivered
+      socket.on('mark-delivered', async (data) => {
+        const { entityId, entityType } = data;
+
+        try {
+          const Message = (await import('./models/Message')).default;
+          // Find all messages that are being updated
+          const updatedMessages = await Message.find({
+            'receiver.id': entityId,
+            'receiver.type': entityType,
+            status: 'sent',
+          });
+          // Update their status to delivered
+          await Message.updateMany(
+            {
+              'receiver.id': entityId,
+              'receiver.type': entityType,
+              status: 'sent',
+            },
+            { status: 'delivered' },
+          );
+
+          // For each sender, emit a 'messages-delivered' event to their room
+          const ioInstance = io;
+          if (ioInstance && updatedMessages.length > 0) {
+            // Group by sender
+            const senders = Array.from(new Set(updatedMessages.map((msg) => `${msg.sender.type}:${msg.sender.id}`)));
+            for (const senderRoom of senders) {
+              ioInstance.to(senderRoom).emit('messages-delivered', {
+                receiverId: entityId,
+                receiverType: entityType,
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error marking messages as delivered:', error);
+        }
       });
 
       socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+        // No log needed
       });
     });
 

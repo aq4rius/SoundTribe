@@ -107,8 +107,6 @@ export const sendMessage = async (
         );
       }
       
-      console.log('🔄 Starting Cloudinary upload for file:', req.file.originalname, 'Size:', req.file.size);
-      
       try {
         // Upload buffer to cloudinary with better configuration
         attachmentUrl = await new Promise((resolve, reject) => {
@@ -127,6 +125,7 @@ export const sendMessage = async (
             uploadOptions,
             (error, result) => {
               if (error) {
+                // Only keep error logs
                 console.error('❌ Cloudinary upload error:', error);
                 return reject(new AppError(`Cloudinary upload failed: ${error.message}`, 500));
               }
@@ -134,11 +133,9 @@ export const sendMessage = async (
                 console.error('❌ Cloudinary upload failed: No result returned');
                 return reject(new AppError('Cloudinary upload failed: No result', 500));
               }
-              console.log('✅ Cloudinary upload successful:', result.secure_url);
               resolve(result.secure_url);
             },
           );
-          
           stream.end(req.file.buffer);
         });
       } catch (cloudinaryError: any) {
@@ -156,6 +153,7 @@ export const sendMessage = async (
       attachment: attachmentUrl,
       sender: { id: senderId, type: senderType },
       receiver: { id: receiverId, type: receiverType },
+      status: 'sent' // Start with sent status
     });
 
     await newMessage.save();
@@ -168,8 +166,23 @@ export const sendMessage = async (
       io.to(senderRoom).emit('new-message', newMessage);
       if (receiverRoom !== senderRoom) {
         io.to(receiverRoom).emit('new-message', newMessage);
+
+        // Check if receiver is online and mark as delivered
+        const receiverSockets = await io.in(receiverRoom).fetchSockets();
+        if (receiverSockets.length > 0) {
+          // Receiver is online, mark as delivered
+          newMessage.status = 'delivered';
+          await newMessage.save();
+          
+          // Emit status update
+          io.to(senderRoom).emit('message-status-update', {
+            messageId: newMessage._id,
+            status: 'delivered'
+          });
+        }
       }
     }
+    
 
     // Create notification for receiver
     try {
@@ -190,6 +203,8 @@ export const sendMessage = async (
     next(error);
   }
 };
+
+
 
 // Get all unique conversation partners for a sender, with last message for each
 export const getConversations = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -220,7 +235,13 @@ export const getConversations = async (req: AuthRequest, res: Response, next: Ne
       if (!conversationsMap.has(key)) {
         conversationsMap.set(key, {
           entity: { _id: partner.id, type: partner.type, name: undefined },
-          lastMessage: msg,
+          lastMessage: {
+            text: msg.text,
+            attachment: msg.attachment,
+            createdAt: msg.createdAt,
+            // Add info about who sent the last message
+            isSentByMe: msg.sender.id.toString() === senderId && msg.sender.type === senderType
+          },
         });
       }
     }
@@ -232,8 +253,10 @@ export const getConversations = async (req: AuthRequest, res: Response, next: Ne
     const eventIds = entitiesToFetch
       .filter((e) => e.entity.type === 'Event')
       .map((e) => e.entity._id);
+
     let artistProfiles: any[] = [];
     let events: any[] = [];
+
     if (artistIds.length > 0) {
       artistProfiles = await (
         await import('../models/ArtistProfile')
@@ -304,27 +327,6 @@ export const deleteConversation = async (req: AuthRequest, res: Response, next: 
   }
 };
 
-export const markMessagesAsRead = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { senderId, senderType, receiverId, receiverType } = req.query;
-    
-    await Message.updateMany(
-      {
-        'sender.id': receiverId,
-        'sender.type': receiverType,
-        'receiver.id': senderId,
-        'receiver.type': senderType,
-        status: { $ne: 'read' }
-      },
-      { status: 'read' }
-    );
-    
-    res.json({ success: true });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const addReaction = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { messageId } = req.params;
@@ -384,7 +386,7 @@ export const getUnreadCounts = async (req: AuthRequest, res: Response, next: Nex
         $match: {
           'receiver.id': senderId,
           'receiver.type': senderType,
-          status: { $ne: 'read' }
+          status: { $in: ['sent', 'delivered'] }
         }
       },
       {

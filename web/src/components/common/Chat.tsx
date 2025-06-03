@@ -4,7 +4,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useMyEntities } from '@/hooks/useMyEntities';
-import { useConversations, useMessages, useUnreadCounts, useMarkAsRead, useDeleteConversation, useAddReaction} from '@/hooks/useChat';
+import {
+  useConversations,
+  useMessages,
+  useUnreadCounts,
+  useDeleteConversation,
+  useAddReaction,
+} from '@/hooks/useChat';
 import { useAuth } from '@/hooks/useAuth';
 import { useSendMessage } from '@/hooks/useSendMessage';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,11 +40,11 @@ const Chat = () => {
   const [selectedSender, setSelectedSender] = useState<any>(null);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
-const [showMenu, setShowMenu] = useState<string | null>(null);
-const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
-const [otherUserTyping, setOtherUserTyping] = useState(false);
-const [isTyping, setIsTyping] = useState(false);
-const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false);
+  const [showMenu, setShowMenu] = useState<string | null>(null);
+  const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false);
 
   // Only fetch conversations for the selected sender
   const { data: conversations = [], isLoading: convLoading } = useConversations(
@@ -62,9 +68,9 @@ const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false);
   const [processedUrlParams, setProcessedUrlParams] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const { data: unreadCounts = [] } = useUnreadCounts(selectedSender, safeToken);
-const markAsReadMutation = useMarkAsRead(safeToken);
-const deleteConversationMutation = useDeleteConversation(safeToken);
-const addReactionMutation = useAddReaction(safeToken);
+  // const markAsReadMutation = useMarkAsRead(safeToken);
+  const deleteConversationMutation = useDeleteConversation(safeToken);
+  const addReactionMutation = useAddReaction(safeToken);
 
   // Set default sender when entities load
   useEffect(() => {
@@ -147,18 +153,24 @@ const addReactionMutation = useAddReaction(safeToken);
   // Enhanced Socket.io real-time updates
   useEffect(() => {
     if (!selectedSender) return;
-
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
     const socket: Socket = io(SOCKET_URL, { withCredentials: true });
+    socketRef.current = socket;
     socket.emit('join-entity', { entityId: selectedSender._id, entityType: selectedSender.type });
 
+    // Emit mark-delivered for this sender entity (to mark all messages sent to this entity as delivered)
+    socket.emit('mark-delivered', { entityId: selectedSender._id, entityType: selectedSender.type });
+
     socket.on('new-message', (msg: any) => {
-      if (
+      const isCurrentConversation =
         selectedConversation &&
         ((msg.sender.id === selectedSender._id &&
           msg.receiver.id === selectedConversation.entity._id) ||
           (msg.receiver.id === selectedSender._id &&
-            msg.sender.id === selectedConversation.entity._id))
-      ) {
+            msg.sender.id === selectedConversation.entity._id));
+      if (isCurrentConversation) {
         queryClient.invalidateQueries({
           queryKey: [
             'messages',
@@ -168,17 +180,100 @@ const addReactionMutation = useAddReaction(safeToken);
             selectedConversation.entity.type,
           ],
         });
-      } else {
+        // If the message is sent TO the current sender (i.e., user is the receiver), emit conversation-opened to mark as read
+        if (msg.receiver.id === selectedSender._id && socketRef.current) {
+          socketRef.current.emit('conversation-opened', {
+            senderId: selectedSender._id,
+            senderType: selectedSender.type,
+            receiverId: selectedConversation.entity._id,
+            receiverType: selectedConversation.entity.type,
+          });
+        }
+      }
+      // Always update conversations and unread counts for sidebar
+      queryClient.invalidateQueries({
+        queryKey: ['conversations', selectedSender._id, selectedSender.type],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['unread-counts', selectedSender._id, selectedSender.type],
+      });
+    });
+    socket.on('messages-delivered', (data: any) => {
+      // Always update conversations and messages for sidebar and chat
+      queryClient.invalidateQueries({
+        queryKey: ['conversations', selectedSender._id, selectedSender.type],
+      });
+      if (selectedConversation) {
         queryClient.invalidateQueries({
-          queryKey: ['conversations', selectedSender._id, selectedSender.type],
+          queryKey: [
+            'messages',
+            selectedSender._id,
+            selectedSender.type,
+            selectedConversation.entity._id,
+            selectedConversation.entity.type,
+          ],
         });
+      }
+    });
+    socket.on('messages-read', (data: any) => {
+      // Always update conversations and messages for sidebar and chat
+      queryClient.invalidateQueries({
+        queryKey: ['conversations', selectedSender._id, selectedSender.type],
+      });
+      if (selectedConversation) {
         queryClient.invalidateQueries({
-          queryKey: ['unread-counts', selectedSender._id, selectedSender.type],
+          queryKey: [
+            'messages',
+            selectedSender._id,
+            selectedSender.type,
+            selectedConversation.entity._id,
+            selectedConversation.entity.type,
+          ],
         });
       }
     });
 
-    // Listen for real-time message reaction updates
+    // Handle message status updates
+    socket.on('message-status-update', (data: any) => {
+      if (selectedConversation) {
+        queryClient.invalidateQueries({
+          queryKey: [
+            'messages',
+            selectedSender._id,
+            selectedSender.type,
+            selectedConversation.entity._id,
+            selectedConversation.entity.type,
+          ],
+        });
+      }
+    });
+
+    // Handle messages read notification
+    socket.on('messages-read', (data: any) => {
+      if (selectedConversation && data.conversationId === selectedConversation.entity._id) {
+        queryClient.invalidateQueries({
+          queryKey: [
+            'messages',
+            selectedSender._id,
+            selectedSender.type,
+            selectedConversation.entity._id,
+            selectedConversation.entity.type,
+          ],
+        });
+      }
+    });
+
+    // Handle messages marked as read (for unread count updates)
+    socket.on('messages-marked-read', () => {
+      queryClient.invalidateQueries({
+        queryKey: ['unread-counts', selectedSender._id, selectedSender.type],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['conversations', selectedSender._id, selectedSender.type],
+      });
+    });
+
+    // Handle reaction events
     socket.on('message-reaction', (data: any) => {
       if (
         selectedConversation &&
@@ -203,7 +298,6 @@ const addReactionMutation = useAddReaction(safeToken);
     socket.on('user-typing', (data: any) => {
       if (selectedConversation && data.senderId === selectedConversation.entity._id) {
         setOtherUserTyping(true);
-        // Auto-clear typing after 3 seconds
         setTimeout(() => setOtherUserTyping(false), 3000);
       }
     });
@@ -220,8 +314,31 @@ const addReactionMutation = useAddReaction(safeToken);
         entityType: selectedSender.type,
       });
       socket.disconnect();
+      socketRef.current = null;
     };
   }, [selectedSender, selectedConversation, queryClient]);
+
+  // When a conversation is opened, emit mark-delivered for that conversation
+  useEffect(() => {
+    if (!selectedSender || !selectedConversation) return;
+    if (!socketRef.current) return;
+    socketRef.current.emit('mark-delivered', {
+      entityId: selectedSender._id,
+      entityType: selectedSender.type,
+    });
+  }, [selectedSender, selectedConversation]);
+
+  // Emit conversation opened when conversation changes
+  useEffect(() => {
+    if (selectedSender && selectedConversation && socketRef.current) {
+      socketRef.current.emit('conversation-opened', {
+        senderId: selectedSender._id,
+        senderType: selectedSender.type,
+        receiverId: selectedConversation.entity._id,
+        receiverType: selectedConversation.entity.type,
+      });
+    }
+  }, [selectedConversation, selectedSender]);
 
   // Cleanup socket on unmount
   useEffect(() => {
@@ -343,18 +460,7 @@ const addReactionMutation = useAddReaction(safeToken);
                   <div className="flex items-center justify-between">
                     <div
                       className="flex-1 cursor-pointer"
-                      onClick={() => {
-                        setSelectedConversation(conv);
-                        // Mark messages as read when opening conversation
-                        if (unreadCount > 0 && selectedSender) {
-                          markAsReadMutation.mutate({
-                            senderId: selectedSender._id,
-                            senderType: selectedSender.type,
-                            receiverId: conv.entity._id,
-                            receiverType: conv.entity.type,
-                          });
-                        }
-                      }}
+                      onClick={() => setSelectedConversation(conv)}
                     >
                       <div className="font-semibold flex items-center gap-2 justify-between">
                         <span className="flex items-center gap-2">
@@ -367,18 +473,26 @@ const addReactionMutation = useAddReaction(safeToken);
                         )}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
-                        {conv.lastMessage?.text
-                          ? conv.lastMessage.text
-                          : conv.lastMessage === undefined
-                            ? 'Start a conversation...'
-                            : '[Attachment]'}
+                        {conv.lastMessage?.text ? (
+                          <>
+                            {conv.lastMessage.isSentByMe ? 'You: ' : ''}
+                            {conv.lastMessage.text}
+                          </>
+                        ) : conv.lastMessage?.attachment ? (
+                          <>
+                            {conv.lastMessage.isSentByMe ? 'You: ' : ''}
+                            [Attachment]
+                          </>
+                        ) : (
+                          'Start a conversation...'
+                        )}
                       </div>
                       <div className="text-xs text-gray-400 text-right">
                         {conv.lastMessage && new Date(conv.lastMessage.createdAt).toLocaleString()}
                       </div>
                     </div>
 
-                    {/* Conversation menu */}
+                    {/* Simplified conversation menu - removed "mark as read" */}
                     <div className="relative">
                       <button
                         onClick={(e) => {
@@ -392,25 +506,8 @@ const addReactionMutation = useAddReaction(safeToken);
 
                       {showMenu === conv.entity._id && (
                         <>
-                          {/* Backdrop to close menu */}
                           <div className="fixed inset-0 z-10" onClick={() => setShowMenu(null)} />
                           <div className="absolute right-0 top-8 bg-white border rounded shadow-lg z-20 min-w-[160px]">
-                            <button
-                              className="block w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
-                              onClick={() => {
-                                if (selectedSender) {
-                                  markAsReadMutation.mutate({
-                                    senderId: selectedSender._id,
-                                    senderType: selectedSender.type,
-                                    receiverId: conv.entity._id,
-                                    receiverType: conv.entity.type,
-                                  });
-                                }
-                                setShowMenu(null);
-                              }}
-                            >
-                              Mark as read
-                            </button>
                             <button
                               className="block w-full text-left px-3 py-2 hover:bg-gray-100 text-red-600 text-sm"
                               onClick={() => {
@@ -421,7 +518,6 @@ const addReactionMutation = useAddReaction(safeToken);
                                     receiverId: conv.entity._id,
                                     receiverType: conv.entity.type,
                                   });
-                                  // Clear selection if this conversation was selected
                                   if (selectedConversation?.entity._id === conv.entity._id) {
                                     setSelectedConversation(null);
                                   }
@@ -513,9 +609,7 @@ const addReactionMutation = useAddReaction(safeToken);
                       <div className="relative group">
                         <div
                           className={`rounded-xl px-3 py-2 max-w-xs shadow-lg ${
-                            isMine
-                              ? 'bg-cyan-900 text-white'
-                              : 'bg-fuchsia-950/80 text-white'
+                            isMine ? 'bg-cyan-900 text-white' : 'bg-fuchsia-950/80 text-white'
                           } relative`}
                         >
                           {msg.attachment && (
@@ -551,10 +645,11 @@ const addReactionMutation = useAddReaction(safeToken);
                             {msg.sender.id === selectedSender?._id && (
                               <span className="text-xs">
                                 {msg.status === 'read'
-                                  ? '✓✓'
+                                  ? '✓✓' // Double check for read
                                   : msg.status === 'delivered'
-                                    ? '✓'
-                                    : '○'}
+                                    ? '✓' // Single check for delivered
+                                    : '○'}{' '}
+                                {/* Circle for sent */}
                               </span>
                             )}
                           </div>
@@ -615,7 +710,6 @@ const addReactionMutation = useAddReaction(safeToken);
                   );
                 })}
               </AnimatePresence>
-             
             </>
           )}
         </div>
@@ -641,31 +735,33 @@ const addReactionMutation = useAddReaction(safeToken);
             </button>
             {showInputEmojiPicker && (
               <div className="absolute bottom-10 left-0 bg-gray-800 rounded-lg p-2 flex gap-1 z-20 shadow-lg">
-                {['👍', '❤️', '😂', '😮', '😢', '😡', '😊', '🎉', '🔥', '🙏', '🥳', '🤘', '🎶'].map((emoji) => (
-                  <button
-                    key={emoji}
-                    className="hover:bg-gray-700 rounded p-1 text-lg"
-                    onClick={() => {
-                      // Insert emoji at cursor position in input
-                      if (inputRef.current) {
-                        const el = inputRef.current;
-                        const start = el.selectionStart || 0;
-                        const end = el.selectionEnd || 0;
-                        const newValue = input.slice(0, start) + emoji + input.slice(end);
-                        setInput(newValue);
-                        setTimeout(() => {
-                          el.focus();
-                          el.setSelectionRange(start + emoji.length, start + emoji.length);
-                        }, 0);
-                      } else {
-                        setInput((val) => val + emoji);
-                      }
-                      setShowInputEmojiPicker(false);
-                    }}
-                  >
-                    {emoji}
-                  </button>
-                ))}
+                {['👍', '❤️', '😂', '😮', '😢', '😡', '😊', '🎉', '🔥', '🙏', '🥳', '🤘', '🎶'].map(
+                  (emoji) => (
+                    <button
+                      key={emoji}
+                      className="hover:bg-gray-700 rounded p-1 text-lg"
+                      onClick={() => {
+                        // Insert emoji at cursor position in input
+                        if (inputRef.current) {
+                          const el = inputRef.current;
+                          const start = el.selectionStart || 0;
+                          const end = el.selectionEnd || 0;
+                          const newValue = input.slice(0, start) + emoji + input.slice(end);
+                          setInput(newValue);
+                          setTimeout(() => {
+                            el.focus();
+                            el.setSelectionRange(start + emoji.length, start + emoji.length);
+                          }, 0);
+                        } else {
+                          setInput((val) => val + emoji);
+                        }
+                        setShowInputEmojiPicker(false);
+                      }}
+                    >
+                      {emoji}
+                    </button>
+                  ),
+                )}
               </div>
             )}
           </div>
@@ -719,7 +815,6 @@ const addReactionMutation = useAddReaction(safeToken);
               id="file-input"
               onChange={(e) => {
                 const selectedFile = e.target.files ? e.target.files[0] : null;
-                console.log('File selected:', selectedFile);
                 if (selectedFile) {
                   // More generous limits since compression will happen in the hook
                   const isImage = selectedFile.type.startsWith('image/');

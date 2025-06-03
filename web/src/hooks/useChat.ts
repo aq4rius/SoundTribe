@@ -16,12 +16,10 @@ export function useConversations(sender: Entity | null, token?: string) {
       return res.json();
     },
     enabled: !!sender && !!token,
-    // Reduce refetch frequency - only refetch when window regains focus or when manually triggered
     refetchInterval: false,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    // Cache for 5 minutes
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -41,12 +39,10 @@ export function useMessages(sender: Entity | null, receiver: Entity | null, toke
       return res.json();
     },
     enabled: !!sender && !!receiver && !!token,
-    // Remove automatic refetching - rely on real-time updates via socket
     refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    // Cache for 1 minute since we have real-time updates
     staleTime: 1 * 60 * 1000,
   });
 }
@@ -66,53 +62,7 @@ export function useUnreadCounts(sender: Entity | null, token?: string) {
       return res.json();
     },
     enabled: !!sender && !!token,
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
-}
-
-export function useMarkAsRead(token?: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      senderId,
-      senderType,
-      receiverId,
-      receiverType,
-    }: {
-      senderId: string;
-      senderType: string;
-      receiverId: string;
-      receiverType: string;
-    }) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/messages/mark-read`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            senderId,
-            senderType,
-            receiverId,
-            receiverType,
-          }),
-        },
-      );
-      if (!res.ok) throw new Error('Failed to mark messages as read');
-      return res.json();
-    },
-    onSuccess: (_data, variables) => {
-      // Invalidate unread counts
-      queryClient.invalidateQueries({
-        queryKey: ['unread-counts', variables.senderId, variables.senderType],
-      });
-      // Invalidate messages
-      queryClient.invalidateQueries({
-        queryKey: ['messages', variables.senderId, variables.senderType, variables.receiverId, variables.receiverType],
-      });
-    },
+    refetchInterval: 30000,
   });
 }
 
@@ -175,6 +125,39 @@ export function useAddReaction(token?: string) {
         },
       );
       if (!res.ok) throw new Error('Failed to add reaction');
+      return res.json();
+    },
+    onSuccess: () => {
+      // Invalidate all messages queries to refresh reactions
+      queryClient.invalidateQueries({
+        queryKey: ['messages'],
+      });
+    },
+  });
+}
+
+export function useRemoveReaction(token?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      messageId,
+      emoji,
+    }: {
+      messageId: string;
+      emoji: string;
+    }) => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/messages/${messageId}/reaction`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ emoji }),
+        },
+      );
+      if (!res.ok) throw new Error('Failed to remove reaction');
       return res.json();
     },
     onSuccess: () => {

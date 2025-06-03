@@ -8,7 +8,6 @@ import {
   sendMessage,
   getConversations,
   deleteConversation,
-  markMessagesAsRead,
   addReaction,
   getUnreadCounts,
 } from '../controllers/messageController';
@@ -29,7 +28,6 @@ router.post('/', authMiddleware, (req: Request, res: Response, next: NextFunctio
     sendMessage(req, res, next);
   });
 });
-router.put('/mark-read', authMiddleware, markMessagesAsRead);
 router.post('/:messageId/reaction', authMiddleware, addReaction);
 router.get('/unread-counts', authMiddleware, getUnreadCounts);
 router.delete('/convo', authMiddleware, deleteConversation); // expects senderId, senderType, receiverId, receiverType as query params
