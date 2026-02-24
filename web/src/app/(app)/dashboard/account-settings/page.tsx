@@ -1,0 +1,194 @@
+"use client";
+import { useAuth } from '@/hooks/use-auth';
+import { useState } from 'react';
+import { updateOnboardingState } from '@/services/user';
+import { useRouter } from 'next/navigation';
+
+export default function AccountSettingsPage() {
+  const { user, token, setAuth } = useAuth();
+  const router = useRouter();
+  const [form, setForm] = useState({
+    ...user,
+    preferences: { ...user?.preferences },
+    locationDetails: { ...user?.locationDetails },
+    notificationPreferences: { ...user?.notificationPreferences },
+    privacySettings: { ...user?.privacySettings },
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  if (!user) return <div className="p-8">Not logged in.</div>;
+
+  const handleChange = (field: string, value: string | string[] | boolean | number) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+  const handlePrefChange = (field: string, value: string | string[] | boolean | number) => {
+    setForm((prev) => ({ ...prev, preferences: { ...prev.preferences, [field]: value } }));
+  };
+  const handleLocChange = (field: string, value: string | string[] | boolean | number) => {
+    setForm((prev) => ({ ...prev, locationDetails: { ...prev.locationDetails, [field]: value } }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+    try {
+      await updateOnboardingState(token || '', {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        location: form.location,
+        bio: form.bio,
+        preferences: form.preferences,
+        locationDetails: form.locationDetails,
+        notificationPreferences: form.notificationPreferences,
+        privacySettings: form.privacySettings,
+      });
+      // Fetch latest user profile and update Zustand/localStorage
+      const { getUserProfile } = await import('@/services/get-user-profile');
+      const updatedUser = await getUserProfile(token || '');
+      const { _id, ...rest } = updatedUser;
+      const authUser = { ...rest, id: _id };
+      setAuth(authUser, token || '');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth', JSON.stringify({ user: authUser, token: token || '' }));
+      }
+      setSuccess(true);
+    } catch (err) {
+      setError('Failed to update settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow p-8 mt-8">
+      <h1 className="text-2xl font-bold mb-6 text-gray-900">Account Settings</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">First Name</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.firstName || ''}
+            onChange={e => handleChange('firstName', e.target.value)}
+            placeholder="First Name"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Last Name</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.lastName || ''}
+            onChange={e => handleChange('lastName', e.target.value)}
+            placeholder="Last Name"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Location</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.location || ''}
+            onChange={e => handleChange('location', e.target.value)}
+            placeholder="Location"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Bio</label>
+          <textarea
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.bio || ''}
+            onChange={e => handleChange('bio', e.target.value)}
+            placeholder="Bio"
+            rows={3}
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Genres</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.preferences?.genres?.join(', ') || ''}
+            onChange={e => handlePrefChange('genres', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            placeholder="e.g. Rock, Jazz"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Instruments</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.preferences?.instruments?.join(', ') || ''}
+            onChange={e => handlePrefChange('instruments', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            placeholder="e.g. Guitar, Drums"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Influences</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.preferences?.influences?.join(', ') || ''}
+            onChange={e => handlePrefChange('influences', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            placeholder="e.g. Radiohead, Daft Punk"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Goals</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.preferences?.eventTypes?.join(', ') || ''}
+            onChange={e => handlePrefChange('eventTypes', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            placeholder="e.g. Gigs, Studio, Networking"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">City</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.locationDetails?.city || ''}
+            onChange={e => handleLocChange('city', e.target.value)}
+            placeholder="City"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Region</label>
+          <input
+            type="text"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.locationDetails?.region || ''}
+            onChange={e => handleLocChange('region', e.target.value)}
+            placeholder="Region"
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1 text-gray-800">Willing to travel (km)</label>
+          <input
+            type="number"
+            className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
+            value={form.locationDetails?.willingToTravel || ''}
+            onChange={e => handleLocChange('willingToTravel', Number(e.target.value))}
+            min={0}
+            max={1000}
+          />
+        </div>
+        <div className="flex gap-4 mt-6">
+          <button type="submit" className="px-6 py-2 rounded bg-indigo-500 text-white font-semibold" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button type="button" className="px-6 py-2 rounded bg-gray-200 text-gray-900" onClick={() => router.push('/dashboard')}>
+            Cancel
+          </button>
+        </div>
+        {error && <div className="text-red-500 mt-2">{error}</div>}
+        {success && <div className="text-green-600 mt-2">Settings updated!</div>}
+      </form>
+    </div>
+  );
+}

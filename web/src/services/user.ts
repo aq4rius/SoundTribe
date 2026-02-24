@@ -1,36 +1,19 @@
-import axios from 'axios';
-import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 
-// Helper to handle 401 and clear session
-async function handleAuthApiCall(promise: Promise<any>) {
-  try {
-    return await promise;
-  } catch (err: any) {
-    if (err.response && err.response.status === 401) {
-      // Clear auth state and localStorage
-      useAuthStore.getState().clearAuth();
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth');
-        window.location.href = '/auth/login';
-      }
-      throw new Error('Session expired. Please log in again.');
-    }
-    throw err;
-  }
-}
+/**
+ * Onboarding service — uses centralized API client with built-in 401 handling.
+ */
 
 export async function getOnboardingState(token: string) {
-  return handleAuthApiCall(
-    axios.get('/api/users/onboarding', {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => res.data)
-  );
+  const res = await api.get('/users/onboarding', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
 }
 
-export async function updateOnboardingState(token: string, data: any) {
-  return handleAuthApiCall(
-    axios.patch('/api/users/onboarding', data, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => res.data)
-  );
+export async function updateOnboardingState(token: string, data: Record<string, unknown>) {
+  const res = await api.patch('/users/onboarding', data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
 }

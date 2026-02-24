@@ -186,12 +186,26 @@ export const sendMessage = async (
 
     // Create notification for receiver
     try {
-      await Notification.create({
+      let senderName = '';
+      if (senderType === 'ArtistProfile') {
+        const ArtistProfile = (await import('../models/ArtistProfile')).default;
+        const profile = await ArtistProfile.findById(senderId);
+        senderName = profile ? profile.stageName : 'Artist';
+      } else if (senderType === 'Event') {
+        const Event = (await import('../models/Event')).default;
+        const event = await Event.findById(senderId);
+        senderName = event ? event.title : 'Event';
+      }
+      const snippet = text ? text.substring(0, 100) : '';
+      const notif = await Notification.create({
         recipient: receiverId,
         type: 'new_message',
-        content: text ? `New message: ${text.substring(0, 100)}` : 'New file received',
+        content: senderName ? `New message from ${senderName}${snippet ? ': ' + snippet : ''}` : (text ? `New message: ${snippet}` : 'New file received'),
         relatedEntity: { id: newMessage._id, type: 'Message' },
       });
+      // Emit real-time notification
+      const { emitNotificationRealtime } = require('./notificationController');
+      emitNotificationRealtime(notif);
     } catch (err) {
       // Log but don't block message send
       console.error('Notification creation failed', err);

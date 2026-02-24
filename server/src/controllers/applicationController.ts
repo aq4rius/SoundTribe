@@ -36,12 +36,15 @@ export const submitApplication = async (req: AuthRequest, res: Response, next: N
 
     // Notify event owner
     if (eventPosting && eventPosting.postedBy && eventPosting.postedBy._id) {
-      await Notification.create({
+      const notif = await Notification.create({
         recipient: eventPosting.postedBy._id,
         type: 'application_submitted',
         content: `New application for your event: "${eventPosting.title}"`,
         relatedEntity: { id: newApplication._id, type: 'Application' },
       });
+      // Emit real-time notification
+      const { emitNotificationRealtime } = require('./notificationController');
+      emitNotificationRealtime(notif);
     }
 
     res.status(201).json(newApplication);
@@ -122,12 +125,15 @@ export const updateApplicationStatus = async (
       eventTitle = (application.eventPosting as any).title || '';
     }
     if (application.applicant && application.applicant._id) {
-      await Notification.create({
+      const notif = await Notification.create({
         recipient: application.applicant._id,
         type: 'application_status',
         content: `Your application for event "${eventTitle}" was ${status}.`,
         relatedEntity: { id: application._id, type: 'Application' },
       });
+      // Emit real-time notification
+      const { emitNotificationRealtime } = require('./notificationController');
+      emitNotificationRealtime(notif);
     }
 
     res.json(application);

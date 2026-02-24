@@ -2,6 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import Notification from '../models/Notification';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { AppError } from '../utils/errorHandler';
+import { getIO } from '../server';
+
+// Utility to emit a real-time notification to the recipient's socket room
+async function emitNotificationRealtime(notification: any) {
+  try {
+    const io = getIO();
+    if (!io) return;
+    // User room convention: User:<userId>
+    const room = `User:${notification.recipient}`;
+    io.to(room).emit('new-notification', notification);
+  } catch (err) {
+    // Don't block on error
+    console.error('Realtime notification emit failed', err);
+  }
+}
 
 export const getNotifications = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -46,3 +61,6 @@ export const deleteNotification = async (req: AuthRequest, res: Response, next: 
     next(error);
   }
 };
+
+// Export for use in other controllers
+export { emitNotificationRealtime };

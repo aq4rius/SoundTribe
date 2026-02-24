@@ -3,33 +3,23 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useMyEntities } from '@/hooks/useMyEntities';
+import { useMyEntities } from '@/hooks/use-my-entities';
 import {
   useConversations,
   useMessages,
   useUnreadCounts,
   useDeleteConversation,
   useAddReaction,
-} from '@/hooks/useChat';
-import { useAuth } from '@/hooks/useAuth';
-import { useSendMessage } from '@/hooks/useSendMessage';
+} from '@/hooks/use-chat';
+import { useAuth } from '@/hooks/use-auth';
+import { useSendMessage } from '@/hooks/use-send-message';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
+import type { IConversation, IMessage, MessageReaction, ChatEntity } from '@/types';
+import { env } from '@/lib/env';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000';
-
-interface Conversation {
-  entity: {
-    _id: string;
-    type: string;
-    name: string;
-  };
-  lastMessage?: {
-    text?: string;
-    createdAt: string;
-  };
-}
+const SOCKET_URL = env.NEXT_PUBLIC_SOCKET_URL;
 
 const Chat = () => {
   // All hooks at the top, no early returns
@@ -90,7 +80,7 @@ const Chat = () => {
     if (receiverId && receiverType && receiverName) {
       // Check if conversation already exists
       const existingConv = conversations.find(
-        (conv: Conversation) => conv.entity._id === receiverId && conv.entity.type === receiverType,
+        (conv: IConversation) => conv.entity._id === receiverId && conv.entity.type === receiverType,
       );
 
       if (existingConv) {
@@ -130,7 +120,7 @@ const Chat = () => {
     if (receiverId && receiverType && receiverName && selectedSender) {
       // Check if this conversation already exists in the list
       const exists = conversations.some(
-        (conv: Conversation) => conv.entity._id === receiverId && conv.entity.type === receiverType,
+        (conv: IConversation) => conv.entity._id === receiverId && conv.entity.type === receiverType,
       );
 
       if (!exists) {
@@ -163,7 +153,7 @@ const Chat = () => {
     // Emit mark-delivered for this sender entity (to mark all messages sent to this entity as delivered)
     socket.emit('mark-delivered', { entityId: selectedSender._id, entityType: selectedSender.type });
 
-    socket.on('new-message', (msg: any) => {
+    socket.on('new-message', (msg: any) => { // TODO(phase-1): replace with Prisma type
       const isCurrentConversation =
         selectedConversation &&
         ((msg.sender.id === selectedSender._id &&
@@ -198,7 +188,7 @@ const Chat = () => {
         queryKey: ['unread-counts', selectedSender._id, selectedSender.type],
       });
     });
-    socket.on('messages-delivered', (data: any) => {
+    socket.on('messages-delivered', (data: any) => { // TODO(phase-1): replace with Prisma type
       // Always update conversations and messages for sidebar and chat
       queryClient.invalidateQueries({
         queryKey: ['conversations', selectedSender._id, selectedSender.type],
@@ -215,7 +205,7 @@ const Chat = () => {
         });
       }
     });
-    socket.on('messages-read', (data: any) => {
+    socket.on('messages-read', (data: any) => { // TODO(phase-1): replace with Prisma type
       // Always update conversations and messages for sidebar and chat
       queryClient.invalidateQueries({
         queryKey: ['conversations', selectedSender._id, selectedSender.type],
@@ -234,7 +224,7 @@ const Chat = () => {
     });
 
     // Handle message status updates
-    socket.on('message-status-update', (data: any) => {
+    socket.on('message-status-update', (data: any) => { // TODO(phase-1): replace with Prisma type
       if (selectedConversation) {
         queryClient.invalidateQueries({
           queryKey: [
@@ -249,7 +239,7 @@ const Chat = () => {
     });
 
     // Handle messages read notification
-    socket.on('messages-read', (data: any) => {
+    socket.on('messages-read', (data: any) => { // TODO(phase-1): replace with Prisma type
       if (selectedConversation && data.conversationId === selectedConversation.entity._id) {
         queryClient.invalidateQueries({
           queryKey: [
@@ -274,7 +264,7 @@ const Chat = () => {
     });
 
     // Handle reaction events
-    socket.on('message-reaction', (data: any) => {
+    socket.on('message-reaction', (data: any) => { // TODO(phase-1): replace with Prisma type
       if (
         selectedConversation &&
         ((data.senderId === selectedSender._id &&
@@ -295,14 +285,14 @@ const Chat = () => {
     });
 
     // Handle typing events
-    socket.on('user-typing', (data: any) => {
+    socket.on('user-typing', (data: any) => { // TODO(phase-1): replace with Prisma type
       if (selectedConversation && data.senderId === selectedConversation.entity._id) {
         setOtherUserTyping(true);
         setTimeout(() => setOtherUserTyping(false), 3000);
       }
     });
 
-    socket.on('user-stopped-typing', (data: any) => {
+    socket.on('user-stopped-typing', (data: any) => { // TODO(phase-1): replace with Prisma type
       if (selectedConversation && data.senderId === selectedConversation.entity._id) {
         setOtherUserTyping(false);
       }
@@ -389,7 +379,7 @@ const Chat = () => {
           // Only invalidate conversations if this was a new conversation
           if (
             !conversations.some(
-              (conv: Conversation) =>
+              (conv: IConversation) =>
                 conv.entity._id === selectedConversation.entity._id &&
                 conv.entity.type === selectedConversation.entity.type,
             )
@@ -438,11 +428,11 @@ const Chat = () => {
           ) : safeConversations.length === 0 ? (
             <div className="p-4 text-gray-400 text-center text-sm">No conversations yet.</div>
           ) : (
-            safeConversations.map((conv: any) => {
+            safeConversations.map((conv: IConversation) => {
               // Get unread count for this conversation
               const unreadCount =
                 unreadCounts.find(
-                  (uc: any) =>
+                  (uc: any) => // TODO(phase-1): replace with Prisma type
                     uc._id.senderId === conv.entity._id && uc._id.senderType === conv.entity.type,
                 )?.count || 0;
 
@@ -591,11 +581,11 @@ const Chat = () => {
               <AnimatePresence initial={false}>
                 {/* Filter messages based on search */}
                 {(searchTerm
-                  ? safeMessages.filter((msg: any) =>
+                  ? safeMessages.filter((msg: IMessage) =>
                       msg.text?.toLowerCase().includes(searchTerm.toLowerCase()),
                     )
                   : safeMessages
-                ).map((msg: any) => {
+                ).map((msg: IMessage) => {
                   const isMine = msg.sender.id === selectedSender?._id;
                   return (
                     <motion.div
@@ -694,7 +684,7 @@ const Chat = () => {
                           <div className="flex gap-1 mt-1">
                             {/* Group reactions by emoji */}
                             {Object.entries(
-                              msg.reactions.reduce((acc: any, reaction: any) => {
+                              msg.reactions.reduce((acc: Record<string, number>, reaction: MessageReaction) => {
                                 acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
                                 return acc;
                               }, {}),

@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  eslint: {
+    // Lint is run separately via `npm run lint`. Don't block builds.
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     return [
       {
