@@ -4,12 +4,32 @@ import { useState, useEffect } from 'react';
 import { getOnboardingState, updateOnboardingState } from '../services/user';
 import { useAuth } from './use-auth';
 
+export interface OnboardingPreferences {
+  genres?: string[];
+  instruments?: string[];
+  influences?: string[];
+  eventTypes?: string[];
+}
+
+export interface OnboardingLocationDetails {
+  city?: string;
+  region?: string;
+  willingToTravel?: number;
+}
+
+export interface OnboardingNotificationPreferences {
+  email?: boolean;
+  push?: boolean;
+}
+
 export interface OnboardingState {
   onboardingStep: number;
   onboardingComplete: boolean;
-  preferences?: Record<string, unknown>;
-  locationDetails?: Record<string, unknown>;
-  notificationPreferences?: Record<string, unknown>;
+  bio?: string;
+  roles?: string[];
+  preferences?: OnboardingPreferences;
+  locationDetails?: OnboardingLocationDetails;
+  notificationPreferences?: OnboardingNotificationPreferences;
 }
 
 export function useOnboarding() {

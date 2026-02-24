@@ -51,6 +51,8 @@ export interface IConversation {
   };
   lastMessage?: {
     text?: string;
+    attachment?: string;
+    isSentByMe?: boolean;
     createdAt: string;
   };
 }

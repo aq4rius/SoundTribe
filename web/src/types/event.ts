@@ -13,7 +13,9 @@ export type PaymentType = 'fixed' | 'hourly';
 
 export interface IEventPosting {
   _id: string;
-  postedBy: string | { _id: string; username: string };
+  postedBy: string | { _id: string; username: string; email?: string };
+  /** Optional image URL for the event. */
+  image?: string;
   title: string;
   description: string;
   genres: (string | IGenre)[];

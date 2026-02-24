@@ -98,7 +98,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
       return {
         ...p,
         genres: genres.includes(genreId)
-          ? genres.filter((id: string) => id !== genreId)
+          ? genres.filter((id) => id !== genreId)
           : [...genres, genreId],
       };
     });

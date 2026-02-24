@@ -9,6 +9,10 @@ export interface SocialMediaLinks {
   instagram?: string;
   twitter?: string;
   youtube?: string;
+  tiktok?: string;
+  other?: string;
+  /** Allow indexing by arbitrary platform name for dynamic access. */
+  [key: string]: string | undefined;
 }
 
 export interface PortfolioItem {

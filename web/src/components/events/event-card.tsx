@@ -39,7 +39,7 @@ const EventCard: FC<EventCardProps> = ({ event, mode = 'compact' }) => {
     </div>
   );
   if (mode === 'full') return cardContent;
-  return <Link href={`/events/${event._id || event.id}`}>{cardContent}</Link>;
+  return <Link href={`/events/${event._id}`}>{cardContent}</Link>;
 };
 
 export default EventCard;

@@ -41,6 +41,15 @@ export type {
 export type {
   IApplication,
   ApplicationStatus,
+  PopulatedUser,
+  PopulatedArtistProfile,
+  PopulatedEventPosting,
+} from './application';
+
+export {
+  isPopulatedArtistProfile,
+  isPopulatedEventPosting,
+  isPopulatedUser,
 } from './application';
 
 export type {

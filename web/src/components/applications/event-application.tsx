@@ -37,7 +37,8 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
         const profiles = await res.json();
         setArtistProfile(Array.isArray(profiles) && profiles.length > 0 ? profiles[0] : null);
         // Determine if user is event owner
-        const isOwner = user && event.postedBy && (user.email === event.postedBy.email || user.id === event.postedBy._id);
+        const postedBy = event.postedBy;
+        const isOwner = user && postedBy && typeof postedBy === 'object' && (user.email === postedBy.email || user.id === postedBy._id);
         let allApplications: IApplication[] = [];
         let userApp: IApplication | null = null;
         if (isOwner) {
@@ -57,7 +58,10 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
           );
           if (myAppRes.ok) {
             const myApps = await myAppRes.json();
-            userApp = myApps.find((a: IApplication) => a.eventPosting?._id === event._id);
+            userApp = myApps.find((a: IApplication) => {
+              const ep = a.eventPosting;
+              return typeof ep === 'object' ? ep._id === event._id : ep === event._id;
+            });
             setUserApplication(userApp || null);
           }
         }
@@ -72,10 +76,10 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
     }
     if (user) fetchData();
     else setIsLoading(false);
-  }, [event._id, user, event.postedBy?.email, event.postedBy?._id, refreshKey]);
+  }, [event._id, user, event.postedBy, refreshKey]);
 
   // Placeholder logic for event owner and application status
-  const isEventOwner = user && event.postedBy && user.email === event.postedBy.email;
+  const isEventOwner = user && event.postedBy && typeof event.postedBy === 'object' && user.email === event.postedBy.email;
   const canApply = event.status === 'open' && !isEventOwner && !userApplication && artistProfile;
 
   if (isLoading) return <div>Loading...</div>;

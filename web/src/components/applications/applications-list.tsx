@@ -6,6 +6,7 @@ import ErrorAlert from '../common/error-alert';
 import { useUpdateApplicationStatus } from '@/hooks/use-update-application-status';
 import { useAuth } from '@/hooks/use-auth';
 import type { IApplication } from '@/types';
+import { isPopulatedArtistProfile, isPopulatedEventPosting } from '@/types';
 
 interface ApplicationsListProps {
   applications: IApplication[];
@@ -52,8 +53,12 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
             <div>
               <h3 className="text-lg font-semibold text-primary">
                 {isEventOwner
-                  ? application.artistProfile?.stageName || 'Unknown Artist'
-                  : application.eventPosting?.title || 'Unknown Event'}
+                  ? (isPopulatedArtistProfile(application.artistProfile)
+                      ? application.artistProfile.stageName
+                      : 'Unknown Artist')
+                  : (isPopulatedEventPosting(application.eventPosting)
+                      ? application.eventPosting.title
+                      : 'Unknown Event')}
               </h3>
               <p className="text-base-content">
                 Submitted on{' '}

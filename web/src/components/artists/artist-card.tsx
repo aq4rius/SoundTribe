@@ -34,7 +34,7 @@ const ArtistCard: FC<ArtistCardProps> = ({ artist, mode = 'compact' }) => {
     </div>
   );
   if (mode === 'full') return cardContent;
-  return <Link href={`/artists/${artist._id || artist.id}`}>{cardContent}</Link>;
+  return <Link href={`/artists/${artist._id}`}>{cardContent}</Link>;
 };
 
 export default ArtistCard;
