@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ─── Prisma Schema ─────────────────────────────────────────────────────────────
+// Faithfully mirrors every Mongoose model in server/src/models/.
+// Table/column names are snake_case via @map / @@map; Prisma fields are camelCase.
 
 generator client {
   provider = "prisma-client-js"
@@ -10,6 +11,280 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Schema models will be added in Phase 1 when we begin the database migration.
-// They will mirror the Mongoose models in server/src/models/ with proper
-// PostgreSQL types and relations.
+// ─── Enums ─────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  user
+  artist
+  organizer
+  enthusiast
+  collaborator
+  networker
+  admin
+
+  @@map("user_role")
+}
+
+enum ApplicationStatus {
+  pending
+  accepted
+  rejected
+
+  @@map("application_status")
+}
+
+enum NotificationType {
+  application_submitted
+  application_status
+  new_message
+  event_update
+  system
+
+  @@map("notification_type")
+}
+
+enum PaymentType {
+  fixed
+  hourly
+
+  @@map("payment_type")
+}
+
+enum EventStatus {
+  open
+  closed
+  filled
+  cancelled
+  completed
+
+  @@map("event_status")
+}
+
+enum MessageStatus {
+  sent
+  delivered
+  read
+
+  @@map("message_status")
+}
+
+enum EntityType {
+  artist_profile
+  event_posting
+
+  @@map("entity_type")
+}
+
+// ─── Models ────────────────────────────────────────────────────────────────────
+
+model User {
+  id       String @id @default(uuid()) @map("id")
+  username String @unique
+  email    String @unique
+  password String
+
+  firstName String? @map("first_name")
+  lastName  String? @map("last_name")
+  location  String?
+  bio       String?
+
+  roles              UserRole[] @default([user])
+  onboardingStep     Int        @default(0) @map("onboarding_step")
+  onboardingComplete Boolean    @default(false) @map("onboarding_complete")
+  profileImage       String?    @map("profile_image")
+
+  // JSON blobs — match Mongoose sub-documents exactly
+  // preferences: { genres?, instruments?, influences?, eventTypes?, skills? }
+  preferences             Json? @map("preferences")
+  // locationDetails: { city?, region?, willingToTravel? }
+  locationDetails         Json? @map("location_details")
+  // notificationPreferences: { email: boolean, push: boolean }
+  notificationPreferences Json? @map("notification_preferences")
+  // privacySettings: { showEmail: boolean, showLocation: boolean }
+  privacySettings         Json? @map("privacy_settings")
+
+  emailVerified            Boolean   @default(false) @map("email_verified")
+  resetPasswordToken       String?   @map("reset_password_token")
+  resetPasswordExpires     DateTime? @map("reset_password_expires")
+  emailVerificationToken   String?   @map("email_verification_token")
+  emailVerificationExpires DateTime? @map("email_verification_expires")
+
+  // Relations
+  artistProfile ArtistProfile?
+  eventPostings EventPosting[]
+  applications  Application[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model ArtistProfile {
+  id     String @id @default(uuid()) @map("id")
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stageName         String   @map("stage_name")
+  biography         String?
+  instruments       String[]
+  yearsOfExperience Int      @map("years_of_experience")
+  location          String
+  websiteUrl        String?  @map("website_url")
+
+  // socialMediaLinks: { facebook?, instagram?, twitter?, youtube? }
+  socialMediaLinks Json?   @map("social_media_links")
+  profileImage     String? @map("profile_image")
+  // portfolioItems: Array<{ title, description?, mediaUrl, mediaType }>
+  portfolioItems   Json?   @map("portfolio_items")
+  // availability: { isAvailable: boolean, availableDates?: Date[] }
+  availability     Json?   @map("availability")
+
+  ratePerHour Float? @map("rate_per_hour")
+
+  // Relations
+  genres       Genre[]        @relation("ArtistProfileGenres")
+  applications Application[]
+  lineups      EventPosting[] @relation("EventLineup")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("artist_profiles")
+}
+
+model EventPosting {
+  id          String @id @default(uuid()) @map("id")
+  organizerId String @map("organizer_id")
+  organizer   User   @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  title               String
+  description         String
+  requiredInstruments String[]    @map("required_instruments")
+  location            String
+  venue               String?
+  eventDate           DateTime    @map("event_date")
+  duration            Int // hours
+  paymentAmount       Decimal     @map("payment_amount") @db.Decimal(10, 2)
+  paymentType         PaymentType @map("payment_type")
+  requiredExperience  Int         @default(0) @map("required_experience")
+  applicationDeadline DateTime    @map("application_deadline")
+  status              EventStatus @default(open)
+
+  // Relations
+  genres       Genre[]         @relation("EventPostingGenres")
+  applications Application[]
+  lineup       ArtistProfile[] @relation("EventLineup")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([organizerId, status, eventDate])
+  @@map("event_postings")
+}
+
+model Application {
+  id              String        @id @default(uuid()) @map("id")
+  applicantId     String        @map("applicant_id")
+  applicant       User          @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  artistProfileId String        @map("artist_profile_id")
+  artistProfile   ArtistProfile @relation(fields: [artistProfileId], references: [id], onDelete: Cascade)
+  eventPostingId  String        @map("event_posting_id")
+  eventPosting    EventPosting  @relation(fields: [eventPostingId], references: [id], onDelete: Cascade)
+
+  coverLetter  String            @map("cover_letter")
+  status       ApplicationStatus @default(pending)
+  proposedRate Float?            @map("proposed_rate")
+  availability DateTime[] // array of available dates
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([eventPostingId, artistProfileId])
+  @@index([eventPostingId, status])
+  @@index([artistProfileId, status])
+  @@map("applications")
+}
+
+model Conversation {
+  id          String     @id @default(uuid()) @map("id")
+  entity1Id   String     @map("entity1_id")
+  entity1Type EntityType @map("entity1_type")
+  entity2Id   String     @map("entity2_id")
+  entity2Type EntityType @map("entity2_type")
+
+  lastMessageAt DateTime? @map("last_message_at")
+
+  // Relations
+  messages Message[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([entity1Id, entity1Type, entity2Id, entity2Type])
+  @@index([entity1Id, entity2Id])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid()) @map("id")
+  conversationId String       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderEntityId   String     @map("sender_entity_id")
+  senderEntityType EntityType @map("sender_entity_type")
+
+  content        String? // optional if attachment-only
+  attachmentUrl  String?       @map("attachment_url")
+  attachmentType String?       @map("attachment_type")
+  status         MessageStatus @default(sent)
+
+  // reactions: Array<{ emoji, entityId, entityType }>
+  reactions Json?
+
+  isDeleted Boolean @default(false) @map("is_deleted")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model Notification {
+  id          String @id @default(uuid()) @map("id")
+  recipientId String @map("recipient_id")
+  recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  title   String
+  message String
+
+  relatedEventId        String? @map("related_event_id")
+  relatedApplicationId  String? @map("related_application_id")
+  relatedConversationId String? @map("related_conversation_id")
+
+  read Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([recipientId, read, createdAt])
+  @@map("notifications")
+}
+
+model Genre {
+  id          String  @id @default(uuid()) @map("id")
+  name        String  @unique
+  description String?
+
+  artistProfiles ArtistProfile[] @relation("ArtistProfileGenres")
+  eventPostings  EventPosting[]  @relation("EventPostingGenres")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("genres")
+}

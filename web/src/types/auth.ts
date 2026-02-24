@@ -1,15 +1,56 @@
 /**
- * User & auth types — mirrors server/src/models/User.ts
+ * User & auth types.
+ *
+ * CANONICAL types are Prisma-derived (e.g., PrismaAuthUser, PrismaUserFull).
+ * TRANSITIONAL types (I-prefixed) are used by components still talking
+ * to the Express API and will be removed when the Express layer is retired.
  */
 
-export type UserRole =
-  | 'user'
-  | 'artist'
-  | 'organizer'
-  | 'enthusiast'
-  | 'collaborator'
-  | 'networker'
-  | 'admin';
+import type { Prisma } from '@prisma/client';
+
+// Re-export Prisma enum for convenience
+export type { UserRole } from '@prisma/client';
+
+// ─── Prisma-Derived Types ──────────────────────────────────────────────────────
+
+/** Safe user payload for client-side auth — password is NEVER included. */
+export type PrismaAuthUser = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    username: true;
+    email: true;
+    roles: true;
+    onboardingComplete: true;
+    onboardingStep: true;
+    profileImage: true;
+  };
+}>;
+
+/** Full user for profile / settings pages (still excludes password). */
+export type PrismaUserFull = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    username: true;
+    email: true;
+    firstName: true;
+    lastName: true;
+    location: true;
+    bio: true;
+    roles: true;
+    onboardingStep: true;
+    onboardingComplete: true;
+    profileImage: true;
+    preferences: true;
+    locationDetails: true;
+    notificationPreferences: true;
+    privacySettings: true;
+    emailVerified: true;
+    createdAt: true;
+    updatedAt: true;
+  };
+}>;
+
+// ─── JSON sub-document shapes (typed overlays for Json? columns) ───────────────
 
 export interface UserPreferences {
   genres?: string[];
@@ -36,11 +77,11 @@ export interface PrivacySettings {
   showLocation: boolean;
 }
 
+// ─── Transitional Types (Express API shape) ────────────────────────────────────
+
 /**
- * The user object stored client-side after login.
- *
- * Excludes sensitive fields (password, tokens) that are never sent to the
- * client by the Express API.
+ * @deprecated TRANSITIONAL — used by components still calling the Express API.
+ * Will be replaced by PrismaUserFull when API routes move to Next.js.
  */
 export interface IUser {
   _id: string;
@@ -50,7 +91,7 @@ export interface IUser {
   lastName?: string;
   location?: string;
   bio?: string;
-  roles: UserRole[];
+  roles: string[];
   onboardingStep: number;
   onboardingComplete: boolean;
   preferences: UserPreferences;
@@ -62,18 +103,20 @@ export interface IUser {
   updatedAt?: string;
 }
 
-/** Alias used by legacy `useAuth` hook (id instead of _id). */
+/**
+ * @deprecated TRANSITIONAL — Express API auth user (id instead of _id).
+ */
 export interface AuthUser extends Omit<IUser, '_id'> {
   id: string;
 }
 
-/** Shape returned by POST /api/auth/login. */
+/** Shape returned by POST /api/auth/login (Express). */
 export interface LoginResponse {
   token: string;
   user: AuthUser;
 }
 
-/** Shape returned by POST /api/auth/register. */
+/** Shape returned by POST /api/auth/register (Express). */
 export interface RegisterResponse {
   message: string;
   user: AuthUser;

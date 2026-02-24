@@ -1,21 +1,40 @@
 /**
- * Application types — mirrors server/src/models/Application.ts
+ * Application types.
  *
- * An Application is submitted by an artist to an event posting.
- *
- * Relations (applicant, artistProfile, eventPosting) can be either:
- *   - a string (unpopulated MongoDB ObjectId)
- *   - a populated object with key fields
- *
- * Use the type guards below to safely narrow these unions.
+ * CANONICAL: Prisma-derived (PrismaApplication, PrismaApplicationCard).
+ * TRANSITIONAL: IApplication (Express API shape with _id and populated unions).
  */
 
-import type { IArtistProfile } from './artist';
-import type { IEventPosting } from './event';
+import type { Prisma } from '@prisma/client';
 
-export type ApplicationStatus = 'pending' | 'accepted' | 'rejected';
+// Re-export Prisma enum
+export type { ApplicationStatus } from '@prisma/client';
 
-/** Populated user shape — only the fields returned by Mongoose .populate() */
+// ─── Prisma-Derived Types ──────────────────────────────────────────────────────
+
+/** Full application for detail view. */
+export type PrismaApplication = Prisma.ApplicationGetPayload<{
+  include: {
+    applicant: { select: { id: true; username: true; profileImage: true } };
+    artistProfile: { select: { id: true; stageName: true; profileImage: true } };
+    eventPosting: { select: { id: true; title: true; location: true; eventDate: true } };
+  };
+}>;
+
+/** Lightweight for application list cards. */
+export type PrismaApplicationCard = Prisma.ApplicationGetPayload<{
+  select: {
+    id: true;
+    status: true;
+    createdAt: true;
+    artistProfile: { select: { id: true; stageName: true } };
+    eventPosting: { select: { id: true; title: true } };
+  };
+}>;
+
+// ─── Transitional Types (Express API shape) ────────────────────────────────────
+
+/** Populated user shape from Mongoose .populate() */
 export interface PopulatedUser {
   _id: string;
   username: string;
@@ -35,7 +54,7 @@ export interface PopulatedEventPosting {
 }
 
 /**
- * The canonical Application interface.
+ * @deprecated TRANSITIONAL — used by components still calling the Express API.
  * Relations are unions of string | populated object.
  */
 export interface IApplication {
@@ -44,7 +63,7 @@ export interface IApplication {
   artistProfile: string | PopulatedArtistProfile;
   eventPosting: string | PopulatedEventPosting;
   coverLetter: string;
-  status: ApplicationStatus;
+  status: string;
   proposedRate?: number;
   availability: string[];
   createdAt: string;

@@ -16,7 +16,18 @@ import { useSendMessage } from '@/hooks/use-send-message';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import type { IConversation, IMessage, MessageReaction, ChatEntity } from '@/types';
+import type {
+  IConversation,
+  IMessage,
+  MessageReaction,
+  ChatEntity,
+  SocketNewMessage,
+  SocketMessagesStatusUpdate,
+  SocketMessageStatusChange,
+  SocketMessageReaction,
+  SocketTypingEvent,
+  UnreadCount,
+} from '@/types';
 import { env } from '@/lib/env';
 
 const SOCKET_URL = env.NEXT_PUBLIC_SOCKET_URL;
@@ -153,7 +164,7 @@ const Chat = () => {
     // Emit mark-delivered for this sender entity (to mark all messages sent to this entity as delivered)
     socket.emit('mark-delivered', { entityId: selectedSender._id, entityType: selectedSender.type });
 
-    socket.on('new-message', (msg: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('new-message', (msg: SocketNewMessage) => {
       const isCurrentConversation =
         selectedConversation &&
         ((msg.sender.id === selectedSender._id &&
@@ -188,7 +199,7 @@ const Chat = () => {
         queryKey: ['unread-counts', selectedSender._id, selectedSender.type],
       });
     });
-    socket.on('messages-delivered', (data: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('messages-delivered', (data: SocketMessagesStatusUpdate) => {
       // Always update conversations and messages for sidebar and chat
       queryClient.invalidateQueries({
         queryKey: ['conversations', selectedSender._id, selectedSender.type],
@@ -205,7 +216,7 @@ const Chat = () => {
         });
       }
     });
-    socket.on('messages-read', (data: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('messages-read', (data: SocketMessagesStatusUpdate) => {
       // Always update conversations and messages for sidebar and chat
       queryClient.invalidateQueries({
         queryKey: ['conversations', selectedSender._id, selectedSender.type],
@@ -224,7 +235,7 @@ const Chat = () => {
     });
 
     // Handle message status updates
-    socket.on('message-status-update', (data: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('message-status-update', (data: SocketMessageStatusChange) => {
       if (selectedConversation) {
         queryClient.invalidateQueries({
           queryKey: [
@@ -239,7 +250,7 @@ const Chat = () => {
     });
 
     // Handle messages read notification
-    socket.on('messages-read', (data: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('messages-read', (data: SocketMessagesStatusUpdate) => {
       if (selectedConversation && data.conversationId === selectedConversation.entity._id) {
         queryClient.invalidateQueries({
           queryKey: [
@@ -264,7 +275,7 @@ const Chat = () => {
     });
 
     // Handle reaction events
-    socket.on('message-reaction', (data: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('message-reaction', (data: SocketMessageReaction) => {
       if (
         selectedConversation &&
         ((data.senderId === selectedSender._id &&
@@ -285,14 +296,14 @@ const Chat = () => {
     });
 
     // Handle typing events
-    socket.on('user-typing', (data: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('user-typing', (data: SocketTypingEvent) => {
       if (selectedConversation && data.senderId === selectedConversation.entity._id) {
         setOtherUserTyping(true);
         setTimeout(() => setOtherUserTyping(false), 3000);
       }
     });
 
-    socket.on('user-stopped-typing', (data: any) => { // TODO(phase-1): replace with Prisma type
+    socket.on('user-stopped-typing', (data: SocketTypingEvent) => {
       if (selectedConversation && data.senderId === selectedConversation.entity._id) {
         setOtherUserTyping(false);
       }
@@ -432,8 +443,8 @@ const Chat = () => {
               // Get unread count for this conversation
               const unreadCount =
                 unreadCounts.find(
-                  (uc: any) => // TODO(phase-1): replace with Prisma type
-                    uc._id.senderId === conv.entity._id && uc._id.senderType === conv.entity.type,
+                  (uc: UnreadCount) =>
+                    uc.receiverId === conv.entity._id && uc.receiverType === conv.entity.type,
                 )?.count || 0;
 
               return (
