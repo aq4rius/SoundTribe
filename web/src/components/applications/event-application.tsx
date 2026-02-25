@@ -18,6 +18,18 @@ interface EventApplicationProps {
   status: string;
 }
 
+interface ApplicationData {
+  id: string;
+  status: string;
+  coverLetter: string;
+  proposedRate: number | null;
+  createdAt: Date;
+  artistProfile?: { id: string; stageName: string };
+  applicant?: unknown;
+  eventPosting?: { id: string };
+  eventPostingId?: string;
+}
+
 const EventApplication: React.FC<EventApplicationProps> = ({ eventId, organizerId, status }) => {
   const { data: session } = useSession();
   const user = session?.user;
@@ -58,14 +70,13 @@ const EventApplication: React.FC<EventApplicationProps> = ({ eventId, organizerI
           const appsResult = await getApplicationsForEventAction(eventId);
           if (appsResult.success) {
             setApplications(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              appsResult.data.map((a: any) => ({
+              appsResult.data.map((a: ApplicationData) => ({
                 id: a.id,
                 status: a.status,
                 coverLetter: a.coverLetter,
                 proposedRate: a.proposedRate,
                 createdAt: a.createdAt,
-                artistProfile: a.artistProfile,
+                artistProfile: a.artistProfile ?? { id: '', stageName: 'Unknown' },
                 applicant: a.applicant,
               })),
             );
@@ -73,9 +84,8 @@ const EventApplication: React.FC<EventApplicationProps> = ({ eventId, organizerI
         } else {
           const myAppsResult = await getMyApplicationsAction();
           if (myAppsResult.success) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const myApp = myAppsResult.data.find(
-              (a: any) => a.eventPosting?.id === eventId || a.eventPostingId === eventId,
+              (a: ApplicationData) => a.eventPosting?.id === eventId || a.eventPostingId === eventId,
             );
             if (myApp) {
               setUserApplication({

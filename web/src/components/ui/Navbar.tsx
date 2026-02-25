@@ -16,7 +16,7 @@ export default function Navbar() {
           SoundTribe
         </span>
       </Link>
-      <button className="md:hidden ml-auto text-white" onClick={() => setMenuOpen((v) => !v)}>
+      <button className="md:hidden ml-auto text-white" onClick={() => setMenuOpen((v) => !v)} aria-label="Toggle navigation menu">
         <span className="material-icons">menu</span>
       </button>
       <div
