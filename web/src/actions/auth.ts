@@ -9,19 +9,15 @@
 
 import { AuthError } from 'next-auth';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { cache } from 'react';
 
 import { signIn, signOut, auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { loginSchema, registerSchema } from '@/validations/auth';
+import type { ActionResult } from '@/types/actions';
 
-// ─── Result Type ───────────────────────────────────────────────────────────────
-
-export interface ActionResult<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+export type { ActionResult };
 
 // ─── Register ──────────────────────────────────────────────────────────────────
 
@@ -172,3 +168,139 @@ export const getCurrentUser = cache(async () => {
 
   return user;
 });
+
+// ─── Forgot Password ───────────────────────────────────────────────────────────
+
+export async function forgotPasswordAction(
+  email: string,
+): Promise<ActionResult<{ message: string }>> {
+  if (!email || typeof email !== 'string') {
+    return { success: false, error: 'Email is required' };
+  }
+
+  const user = await db.user.findUnique({ where: { email } });
+  // Always return success to prevent email enumeration
+  if (!user) {
+    return { success: true, data: { message: 'If an account exists, a reset link has been sent.' } };
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+    },
+  });
+
+  // TODO(phase-4): Send email with reset link using a mailer service
+  // The reset link would be: ${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}
+  console.log(`[DEV] Password reset token for ${email}: ${token}`);
+
+  return { success: true, data: { message: 'If an account exists, a reset link has been sent.' } };
+}
+
+// ─── Reset Password ────────────────────────────────────────────────────────────
+
+export async function resetPasswordAction(
+  token: string,
+  newPassword: string,
+): Promise<ActionResult<{ message: string }>> {
+  if (!token || !newPassword) {
+    return { success: false, error: 'Token and new password are required' };
+  }
+  if (newPassword.length < 8) {
+    return { success: false, error: 'Password must be at least 8 characters' };
+  }
+
+  const user = await db.user.findFirst({
+    where: {
+      resetPasswordToken: token,
+      resetPasswordExpires: { gt: new Date() },
+    },
+  });
+
+  if (!user) {
+    return { success: false, error: 'Invalid or expired reset token' };
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
+
+  return { success: true, data: { message: 'Password has been reset successfully' } };
+}
+
+// ─── Verify Email ──────────────────────────────────────────────────────────────
+
+export async function verifyEmailAction(
+  token: string,
+): Promise<ActionResult<{ message: string }>> {
+  if (!token) {
+    return { success: false, error: 'Verification token is required' };
+  }
+
+  const user = await db.user.findFirst({
+    where: {
+      emailVerificationToken: token,
+      emailVerificationExpires: { gt: new Date() },
+    },
+  });
+
+  if (!user) {
+    return { success: false, error: 'Invalid or expired verification token' };
+  }
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
+    },
+  });
+
+  return { success: true, data: { message: 'Email verified successfully' } };
+}
+
+// ─── Resend Verification Email ─────────────────────────────────────────────────
+
+export async function resendVerificationAction(
+  email: string,
+): Promise<ActionResult<{ message: string }>> {
+  if (!email || typeof email !== 'string') {
+    return { success: false, error: 'Email is required' };
+  }
+
+  const user = await db.user.findUnique({ where: { email } });
+  // Always return success to prevent email enumeration
+  if (!user || user.emailVerified) {
+    return { success: true, data: { message: 'If applicable, a verification email has been sent.' } };
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerificationToken: token,
+      emailVerificationExpires: expires,
+    },
+  });
+
+  // TODO(phase-4): Send verification email using a mailer service
+  // The verification link: ${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}
+  console.log(`[DEV] Email verification token for ${email}: ${token}`);
+
+  return { success: true, data: { message: 'If applicable, a verification email has been sent.' } };
+}
