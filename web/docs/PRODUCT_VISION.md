@@ -1,6 +1,6 @@
 # SoundTribe — Product Vision
 
-> **Living document.** Last updated: 2025-07-25.
+> **Living document.** Last updated: 2025-07-27.
 > This is the canonical product reference. Every feature decision, architectural choice, and UX trade-off should be tested against this document.
 
 ---
@@ -12,6 +12,8 @@ SoundTribe is the platform where the **music industry** organizes itself — acr
 For **organizers**, SoundTribe is the only place they need to go to find, vet, and book artists for their events — with structured applications, direct messaging, and a searchable talent pool. For **artists**, SoundTribe is their professional home: a portfolio, a discovery channel, a direct line to the people putting on the events they want to play, and a network of fellow musicians to collaborate with.
 
 The long-term bet: SoundTribe becomes the LinkedIn of the music event world — a social-professional network where your reputation, connections, and activity history are the currency.
+
+> **Technical Foundation (as of Phase 10 completion):** The entire platform runs as a single Next.js 15 application — Server Components, Server Actions, Prisma 6 + PostgreSQL (Neon), NextAuth v5, Ably real-time, and Cloudinary file handling. Zero legacy dependencies remain. The codebase is fully type-safe, tested (58 unit tests + Playwright E2E), and deployed via Vercel with GitHub Actions CI/CD. See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full technical reference.
 
 ---
 

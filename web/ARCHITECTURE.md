@@ -1,6 +1,6 @@
 # SoundTribe — Architecture Decision Document
 
-> **Living document.** Last updated: 2025-07-26.
+> **Living document.** Last updated: 2025-07-27.
 > Read [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) first for product context.
 > All architectural decisions exist to serve the product vision — when they conflict, the product vision wins.
 
@@ -27,7 +27,7 @@ Before any decisions, it's critical to document the **real** current state — n
 - ✅ **Ably** real-time messaging + notifications (replaces Socket.IO)
 - ✅ Decomposed chat UI: conversation-list, message-thread, message-bubble, message-input, entity-selector
 - ✅ Real-time notification bell (replaces 30s polling)
-- ✅ Express server and legacy client archived to `_legacy/`
+- ✅ Express server and legacy client deleted (previously archived to `_legacy/`, now removed)
 
 **Completed (Phases 5–6: UX Polish & Performance):**
 - ✅ Chat file uploads via Cloudinary (uploadAttachmentAction server action)
@@ -62,7 +62,22 @@ Before any decisions, it's critical to document the **real** current state — n
 - ✅ Playwright E2E config + auth flow spec (5 tests) + core loop spec (7 tests)
 - ✅ @playwright/test installed
 
-**Still pending:**
+**Completed (Phase 10: CI/CD, Deployment & Final Cleanup):**
+- ✅ GitHub Actions CI pipeline (type-check → lint → test → build)
+- ✅ GitHub Actions Deploy pipeline (Vercel + Prisma migrate)
+- ✅ `_legacy/` directory deleted permanently
+- ✅ Root repo cleaned: only `.git/`, `.github/`, `.gitignore`, `README.md`, `web/` remain
+- ✅ Root `.gitignore` rewritten for Next.js-only repo
+- ✅ Root `README.md` replaced with minimal redirect to `web/README.md`
+- ✅ `web/README.md` rewritten from scratch (tech stack, architecture, setup, scripts, folder structure, testing)
+- ✅ `web/docs/DEPLOYMENT.md` created (Neon, Cloudinary, Ably, Vercel, GitHub Secrets, smoke test)
+- ✅ `web/docs/ENVIRONMENT.md` created (8 variables documented with sources)
+- ✅ All ESLint warnings resolved (zero errors)
+- ✅ All 58 unit tests passing
+- ✅ Production build clean (23 routes)
+- ✅ Grep checks clean: zero `: any`, zero `localhost:5000`, zero `_legacy`, zero `socket.io`/`mongodb`
+
+**Still pending (post-MVP):**
 - ❌ Email delivery for password reset / verification tokens
 
 `web/` currently uses:
@@ -78,15 +93,11 @@ Before any decisions, it's critical to document the **real** current state — n
 - ✅ **Cloudinary** for file uploads (chat attachments)
 - ✅ **next/image** for all user-facing images
 
-### What `_legacy/server/` is
+### What was `_legacy/` (now deleted)
 
-The original **Express.js + TypeScript + MongoDB (Mongoose)** API, previously hosted on **Render**. Archived in `_legacy/` after Phase 4. It handled JWT auth, CRUD, Socket.IO messaging, Cloudinary uploads, and rate limiting. **No longer deployed or required.**
+The original **Express.js + MongoDB** API server and **React 18 + Vite** client were archived to `_legacy/` after Phase 4, then permanently deleted in Phase 10. They are no longer in the repository.
 
-### What `_legacy/client/` is
-
-The original **React 18 + Vite + TanStack Query** frontend. Archived in `_legacy/` after Phase 4. **No longer deployed or required.**
-
-### The Actual Architecture (as-is, post Phase 4)
+### The Actual Architecture (as-is, final)
 
 ```
 Browser
@@ -100,7 +111,7 @@ Browser
         └── Ably (real-time messaging, notifications, typing indicators)
 ```
 
-The Express server and legacy client have been archived to `_legacy/`. All traffic flows through Next.js.
+The Express server and legacy client have been permanently deleted. All traffic flows through Next.js.
 
 ---
 
@@ -757,18 +768,38 @@ Each phase produces a **shippable, working increment**. No phase leaves the app 
 
 ---
 
-### Phase 10 — Deployment & CI/CD
-**Goal:** One-command deploy. CI/CD pipeline.
-
-Files to **create:**
-- `.github/workflows/ci.yml` — Lint + type-check + test on every PR
-- `web/docs/DEPLOYMENT.md` — Vercel + Neon + Cloudinary + Ably setup guide
-
-> Note: Express decommission completed in Phase 4. `server/` and `client/` already archived to `_legacy/`.
+### Phase 10 — Deployment & CI/CD ✅
+**Goal:** One-command deploy. CI/CD pipeline. Final cleanup.
+**Completed:**
+- GitHub Actions CI pipeline (`.github/workflows/ci.yml`): type-check → lint → test → build
+- GitHub Actions Deploy pipeline (`.github/workflows/deploy.yml`): Vercel + Prisma migrate
+- `_legacy/` directory permanently deleted
+- Root repo cleaned to final state: `.git/`, `.github/`, `.gitignore`, `README.md`, `web/`
+- All legacy root config files removed (`.eslintignore`, `.prettierignore`, `.prettierrc`, `commitlint.config.js`, `package.json`, `.husky/`, etc.)
+- Root `.gitignore` rewritten for Next.js-only repo
+- Root `README.md` replaced with minimal redirect
+- `web/README.md` rewritten from scratch
+- `web/docs/DEPLOYMENT.md` — complete production deployment guide
+- `web/docs/ENVIRONMENT.md` — all 8 environment variables documented
+- All ESLint warnings resolved (zero errors, zero warnings)
+- Final quality pass: type-check ✅, lint ✅, 58 tests ✅, build ✅ (23 routes)
+- Grep checks clean: zero `: any`, zero `localhost:5000`, zero `_legacy`, zero `socket.io`/`mongodb`
 
 ---
 
-### Phase 11 — Monetization Infrastructure
+### Migration Complete 🎉
+
+All 10 phases of the Express → Next.js migration are complete. The codebase is:
+- **Fully self-contained** — zero dependency on Express, MongoDB, Socket.IO, Zustand, Axios, or TanStack Query
+- **Type-safe** — zero `: any` annotations, Prisma-derived types throughout
+- **Tested** — 58 unit tests, Storybook stories for 8 components, Playwright E2E specs
+- **CI/CD ready** — GitHub Actions for quality gates + Vercel deployment
+- **Documented** — Architecture, product vision, deployment, and environment docs
+- **Clean** — no legacy code, no dead imports, no unused variables
+
+---
+
+### Phase 11 — Monetization Infrastructure (Future)
 **Goal:** Implement Organizer Subscription (Model A) + Featured Listings (Model D).
 **Timing:** Per [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) §6, not before 6 months post-launch.
 
