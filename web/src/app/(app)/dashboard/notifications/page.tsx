@@ -101,8 +101,8 @@ export default function NotificationsPage() {
 
 function NotificationPreferencesSection() {
   const { data: session } = useSession();
-  // TRANSITIONAL: cast to any — session.user has limited fields; Phase 3 will fetch full profile from DB
-  const user = session?.user as any;
+  // TODO(phase-3): replace `as any` with a proper user profile type once full profile is fetched via Server Action
+  const user = session?.user as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
   const token: string | undefined = undefined;
   const [email, setEmail] = useState(user?.notificationPreferences?.email ?? true);

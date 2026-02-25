@@ -60,6 +60,8 @@ export async function registerAction(
   const hashedPassword = await bcrypt.hash(password, 12);
 
   // 5. Create user
+  // NOTE: Initial role is 'user' — actual role selection (artist, organizer, etc.)
+  // happens in onboarding Step 1. This is just a placeholder default.
   await db.user.create({
     data: {
       username,

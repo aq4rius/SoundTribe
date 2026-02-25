@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 
 export default function AccountSettingsPage() {
   const { data: session } = useSession();
-  // TRANSITIONAL: cast to any — session.user has limited fields; Phase 3 will fetch full profile from DB
-  const user = session?.user as any;
+  // TODO(phase-3): replace `as any` with a proper user profile type once full profile is fetched via Server Action
+  const user = session?.user as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
   const token: string | undefined = undefined;
   const router = useRouter();
@@ -24,14 +24,15 @@ export default function AccountSettingsPage() {
 
   if (!user) return <div className="p-8">Not logged in.</div>;
 
+  // TODO(phase-3): replace `any` with a proper AccountSettingsForm type once full profile is fetched via Server Action
   const handleChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev: any) => ({ ...prev, [field]: value }));
+    setForm((prev: any) => ({ ...prev, [field]: value })); // eslint-disable-line @typescript-eslint/no-explicit-any
   };
   const handlePrefChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev: any) => ({ ...prev, preferences: { ...prev.preferences, [field]: value } }));
+    setForm((prev: any) => ({ ...prev, preferences: { ...prev.preferences, [field]: value } })); // eslint-disable-line @typescript-eslint/no-explicit-any
   };
   const handleLocChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev: any) => ({
+    setForm((prev: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
       ...prev,
       locationDetails: { ...prev.locationDetails, [field]: value },
     }));

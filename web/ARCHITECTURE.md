@@ -1,6 +1,6 @@
 # SoundTribe — Architecture Decision Document
 
-> **Living document.** Last updated: 2026-02-24.
+> **Living document.** Last updated: 2026-02-25.
 > Read [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) first for product context.
 > All architectural decisions exist to serve the product vision — when they conflict, the product vision wins.
 
@@ -12,17 +12,27 @@ Before any decisions, it's critical to document the **real** current state — n
 
 ### What `web/` actually is today
 
-`web/` is a **Next.js 15 (App Router) application that acts as a React SPA**. It does NOT use:
-- ❌ Prisma or any ORM
-- ❌ NextAuth or any server-side auth
-- ❌ Server Actions
-- ❌ PostgreSQL
+`web/` is a **Next.js 15 (App Router) application** in a transitional state between client-side SPA and full-stack Next.js.
 
-It DOES use:
-- ✅ Next.js 15 with Turbopack (client-rendered pages; `'use client'` on nearly every page)
-- ✅ The legacy **Express.js + MongoDB API** (`server/`) as its backend — via Axios at `NEXT_PUBLIC_API_URL`
-- ✅ **Zustand** for auth state (JWT token in localStorage)
-- ✅ **TanStack Query v5** for all data fetching and caching
+**Completed (Phases 0–2):**
+- ✅ Prisma 6 + PostgreSQL (Neon) as the database layer
+- ✅ NextAuth v5 with Credentials provider, JWT strategy, httpOnly cookie sessions
+- ✅ Middleware-level route protection (auth.config.ts + middleware.ts)
+- ✅ Server Actions for auth flows (login, register, logout)
+- ✅ Zod-validated environment variables (lib/env.ts)
+- ✅ TypeScript types for all domain models (types/)
+
+**Still in transition (waiting for Phase 3):**
+- ❌ TanStack Query hooks are disabled (`enabled: false`) — all data still comes from Express API
+- ❌ Server Components not yet used for data fetching
+- ❌ Express API still required for CRUD operations
+
+`web/` currently uses:
+- ✅ Next.js 15 with Turbopack
+- ✅ **NextAuth v5** (httpOnly cookie sessions, JWT strategy, Prisma adapter)
+- ✅ **Prisma 6** → PostgreSQL (Neon serverless)
+- ✅ The legacy **Express.js + MongoDB API** (`server/`) for data CRUD — via fetch at `NEXT_PUBLIC_API_URL`
+- ✅ **TanStack Query v5** for data fetching (all hooks disabled pending Phase 3 migration)
 - ✅ **Socket.IO client** for real-time messaging
 - ✅ **shadcn/ui** + **Radix UI** + **Tailwind CSS v4** for UI
 - ✅ **React Hook Form** + **Zod** for forms
@@ -42,15 +52,18 @@ A fully working **Express.js + TypeScript + MongoDB (Mongoose)** API hosted on *
 
 The original **React 18 + Vite + TanStack Query** frontend. The `web/` directory is a port of this to Next.js. `client/` is fully superseded — it only exists for reference.
 
-### The Actual Architecture (as-is)
+### The Actual Architecture (as-is, post Phase 2)
 
 ```
 Browser
-  └── web/ (Next.js 15 — client-side SPA)
-        ├── Zustand (auth state / localStorage JWT)
-        ├── TanStack Query (data fetching)
-        ├── Socket.IO client (real-time chat)
-        └── Axios ──────────────────────────────► server/ (Express.js on Render)
+  └── web/ (Next.js 15 — transitional)
+        ├── NextAuth v5 (httpOnly cookie JWT sessions)
+        ├── Prisma 6 → PostgreSQL (Neon) — auth only, CRUD pending Phase 3
+        ├── Server Actions (auth flows: login, register, logout)
+        ├── Middleware (route protection via auth.config.ts)
+        ├── TanStack Query (disabled — all hooks have enabled: false)
+        ├── Socket.IO client (real-time chat — still connects to Express)
+        └── fetch() ──────────────────► server/ (Express.js on Render)
                                                      ├── MongoDB Atlas
                                                      ├── Cloudinary (images)
                                                      └── Socket.IO server
@@ -92,16 +105,16 @@ Browser
 | **Framework** | Next.js 15.3.2 | Next.js 15 (App Router) | Already in place |
 | **Language** | TypeScript 5 (strict) | TypeScript 5 (strict) | Already in place |
 | **Rendering** | Client-side SPA (`'use client'` everywhere) | Server Components by default, Client Components only for interactivity | Phase 1–3 |
-| **Auth** | Zustand + localStorage JWT | **NextAuth v5** (httpOnly cookie sessions, Credentials + future OAuth) | Phase 1 |
-| **Database** | MongoDB Atlas (via Express) | **PostgreSQL (Neon serverless)** via **Prisma 6** | Phase 1 |
-| **Data fetching** | TanStack Query + Axios → Express API | **Server Components** (reads) + **Server Actions** (mutations) | Phase 2–3 |
+| **Auth** | ~~Zustand + localStorage JWT~~ | **NextAuth v5** (httpOnly cookie sessions, Credentials + future OAuth) | ✅ Phase 2 |
+| **Database** | ~~MongoDB Atlas (via Express)~~ | **PostgreSQL (Neon serverless)** via **Prisma 6** | ✅ Phase 1 |
+| **Data fetching** | TanStack Query + fetch → Express API | **Server Components** (reads) + **Server Actions** (mutations) | Phase 3 |
 | **Real-time** | Socket.IO client → Express Socket.IO server | **Ably** (`@ably/react` hooks, server-side publish) | Phase 4 |
 | **File uploads** | Express + Multer + Cloudinary | **Cloudinary** (presigned upload URLs via Server Action) | Phase 2 |
 | **UI** | shadcn/ui + Radix UI + Tailwind CSS v4 | Same — no change | Already in place |
 | **Animations** | Framer Motion | Same — no change | Already in place |
 | **Forms** | React Hook Form + Zod | Same — no change | Already in place |
 | **Component dev** | Storybook 8 | Same — no change | Already in place |
-| **State** | Zustand (auth) + TanStack Query (server) | Zustand removed; auth via NextAuth session; server state via RSC | Phase 1–3 |
+| **State** | ~~Zustand (auth)~~ + TanStack Query (server) | Auth via NextAuth session; server state via RSC | ✅ Phase 2 (auth) / Phase 3 (data) |
 
 ### Transitional Dependencies (removed after migration)
 
@@ -111,7 +124,7 @@ These packages are currently in `package.json` and will be removed domain-by-dom
 |---|---|---|
 | `axios` | HTTP client for Express API | Phase 3 |
 | `@tanstack/react-query` | Client-side data fetching/caching | Phase 3 |
-| `zustand` | Client-side auth state | Phase 1 |
+| `zustand` | Client-side auth state | ✅ Removed in Phase 2 |
 | `socket.io-client` | Real-time messaging via Express | Phase 4 |
 | `browser-image-compression` | Client-side image compression before upload | Phase 2 (replace with server-side) |
 
@@ -279,14 +292,16 @@ Accuracy-audited against actual source files (not guessed).
 
 | Feature | Status | File | Notes |
 |---|---|---|---|
-| Register (form + API call) | ✅ Working | `auth/register/` + `components/auth/RegisterForm.tsx` | |
-| Login (form + JWT storage) | ✅ Working | `auth/login/` + `components/auth/LoginForm.tsx` | |
-| Logout (clear Zustand + localStorage) | ✅ Working | Navbar component | |
-| Forgot password flow | 🟡 UI only | `auth/forgot-password/` | Page exists, unclear if backend endpoint wired |
+| Register (form + server action) | ✅ Working | `actions/auth.ts` + `components/auth/register-form.tsx` | NextAuth Credentials provider, bcrypt, Prisma |
+| Login (form + httpOnly cookie) | ✅ Working | `actions/auth.ts` + `components/auth/login-form.tsx` | JWT in httpOnly cookie, no localStorage |
+| Logout (server action) | ✅ Working | `actions/auth.ts` + Navbar | `signOut()` from next-auth/react |
+| Middleware route protection | ✅ Working | `middleware.ts` + `lib/auth.config.ts` | Edge-compatible, protects all (app) routes |
+| Session management | ✅ Working | `lib/auth.ts` | JWT strategy, 30-day maxAge, SessionProvider in providers.tsx |
+| Type-safe session | ✅ Working | `types/next-auth.d.ts` | Module augmentation: id, roles, onboardingComplete, onboardingStep, username, profileImage |
+| Forgot password flow | 🟡 UI only | `auth/forgot-password/` | Page exists, backend endpoint not wired |
 | Reset password flow | 🟡 UI only | `auth/reset-password/` | Same |
 | Email verification | 🟡 UI only | `auth/verify-email/` | Backend model has the fields; frontend flow unclear |
-| Auth guard (redirect if not logged in) | 🟡 Partial | Per-page `useEffect` redirects | No middleware-level protection |
-| Token refresh / expiry handling | 🔴 Missing | — | JWT expires, no refresh mechanism |
+| Token refresh / expiry handling | ✅ Handled | NextAuth manages cookie refresh automatically | No manual refresh needed |
 
 ### Onboarding
 
@@ -483,67 +498,63 @@ _Fix:_ Add `aria-label` to all icon-only interactive elements.
 
 Each phase produces a **shippable, working increment**. No phase leaves the app in a broken state.
 
-### Phase 0 — Cleanup & Foundation
-**Goal:** Eliminate silent failures, enforce types, clean the structure. Nothing user-visible changes.
+### Phase 0 — Scaffold ✅
+**Goal:** Next.js 15 App Router shell with route stubs, layouts, and shared UI (shadcn/ui).
 
-Files to **create:**
-- `src/lib/env.ts` — Zod-validated env (NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SOCKET_URL)
-- `src/lib/api.ts` — Centralized Axios instance with 401 interceptor
-- `src/lib/socket.ts` — Socket.IO singleton
-- `src/types/index.ts`, `api.ts`, `auth.ts`, `artist.ts`, `event.ts`, `application.ts`, `message.ts`, `notification.ts`
-- `src/app/not-found.tsx` — Global 404
-- `src/app/error.tsx` — Global error boundary
-- `.env.example` — Document all required env vars
+**Delivered:**
+- `(app)` and `(auth)` route groups with layout separation
+- Theme switcher (dark / light / system)
+- All route stubs matching the original `client/` SPA
+- shadcn/ui component library bootstrapped (Button, Card, Dialog, Input, etc.)
+- Tailwind CSS v4 configured
 
-Files to **modify:**
-- `package.json` — Add `"test": "vitest"` script, remove `@types/axios`
-- `next.config.ts` — Add security headers, proper image domains
-- `src/app/layout.tsx` — Fix metadata (title, description, OG)
-- All `any` types in hooks and pages → replace with types from `src/types/`
-
-Files to **delete:**
-- `src/stories/Button.tsx`, `Header.tsx`, `Page.tsx`, + their stories (CRA placeholders)
-
-**Commits:** `chore: add env validation and centralized API client`, `chore: add TypeScript types for all domain models`, `chore: remove CRA storybook placeholders`
+**Commits:** `9fa3f01`, `20a598b`
 
 ---
 
-### Phase 1 — Auth & Security
-**Goal:** Close auth security gaps; properly protect routes.
-**Product Vision link:** Required before any monetization feature.
+### Phase 1 — Database Migration ✅
+**Goal:** PostgreSQL schema via Prisma, seeded genre list, Neon serverless adapter.
 
-Files to **create:**
-- `src/middleware.ts` — Route protection: redirect to `/auth/login` if no token for `(app)` routes
-- `src/app/(auth)/layout.tsx` — Minimal centered layout for auth pages
-- `src/app/(app)/layout.tsx` — App shell layout (Navbar only for authenticated routes)
-- `src/app/auth/*/loading.tsx` — Loading states for auth pages
+**Delivered:**
+- Prisma schema (`prisma/schema.prisma`) with all 10 models: User, ArtistProfile, Event, Application, Message, Conversation, Notification, Genre, SocialLinks, EventDateRange
+- Initial migration (`0001_init`)
+- Seed script with 15 genre-neutral genres (Rock, Pop, Hip Hop, Jazz, Classical, Country, R&B, Electronic, Folk, Blues, Metal, Reggae, Latin, Soul, Punk)
+- TypeScript types generated from Prisma (`types/prisma.ts`)
 
-Files to **modify:**
-- `src/lib/api.ts` — Add 401 interceptor (`clearAuth()` + redirect)
-- `src/store/auth-store.ts` — Persisted via `zustand/middleware` `persist` with `localStorage` strategy (already in use), plus optional migration to `sessionStorage` (more secure)
-- `src/app/layout.tsx` — Remove Navbar/Footer from root layout (move to `(app)/layout.tsx`)
-- `src/app/dashboard/account-settings/page.tsx` — Wire forgot-password and email verification flows
-
-**Commits:** `feat: add middleware route protection`, `fix: add 401 interceptor and auth redirect`, `refactor: separate auth and app layouts`
+**Commits:** `3964553`
 
 ---
 
-### Phase 2 — Type Safety & Data Layer
-**Goal:** Zero `any` types; all API responses properly typed; all TanStack Query hooks typed.
+### Phase 2 — Auth Migration ✅
+**Goal:** Replace Zustand + localStorage JWT with NextAuth v5 (httpOnly cookie sessions).
 
-Files to **modify:**
-- All `hooks/use-*.ts` — Add generics to `useQuery<T>` and `useMutation<T>`
-- `services/*.ts` — Return typed responses using `types/` interfaces
-- `app/dashboard/page.tsx` — Replace `useState<any[]>` with typed state
-- `components/` all — Replace `any` prop types with proper interfaces
+**Delivered:**
+- NextAuth v5 (beta.30) with Credentials provider + PrismaAdapter
+- JWT strategy with 30-day maxAge, httpOnly cookies
+- Edge-compatible split: `auth.config.ts` (middleware) + `auth.ts` (full config with Prisma/bcrypt)
+- Server Actions for register / login / logout (`actions/auth.ts`)
+- `SessionProvider` in root layout for client-side `useSession()`
+- Middleware route protection for all `(app)` routes
+- Module-augmented session type: `{ id, username, roles, onboardingComplete, onboardingStep, profileImage }`
+- Zustand auth store removed; all TanStack Query hooks disabled with `enabled: false` + `TODO(phase-3)` comments
+- Dashboard pages use `session?.user as any` for extended profile fields — flagged with `TODO(phase-3)`
 
-**Commits:** `refactor: type all TanStack Query hooks`, `refactor: type all service functions`
+**Commits:** `c92ef43`
+
+#### Phase 2 Decisions
+
+| Decision | Rationale |
+|---|---|
+| **JWT strategy** (not database sessions) | Simpler for beta; no extra DB round-trip per request. Can switch to database strategy later by changing one line in `auth.ts`. |
+| **Split config** (`auth.config.ts` + `auth.ts`) | `auth.config.ts` is edge-compatible (no Node.js deps) and used by `middleware.ts`. `auth.ts` imports Prisma + bcrypt and runs only in Node.js runtime. |
+| **Disabled TanStack Query hooks** | All hooks still reference `token` from the removed Zustand store. Rather than rewrite them now, we set `enabled: false` and will replace them with Server Actions in Phase 3. |
+| **`as any` casts on dashboard pages** | Dashboard pages read extended profile fields (firstName, lastName, bio, etc.) from `session?.user`. These are not in the NextAuth session type yet. Flagged with `TODO(phase-3)` — will be replaced when dashboard pages fetch profile data via Server Components. |
+| **PrismaAdapter `as any`** | NextAuth v5 beta.30 `@auth/prisma-adapter` types lag behind Prisma 6. The cast is harmless at runtime. Tracked as `TODO(phase-3)`. |
 
 ---
 
-### Phase 3 — UX Polish (Loading, Error, Empty States)
-**Goal:** No blank screens, no crashes reaching the user.
-**Product Vision link:** P6 (Mobile First-Class Citizen) — loading states are critical on slow connections.
+### Phase 3 — Server Actions & Data Layer (next up)
+**Goal:** Replace all TanStack Query hooks + Axios calls with Server Actions and Server Components. Re-enable data fetching. Zero `any` types.
 
 Files to **create:**
 - `src/app/(app)/dashboard/loading.tsx`

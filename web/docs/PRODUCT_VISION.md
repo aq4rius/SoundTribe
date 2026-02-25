@@ -1,15 +1,15 @@
 # SoundTribe — Product Vision
 
-> **Living document.** Last updated: 2026-02-24.
+> **Living document.** Last updated: 2026-02-25.
 > This is the canonical product reference. Every feature decision, architectural choice, and UX trade-off should be tested against this document.
 
 ---
 
 ## 1. Mission Statement
 
-SoundTribe is the platform where the electronic music industry organizes itself. We connect event organizers who need talent with artists who want to perform — removing the friction, opacity, and middlemen that dominate the underground music scene today.
+SoundTribe is the platform where the **music industry** organizes itself — across every genre, every instrument, every stage size. We connect event organizers who need talent with artists who want to perform, and artists who want to collaborate with each other — removing the friction, opacity, and middlemen that dominate the live music scene today.
 
-For **organizers**, SoundTribe is the only place they need to go to find, vet, and book artists for their events — with structured applications, direct messaging, and a searchable talent pool. For **artists**, SoundTribe is their professional home: a portfolio, a discovery channel, and a direct line to the people putting on the events they want to play.
+For **organizers**, SoundTribe is the only place they need to go to find, vet, and book artists for their events — with structured applications, direct messaging, and a searchable talent pool. For **artists**, SoundTribe is their professional home: a portfolio, a discovery channel, a direct line to the people putting on the events they want to play, and a network of fellow musicians to collaborate with.
 
 The long-term bet: SoundTribe becomes the LinkedIn of the music event world — a social-professional network where your reputation, connections, and activity history are the currency.
 
@@ -21,7 +21,7 @@ The long-term bet: SoundTribe becomes the LinkedIn of the music event world — 
 
 **Who they are:**
 - Club programmers and talent bookers at venues (capacity 100–5,000)
-- Independent event promoters running their own parties (warehouse, rooftop, club nights)
+- Independent event promoters running their own parties (warehouse, rooftop, club nights, concert venues)
 - Festival A&R staff managing multi-stage lineups
 - Booking agencies acting on behalf of venues (secondary user, same workflows)
 - Age range: 25–45. Digital-native but time-poor. Juggle multiple events simultaneously.
@@ -43,21 +43,22 @@ The long-term bet: SoundTribe becomes the LinkedIn of the music event world — 
 
 ---
 
-### Primary Persona B — The Artist / DJ
+### Primary Persona B — The Artist / Performer
 
 **Who they are:**
-- Emerging DJs looking for their first paid gigs (0–3 years experience)
-- Established underground artists building a touring schedule
-- Live electronic performers (hardware acts, live PA, hybrid sets)
-- Multi-instrumentalists applying to both DJ slots and live performance slots
-- Age range: 20–40. Highly online, identity-driven, genre-community-embedded.
+- Emerging musicians looking for their first paid gigs (0–3 years experience) — any genre
+- Established artists building a touring schedule (jazz combos, rock bands, DJs, singer-songwriters, classical ensembles)
+- Live performers of all kinds: soloists, duos, full bands, electronic acts, acoustic acts
+- Multi-instrumentalists applying to a variety of performance slots
+- Age range: 20–40. Highly online, identity-driven, community-embedded.
 
 **Pain today (without SoundTribe):**
-- No central place to be discovered — scattered across SoundCloud, RA, Resident Advisor profiles, Instagram
+- No central place to be discovered — scattered across SoundCloud, Bandcamp, Spotify for Artists, personal websites, Instagram
 - Applying for gigs means cold messaging organizers who don't know them
 - No visibility into which events are actively seeking talent and what they're paying
-- No structured way to present: bio, genres, mix portfolio, social links, experience, availability, rate
+- No structured way to present: bio, genres, portfolio, social links, experience, availability, rate
 - Rejection (or silence) with zero feedback loop
+- Finding collaborators (other musicians, jam partners, session players) happens informally with no central directory
 
 **What success looks like on SoundTribe:**
 - A complete artist profile that serves as their professional booking page
@@ -65,7 +66,8 @@ The long-term bet: SoundTribe becomes the LinkedIn of the music event world — 
 - One-click application with a personal message
 - Real-time notification when an organizer accepts or rejects
 - Direct messaging channel with organizers who want to work with them
-- Over time: a public profile URL they can share like a portfolio site (`soundtribe.com/artists/djname`)
+- Ability to browse other artists by genre, location, and instruments — connect and message to explore collaborations
+- Over time: a public profile URL they can share like a portfolio site (`soundtribe.com/artists/stagename`)
 
 ---
 
@@ -97,6 +99,7 @@ The MVP must deliver a complete, working loop for **both primary personas**. Eve
 | Apply to events (message + profile) | The core transaction |
 | Manage applications (organizer accepts/rejects; artist sees status) | Completion of the transaction |
 | Direct messaging (ArtistProfile ↔ EventPosting entity, with Socket.IO real-time) | Trust-building; negotiation |
+| Artist-to-artist networking (browse artists, connect, message) | Collaboration discovery; community building |
 | Notifications (application received, accepted, rejected, new message) | Closing the feedback loop |
 | User settings (update profile, preferences, notification settings) | Basic account hygiene |
 | Responsive UI on desktop and mobile | Organizers work on desktop; artists use phones |
@@ -147,7 +150,7 @@ Listed in rough priority order based on impact × effort:
 16. **Recommendation engine** — "Artists like you also applied to..." / "Events matching your profile..." personalized feed.
 17. **Map view** — Geographic event discovery, useful for touring artists.
 18. **React Native mobile app** — After web product-market fit is confirmed.
-19. **Multi-language support** — German, Spanish, French first (major electronic music markets).
+19. **Multi-language support** — German, Spanish, French first (major music markets).
 20. **Enthusiast / Fan features** — Event RSVP, following artists, personal event feed.
 
 ---
@@ -182,7 +185,7 @@ This is the canonical reference for how the app works. All UX and backend decisi
 CREATE EVENT
 1. Organizer clicks "Post an Event"
 2. Fills event posting form:
-   - Title (e.g., "Resident DJ slot — Club XYZ, Berlin")
+   - Title (e.g., "Jazz pianist for weekly residency — Blue Note, NYC")
    - Description (vibe, requirements, additional context)
    - Genres required (select from list)
    - Required instruments (DJ, live PA, hardware, etc.)
@@ -198,7 +201,7 @@ RECEIVE APPLICATIONS
 5. Artists apply → Organizer receives in-app notification: "New application from [ArtistName] for [EventTitle]"
 6. Organizer reviews application:
    - Reads artist's message
-   - Clicks through to their ArtistProfile (bio, genres, mix portfolio, social links, experience, rate)
+   - Clicks through to their ArtistProfile (bio, genres, portfolio, social links, experience, rate)
    - Decision: Accept or Reject
 
 ACCEPT/REJECT
@@ -245,6 +248,24 @@ BUILD PROFILE & REPUTATION
 12. Rating received from organizer (post-MVP)
 13. Profile gains a "verified" badge (post-MVP)
 ```
+
+### 5.3a Artist Networking Flow
+
+```
+DISCOVER ARTISTS
+1. Artist browses /artists page (same browse UI available to organizers)
+2. Filters by: genre, location, instruments
+3. Clicks an artist profile → sees bio, genres, instruments, portfolio, social links
+
+CONNECT
+4. Clicks "Message" → opens a direct messaging channel (ArtistProfile ↔ ArtistProfile)
+5. Opens conversation: "Hey, I play guitar and love your jazz tracks — want to jam?"
+
+COLLABORATE (post-MVP extensions)
+6. Future: shared setlists, co-applications to events, band/ensemble profiles
+```
+
+> **Genre seed list note:** The 15 seeded genres (Rock, Pop, Hip Hop, Jazz, Classical, Country, R&B, Electronic, Folk, Blues, Metal, Reggae, Latin, Soul, Punk) intentionally span the full musical spectrum. Genre selection is additive — organizers and artists can select any combination.
 
 ### 5.4 Messaging Touchpoints
 
@@ -397,7 +418,7 @@ We are not building a job board. We're building a network. A platform with 500 o
 
 ### P5 — Privacy Respects Scene Culture
 
-The underground music scene values privacy. Artists don't always want their real names attached to a public record of every gig they played. The platform must support pseudonyms (stage names separate from account names), and privacy settings must be first-class, not an afterthought.
+The music scene values privacy. Artists don't always want their real names attached to a public record of every gig they played. The platform must support pseudonyms (stage names separate from account names), and privacy settings must be first-class, not an afterthought.
 
 ### P6 — Mobile Is a First-Class Citizen from Day One
 
@@ -415,7 +436,7 @@ The platform supports the following user roles (set during onboarding, multiple 
 
 | Role | Description | Core experience |
 |---|---|---|
-| `artist` | Performer — DJ, live act, instrumentalist | Apply to events, manage ArtistProfile |
+| `artist` | Performer — any genre, any instrument | Apply to events, manage ArtistProfile, network with other artists |
 | `organizer` | Event organizer — club, festival, promoter | Post events, manage applications, build lineup |
 | `enthusiast` | Music fan, scene participant | Browse events and artists (read-only, post-MVP) |
 | `collaborator` | Audio engineer, visual artist, crew | Collaboration profiles (post-MVP) |

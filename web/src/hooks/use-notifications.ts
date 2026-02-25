@@ -14,7 +14,9 @@ export function useNotifications(token?: string) {
       if (!res.ok) throw new Error('Failed to fetch notifications');
       return res.json();
     },
-    enabled: !!token,
+    // TODO(phase-3): re-enable when this hook is replaced by a Server Action
+    // Currently disabled — token removed in Phase 2 auth migration
+    enabled: false,
   });
 }
 

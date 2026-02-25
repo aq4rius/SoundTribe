@@ -17,7 +17,9 @@ export function useConversations(sender: ChatEntity | null, token?: string) {
       if (!res.ok) throw new Error('Failed to fetch conversations');
       return res.json();
     },
-    enabled: !!sender && !!token,
+    // TODO(phase-3): re-enable when this hook is replaced by a Server Action
+    // Currently disabled — token removed in Phase 2 auth migration
+    enabled: false,
     refetchInterval: false,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -44,7 +46,9 @@ export function useMessages(
       if (!res.ok) throw new Error('Failed to fetch messages');
       return res.json();
     },
-    enabled: !!sender && !!receiver && !!token,
+    // TODO(phase-3): re-enable when this hook is replaced by a Server Action
+    // Currently disabled — token removed in Phase 2 auth migration
+    enabled: false,
     refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -67,7 +71,9 @@ export function useUnreadCounts(sender: ChatEntity | null, token?: string) {
       if (!res.ok) throw new Error('Failed to fetch unread counts');
       return res.json();
     },
-    enabled: !!sender && !!token,
+    // TODO(phase-3): re-enable when this hook is replaced by a Server Action
+    // Currently disabled — token removed in Phase 2 auth migration
+    enabled: false,
     refetchInterval: 30000,
   });
 }

@@ -34,6 +34,8 @@ export function useMyEntities(token?: string) {
         : [];
       return [...profiles, ...events];
     },
-    enabled: !!token,
+    // TODO(phase-3): re-enable when this hook is replaced by a Server Action
+    // Currently disabled — token removed in Phase 2 auth migration
+    enabled: false,
   });
 }
