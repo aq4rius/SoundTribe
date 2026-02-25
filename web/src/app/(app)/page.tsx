@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 
@@ -72,18 +73,18 @@ export default function Home() {
             transition={{ delay: 0.6, duration: 0.7 }}
             className="flex flex-wrap gap-4 justify-center mt-8"
           >
-            <a
-              href="#explore"
+            <Link
+              href="/artists"
               className="px-8 py-3 rounded-full bg-gradient-to-r from-fuchsia-600 to-cyan-400 text-white font-bold shadow-lg hover:scale-105 hover:from-fuchsia-500 hover:to-cyan-300 transition-transform duration-200"
             >
               Explore Artists
-            </a>
-            <a
-              href="#events"
+            </Link>
+            <Link
+              href="/events"
               className="px-8 py-3 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 text-white font-bold shadow-lg hover:scale-105 hover:from-emerald-400 hover:to-cyan-300 transition-transform duration-200"
             >
               Upcoming Events
-            </a>
+            </Link>
           </motion.div>
         </motion.div>
       </section>
