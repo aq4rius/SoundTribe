@@ -1,8 +1,28 @@
 // Event details page for /events/[id]
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import EventCard from '@/components/events/event-card';
 import EventApplication from '@/components/applications/event-application';
 import { getEventByIdAction } from '@/actions/events';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const result = await getEventByIdAction(id);
+  if (!result.success || !result.data) {
+    return { title: 'Event Not Found | SoundTribe' };
+  }
+  const event = result.data;
+  return {
+    title: `${event.title} | SoundTribe`,
+    description: event.description
+      ? event.description.slice(0, 160)
+      : `Event in ${event.location || 'an unknown location'}`,
+  };
+}
 
 export default async function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -1,7 +1,27 @@
 // Artist details page for /artists/[id]
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ArtistCard from '@/components/artists/artist-card';
 import { getArtistProfileByIdAction } from '@/actions/artist-profiles';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const result = await getArtistProfileByIdAction(id);
+  if (!result.success || !result.data) {
+    return { title: 'Artist Not Found | SoundTribe' };
+  }
+  const artist = result.data;
+  return {
+    title: `${artist.stageName} | SoundTribe`,
+    description: artist.biography
+      ? artist.biography.slice(0, 160)
+      : `Artist profile for ${artist.stageName}`,
+  };
+}
 
 export default async function ArtistDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
