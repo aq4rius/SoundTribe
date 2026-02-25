@@ -1,6 +1,6 @@
 # SoundTribe — Architecture Decision Document
 
-> **Living document.** Last updated: 2025-07-24.
+> **Living document.** Last updated: 2025-07-25.
 > Read [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) first for product context.
 > All architectural decisions exist to serve the product vision — when they conflict, the product vision wins.
 
@@ -29,8 +29,24 @@ Before any decisions, it's critical to document the **real** current state — n
 - ✅ Real-time notification bell (replaces 30s polling)
 - ✅ Express server and legacy client archived to `_legacy/`
 
+**Completed (Phases 5–6: UX Polish & Performance):**
+- ✅ Chat file uploads via Cloudinary (uploadAttachmentAction server action)
+- ✅ Skeleton loading components for all card types (event, artist, application, notification, conversation, dashboard)
+- ✅ Route-level loading.tsx for all app routes (7 routes)
+- ✅ Route-level error.tsx with reusable RouteError component (6 routes)
+- ✅ Reusable EmptyState component applied to all browse/list pages
+- ✅ Parallel data fetching (Promise.all) on events, artists, and dashboard pages
+- ✅ All `<img>` tags replaced with next/image `<Image>` (4 replacements)
+- ✅ Cloudinary remote patterns configured in next.config.ts
+- ✅ generateMetadata on event and artist detail pages
+- ✅ Skip-to-content link + id="main-content" landmark
+- ✅ Geist/Geist Mono font variables applied to root layout
+- ✅ aria-labels on all icon-only buttons (navbar menu, notification bell, chat buttons)
+- ✅ 44×44px minimum touch targets on mobile interactive elements
+- ✅ BUG-025 fixed: landing page anchor links replaced with proper route links
+- ✅ Zero `: any` type annotations remaining
+
 **Still pending:**
-- ❌ File upload wiring in chat (Cloudinary presigned URLs — Phase 5)
 - ❌ Email delivery for password reset / verification tokens
 
 `web/` currently uses:
@@ -43,6 +59,8 @@ Before any decisions, it's critical to document the **real** current state — n
 - ✅ **Framer Motion** for animations
 - ✅ **Storybook** for component development
 - ✅ **Ably** for real-time messaging + notifications
+- ✅ **Cloudinary** for file uploads (chat attachments)
+- ✅ **next/image** for all user-facing images
 
 ### What `_legacy/server/` is
 

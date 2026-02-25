@@ -1,6 +1,6 @@
 # SoundTribe — Product Vision
 
-> **Living document.** Last updated: 2025-07-23.
+> **Living document.** Last updated: 2025-07-25.
 > This is the canonical product reference. Every feature decision, architectural choice, and UX trade-off should be tested against this document.
 
 ---
