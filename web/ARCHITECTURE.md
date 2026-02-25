@@ -1,6 +1,6 @@
 # SoundTribe — Architecture Decision Document
 
-> **Living document.** Last updated: 2025-07-25.
+> **Living document.** Last updated: 2025-07-26.
 > Read [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) first for product context.
 > All architectural decisions exist to serve the product vision — when they conflict, the product vision wins.
 
@@ -45,6 +45,22 @@ Before any decisions, it's critical to document the **real** current state — n
 - ✅ 44×44px minimum touch targets on mobile interactive elements
 - ✅ BUG-025 fixed: landing page anchor links replaced with proper route links
 - ✅ Zero `: any` type annotations remaining
+
+**Completed (Phases 7–9: Storybook, SEO & Testing):**
+- ✅ Onboarding page converted to dynamic Server Component with auth() guard
+- ✅ PostCSS config fixed for Storybook Vite build compatibility
+- ✅ Storybook stories for 8 core components: EventCard, ArtistCard, EmptyState, Pagination, ErrorAlert, Skeleton/CardSkeletons, Footer, RouteError
+- ✅ Shared mock data file (src/stories/mock-data.ts) with typed fixtures
+- ✅ Storybook build (`npm run build-storybook`) passes cleanly
+- ✅ robots.ts — disallows /api/, /dashboard/, /onboarding/, /chat/
+- ✅ sitemap.ts — static routes (/, /events, /artists, /login, /register)
+- ✅ opengraph-image.tsx — edge-rendered OG image with SoundTribe branding
+- ✅ public/icon.svg — branded SVG favicon
+- ✅ Root layout metadata enhanced: title template, metadataBase, icons
+- ✅ Vitest unit test workspace added alongside Storybook browser tests
+- ✅ 58 unit tests across 5 files: auth validation (16), event validation (16), application validation (8), action-utils (11), cn utility (7)
+- ✅ Playwright E2E config + auth flow spec (5 tests) + core loop spec (7 tests)
+- ✅ @playwright/test installed
 
 **Still pending:**
 - ❌ Email delivery for password reset / verification tokens
@@ -200,7 +216,18 @@ web/src/
 │   └── utils.ts         # cn() utility
 ├── types/               # Prisma-derived canonical types + filters + onboarding
 ├── validations/         # Zod schemas: users, artist-profiles, events, applications
-└── stories/             # Storybook (placeholder stories)
+│   └── __tests__/       # Unit tests for validation schemas (events, auth, applications)
+├── stories/             # Storybook stories + shared mock data
+│   ├── mock-data.ts     # Typed fixture data for all stories
+│   ├── events/          # EventCard stories
+│   ├── artists/         # ArtistCard stories
+│   ├── common/          # Pagination, ErrorAlert stories
+│   ├── shared/          # EmptyState, RouteError stories
+│   └── ui/              # Skeleton, Footer stories
+├── test/
+│   └── setup.ts         # Vitest unit test setup
+└── lib/
+    └── __tests__/       # Unit tests for action-utils, cn utility
 ```
 
 **Deleted in Phase 3:**
@@ -486,11 +513,11 @@ _Fix:_ Socket.IO client fully removed. Chat page is now a placeholder pending Ab
 `dashboard/page.tsx` uses `useState<any[]>` for events, artists, applications.
 _Fix:_ All types derived from Prisma schema. Server Actions have typed `ActionResult<T>` returns. Zero `any` casts remain in data layer.
 
-**BUG-008: Storybook stories are Create React App placeholders**
+**BUG-008: Storybook stories are Create React App placeholders** ✅ FIXED Phase 7
 `src/stories/` contains the default CRA Storybook stories (Button, Header, Page) — not SoundTribe components. Storybook is set up but provides zero value.
-_Fix:_ Replace with real stories: `EventCard.stories.tsx`, `ArtistCard.stories.tsx`, `ApplicationCard.stories.tsx`.
+_Fix:_ Replaced with 8 real story files covering EventCard, ArtistCard, EmptyState, Pagination, ErrorAlert, Skeleton, Footer, RouteError. Shared mock data in `stories/mock-data.ts`.
 
-**BUG-009: No `loading.tsx` or `error.tsx` in any route segment**
+**BUG-009: No `loading.tsx` or `error.tsx` in any route segment** ✅ FIXED Phase 6
 Data-heavy pages (events list, dashboard) show a blank screen during data fetch. React errors bubble to the root and show the default crash page.
 _Fix:_ Add `loading.tsx` (skeleton UIs) and `error.tsx` (recovery UI) to all major route segments.
 
@@ -506,9 +533,9 @@ _Fix:_ Use route groups `(auth)` and `(app)` with separate layouts.
 Navigating to a non-existent route shows Next.js's default 404. No SoundTribe branding.
 _Fix:_ Add `app/not-found.tsx`.
 
-**BUG-013: Root `layout.tsx` has placeholder metadata**
+**BUG-013: Root `layout.tsx` has placeholder metadata** ✅ FIXED Phase 5/Phase 8
 `title: 'Create Next App'` — the default Next.js starter metadata is still in production.
-_Fix:_ Update metadata: title, description, OG tags, favicon.
+_Fix:_ Updated in Phase 5 with SoundTribe branding. Enhanced in Phase 8 with title template, metadataBase, favicon, robots.ts, sitemap.ts, and OG image.
 
 **BUG-014: `useMyEntities` hook is a single integration point for all messaging**
 The hook fetches all entities (ArtistProfiles + Events) that belong to the current user. If this fetch fails, the entire chat UI breaks. No error state displayed.
@@ -540,7 +567,7 @@ _Fix:_ Add `aria-label` to all icon-only interactive elements.
 `components/common/Chat.tsx` handles conversations list, message thread, socket management, emoji picker, and file upload all in one component.
 _Fix:_ Deleted in Phase 3. Rebuilt in Phase 4 as 5 focused components: `conversation-list.tsx`, `message-thread.tsx`, `message-bubble.tsx`, `message-input.tsx`, `entity-selector.tsx`.
 
-**BUG-022: Storybook default stories pollute component stories** — `src/stories/Button.tsx` is the CRA default Button, not a SoundTribe component.
+**BUG-022: Storybook default stories pollute component stories** ✅ FIXED Phase 7 — CRA placeholder stories replaced with 8 real component stories.
 
 **BUG-023: `package.json` has no test script** — `vitest` is a devDependency but there's no `"test"` script in `package.json`.
 
@@ -693,18 +720,40 @@ Each phase produces a **shippable, working increment**. No phase leaves the app 
 
 ---
 
-### Phase 7 — Storybook & Component Documentation
+### Phase 7 — Storybook & Component Documentation ✅
 **Goal:** Every major component has a Storybook story.
+**Completed:**
+- 8 story files covering EventCard (5 stories), ArtistCard (5 stories), EmptyState (4 stories), Pagination (4 stories), ErrorAlert (3 stories), Skeleton/CardSkeletons (6 stories), Footer (1 story), RouteError (2 stories)
+- Shared mock data file (`src/stories/mock-data.ts`) with typed fixtures
+- PostCSS config fixed for Storybook Vite build compatibility
+- `npm run build-storybook` passes cleanly
 
 ---
 
-### Phase 8 — SEO & Metadata
+### Phase 8 — SEO & Metadata ✅
 **Goal:** Landing page ranks. Artist/event pages are shareable.
+**Completed:**
+- `robots.ts` — disallows /api/, /dashboard/, /onboarding/, /chat/
+- `sitemap.ts` — static routes with priorities
+- `opengraph-image.tsx` — edge-rendered OG image with SoundTribe gradient branding
+- `public/icon.svg` — branded SVG favicon
+- Root layout metadata enhanced with title template, metadataBase, and icons
 
 ---
 
-### Phase 9 — Testing
+### Phase 9 — Testing ✅
 **Goal:** Confidence in auth, CRUD, and application flows. Vitest for Server Actions, Playwright for e2e.
+**Completed:**
+- Vitest unit test workspace added alongside existing Storybook browser test workspace
+- 58 unit tests across 5 test files (all passing):
+  - Auth validation (16 tests): login, register, change password schemas
+  - Event validation (16 tests): create/update event schemas, coercion, defaults
+  - Application validation (8 tests): UUID validation, cover letter bounds, optional rate
+  - Action utilities (11 tests): hasRole, withActionHandler
+  - cn utility (7 tests): class merging, Tailwind conflict resolution
+- Playwright E2E config with chromium project and dev server integration
+- Auth flow spec (5 tests): page renders, validation, navigation, redirect
+- Core loop spec (7 tests): browse pages, navigation, branding
 
 ---
 
