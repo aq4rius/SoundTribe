@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { useAblyChannel } from '@/hooks/use-ably-channel';
 import {
   getConversationsAction,
@@ -157,7 +158,7 @@ export default function ConversationList({
         <button
           onClick={onNewConversation}
           disabled={!selectedSender}
-          className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary disabled:opacity-30 transition-colors"
+          className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary disabled:opacity-30 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="New conversation"
         >
           <MessageSquarePlus className="h-5 w-5" />
@@ -191,9 +192,11 @@ export default function ConversationList({
                 {/* Avatar */}
                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-lg shrink-0">
                   {conv.otherEntity.image ? (
-                    <img
+                    <Image
                       src={conv.otherEntity.image}
                       alt=""
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (

@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
     // Lint is run separately via `npm run lint`. Don't block builds.
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+    ],
+  },
   async rewrites() {
     return [
       {

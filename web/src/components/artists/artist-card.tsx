@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ArtistCardArtist {
   id: string;
@@ -21,9 +22,11 @@ const ArtistCard: FC<ArtistCardProps> = ({ artist, mode = 'compact' }) => {
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-fuchsia-500 to-cyan-400 flex items-center justify-center text-2xl font-bold text-white">
           {/* Placeholder for avatar */}
           {artist.profileImage ? (
-            <img
+            <Image
               src={artist.profileImage}
               alt={artist.stageName}
+              width={64}
+              height={64}
               className="w-full h-full rounded-full object-cover"
             />
           ) : (

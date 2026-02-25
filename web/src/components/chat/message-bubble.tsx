@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import type { MessageData } from './message-thread';
 import { addReactionAction, deleteMessageAction } from '@/actions/messages';
 import type { EntityType, MessageStatus } from '@prisma/client';
@@ -80,11 +81,12 @@ export default function MessageBubble({
           <div className="mb-1">
             {message.attachmentType?.startsWith('image/') ||
             message.attachmentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-              <img
+              <Image
                 src={message.attachmentUrl}
                 alt="attachment"
+                width={320}
+                height={192}
                 className="max-w-full max-h-48 rounded-lg border border-white/10"
-                loading="lazy"
               />
             ) : message.attachmentType?.startsWith('audio/') ||
               message.attachmentUrl.match(/\.(mp3|wav|ogg|m4a)$/i) ? (

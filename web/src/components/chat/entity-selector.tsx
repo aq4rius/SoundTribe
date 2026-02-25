@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { getMyEntitiesAction } from '@/actions/messages';
 import type { SenderEntity } from './conversation-list';
 import type { EntityType } from '@prisma/client';
@@ -125,7 +126,7 @@ export default function EntitySelector({
                     >
                       <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm">
                         {artist.image ? (
-                          <img src={artist.image} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          <Image src={artist.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                         ) : (
                           '🎤'
                         )}
