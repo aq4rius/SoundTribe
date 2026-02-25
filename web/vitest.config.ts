@@ -12,11 +12,10 @@ const dirname =
 export default defineConfig({
   test: {
     workspace: [
+      // ── Storybook interaction tests (browser) ─────────────────────────
       {
         extends: true,
         plugins: [
-          // The plugin will run tests for the stories defined in your Storybook config
-          // See options at: https://storybook.js.org/docs/writing-tests/test-addon#storybooktest
           storybookTest({ configDir: path.join(dirname, '.storybook') }),
         ],
         test: {
@@ -28,6 +27,21 @@ export default defineConfig({
             provider: 'playwright',
           },
           setupFiles: ['.storybook/vitest.setup.ts'],
+        },
+      },
+      // ── Unit tests (node) ─────────────────────────────────────────────
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['src/**/*.test.{ts,tsx}'],
+          environment: 'node',
+          setupFiles: ['src/test/setup.ts'],
+        },
+        resolve: {
+          alias: {
+            '@': path.join(dirname, 'src'),
+          },
         },
       },
     ],
