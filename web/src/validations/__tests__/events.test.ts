@@ -94,6 +94,7 @@ describe('createEventSchema', () => {
   });
 
   it('defaults requiredExperience to 0', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { requiredExperience: _, ...rest } = validInput;
     const result = createEventSchema.safeParse(rest);
     expect(result.success).toBe(true);

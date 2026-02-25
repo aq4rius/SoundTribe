@@ -3,7 +3,6 @@ import type { OnboardingState } from '@/types/onboarding';
 
 export default function SummaryStep({
   goBack,
-  onboarding,
   saveOnboarding,
 }: {
   goBack: () => void;

@@ -2,7 +2,6 @@
 
 import { db } from '@/lib/db';
 import { requireAuth, withActionHandler } from '@/lib/action-utils';
-import type { ActionResult } from '@/types/actions';
 import { publishToChannel, channelNames } from '@/lib/ably';
 import { EntityType } from '@prisma/client';
 
@@ -246,9 +245,6 @@ export async function getMessagesAction(
     const total = await db.message.count({
       where: { conversationId, isDeleted: false },
     });
-
-    const skip = Math.max(0, total - page * limit);
-    const take = page === Math.ceil(total / limit) ? total % limit || limit : limit;
 
     const messages = await db.message.findMany({
       where: { conversationId, isDeleted: false },

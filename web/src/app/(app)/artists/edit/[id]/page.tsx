@@ -1,7 +1,7 @@
 // Edit Artist Profile Page
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import EditArtistProfile from '@/components/profile/edit-artist-profile';
 
 export default function EditArtistProfilePage() {

@@ -37,7 +37,7 @@ export default function PreferencesStep({
     try {
       await saveOnboarding({ preferences: { genres, instruments, influences }, onboardingStep: 2 });
       goNext();
-    } catch (e) {
+    } catch {
       setError('Failed to save preferences. Please try again.');
     }
   };
