@@ -84,8 +84,6 @@ export function isPopulatedEventPosting(
   return typeof value === 'object' && value !== null && 'title' in value;
 }
 
-export function isPopulatedUser(
-  value: string | PopulatedUser,
-): value is PopulatedUser {
+export function isPopulatedUser(value: string | PopulatedUser): value is PopulatedUser {
   return typeof value === 'object' && value !== null && '_id' in value;
 }

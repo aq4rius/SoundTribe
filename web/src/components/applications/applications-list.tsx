@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import ErrorAlert from '../common/error-alert';
 import { useUpdateApplicationStatus } from '@/hooks/use-update-application-status';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import type { IApplication } from '@/types';
 import { isPopulatedArtistProfile, isPopulatedEventPosting } from '@/types';
 
@@ -19,8 +19,9 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
   isEventOwner = false,
   onStatusUpdate,
 }) => {
-  const { token } = useAuth();
-  const safeToken = token || undefined;
+  const { data: session } = useSession();
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const safeToken: string | undefined = undefined;
   const updateStatusMutation = useUpdateApplicationStatus(safeToken);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,12 +54,12 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
             <div>
               <h3 className="text-lg font-semibold text-primary">
                 {isEventOwner
-                  ? (isPopulatedArtistProfile(application.artistProfile)
-                      ? application.artistProfile.stageName
-                      : 'Unknown Artist')
-                  : (isPopulatedEventPosting(application.eventPosting)
-                      ? application.eventPosting.title
-                      : 'Unknown Event')}
+                  ? isPopulatedArtistProfile(application.artistProfile)
+                    ? application.artistProfile.stageName
+                    : 'Unknown Artist'
+                  : isPopulatedEventPosting(application.eventPosting)
+                    ? application.eventPosting.title
+                    : 'Unknown Event'}
               </h3>
               <p className="text-base-content">
                 Submitted on{' '}

@@ -1,21 +1,13 @@
-// LoginForm for Next.js app using React Hook Form, Zod, ShadCN UI
+// LoginForm — NextAuth v5 credentials login via server action
 'use client';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth-store';
 import { motion } from 'framer-motion';
 import ResendVerification from './resend-verification';
-import { env } from '@/lib/env';
-
-const schema = z.object({
-  email: z.string().email('Please provide a valid email'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type LoginFormValues = z.infer<typeof schema>;
+import { loginSchema, type LoginFormValues } from '@/validations/auth';
+import { loginAction } from '@/actions/auth';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -26,38 +18,29 @@ export default function LoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(loginSchema),
   });
-  const setAuth = useAuthStore((state) => state.setAuth);
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/auth/login`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-          credentials: 'include',
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json();
-        if (err.errors && Array.isArray(err.errors)) {
-          setError(err.errors.map((e: { msg: string }) => e.msg).join(', '));
-        } else {
-          setError(err.message || 'Login failed');
-        }
+      const formData = new FormData();
+      formData.append('email', data.email);
+      formData.append('password', data.password);
+
+      const result = await loginAction(formData);
+
+      if (!result.success) {
+        setError(result.error ?? 'Login failed');
         return;
       }
-      const result = await res.json();
-      setAuth(result.user, result.token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth', JSON.stringify({ user: result.user, token: result.token }));
+
+      if (result.data?.onboardingComplete === false) {
+        router.push('/onboarding');
+      } else {
+        router.push('/dashboard');
       }
-      router.push('/dashboard');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed');
     } finally {
@@ -113,10 +96,12 @@ export default function LoginForm() {
             {error}
             {/* Show resend verification if error is about verification */}
             {error.toLowerCase().includes('verify your email') && (
-              <ResendVerification email={
-                // Use the email from the form state
-                (document.getElementById('email') as HTMLInputElement | null)?.value || ''
-              } />
+              <ResendVerification
+                email={
+                  // Use the email from the form state
+                  (document.getElementById('email') as HTMLInputElement | null)?.value || ''
+                }
+              />
             )}
           </div>
         )}

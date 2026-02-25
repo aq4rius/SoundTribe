@@ -2,7 +2,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { getAllGenres } from '@/services/genre';
 import { env } from '@/lib/env';
 import type { IArtistProfile, IGenre } from '@/types';
@@ -13,15 +13,20 @@ function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void })
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-8 max-w-sm w-full text-center border border-fuchsia-400">
         <h2 className="text-2xl font-bold mb-2 text-fuchsia-700 dark:text-fuchsia-300">Success!</h2>
-        <p className="mb-4 text-zinc-700 dark:text-zinc-200">Your artist profile was updated successfully.</p>
-        <button className="btn btn-primary" onClick={onClose}>OK</button>
+        <p className="mb-4 text-zinc-700 dark:text-zinc-200">
+          Your artist profile was updated successfully.
+        </p>
+        <button className="btn btn-primary" onClick={onClose}>
+          OK
+        </button>
       </div>
     </div>
   );
 }
 
 export default function EditArtistProfile({ artistId }: { artistId: string }) {
-  const { token } = useAuth();
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const router = useRouter();
   const [profile, setProfile] = useState<IArtistProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +40,8 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
       try {
         const res = await fetch(
           `${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${artistId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          // TRANSITIONAL: auth header removed until Phase 3
+          { headers: {} },
         );
         if (!res.ok) throw new Error('Failed to fetch artist profile');
         const data = await res.json();
@@ -49,7 +55,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             twitter: '',
             youtube: '',
             tiktok: '',
-            other: ''
+            other: '',
           },
           genres: Array.isArray(data.genres)
             ? data.genres.map((g: string | IGenre) => (typeof g === 'string' ? g : g._id))
@@ -74,7 +80,9 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
         setProfile((p) => {
           if (!p || !Array.isArray(p.genres)) return p;
           // If genres are just IDs, map to objects
-          const genreIds = p.genres.map((g: string | IGenre) => (typeof g === 'string' ? g : g._id));
+          const genreIds = p.genres.map((g: string | IGenre) =>
+            typeof g === 'string' ? g : g._id,
+          );
           return {
             ...p,
             genres: genreIds,
@@ -88,7 +96,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setProfile((p) => p ? { ...p, [e.target.name]: e.target.value } : p);
+    setProfile((p) => (p ? { ...p, [e.target.name]: e.target.value } : p));
   };
 
   const handleGenreChange = (genreId: string) => {
@@ -109,14 +117,11 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${artistId}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(profile),
-        }
-      );
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${artistId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
       if (!res.ok) throw new Error('Failed to update artist profile');
       setShowSuccess(true);
       setTimeout(() => {
@@ -171,8 +176,18 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
           <label className="block mb-1 font-medium">Instruments (comma separated)</label>
           <input
             name="instruments"
-            value={Array.isArray(profile.instruments) ? profile.instruments.join(', ') : profile.instruments || ''}
-            onChange={e => setProfile((p) => p ? { ...p, instruments: e.target.value.split(',').map((i: string) => i.trim()) } : p)}
+            value={
+              Array.isArray(profile.instruments)
+                ? profile.instruments.join(', ')
+                : profile.instruments || ''
+            }
+            onChange={(e) =>
+              setProfile((p) =>
+                p
+                  ? { ...p, instruments: e.target.value.split(',').map((i: string) => i.trim()) }
+                  : p,
+              )
+            }
             className="input input-bordered w-full"
             placeholder="Instruments (comma separated)"
           />
@@ -207,13 +222,19 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
                 key={platform}
                 name={platform}
                 value={profile.socialMediaLinks?.[platform] || ''}
-                onChange={e => setProfile((p) => p ? ({
-                  ...p,
-                  socialMediaLinks: {
-                    ...p.socialMediaLinks,
-                    [platform]: e.target.value
-                  }
-                }) : p)}
+                onChange={(e) =>
+                  setProfile((p) =>
+                    p
+                      ? {
+                          ...p,
+                          socialMediaLinks: {
+                            ...p.socialMediaLinks,
+                            [platform]: e.target.value,
+                          },
+                        }
+                      : p,
+                  )
+                }
                 className="input input-bordered w-full"
                 placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
               />
@@ -245,10 +266,13 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
           </button>
         </div>
       </form>
-      <SuccessModal show={showSuccess} onClose={() => {
-        setShowSuccess(false);
-        router.push('/dashboard');
-      }} />
+      <SuccessModal
+        show={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          router.push('/dashboard');
+        }}
+      />
     </>
   );
 }

@@ -2,11 +2,12 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { env } from '@/lib/env';
 
 export default function ProfileSetup() {
-  const { user, setAuth } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const router = useRouter();
   const [form, setForm] = useState({
     firstName: '',
@@ -28,38 +29,19 @@ export default function ProfileSetup() {
     setError(null);
     setIsLoading(true);
     try {
-      // Get token from localStorage or Zustand
-      let token = '';
-      if (typeof window !== 'undefined') {
-        const auth = localStorage.getItem('auth');
-        if (auth) {
-          try {
-            token = JSON.parse(auth).token;
-          } catch {}
-        }
-      }
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/users/profile`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ ...form }),
-          credentials: 'include',
+      // TRANSITIONAL: Express API call will not work without token until Phase 3
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({ ...form }),
+        credentials: 'include',
+      });
       if (!res.ok) {
         const err = await res.json();
         setError(err.message || 'Profile update failed');
         return;
-      }
-      const updated = await res.json();
-      // Update Zustand and localStorage with the new user state
-      setAuth(updated, token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth', JSON.stringify({ user: updated, token }));
       }
       router.push('/dashboard');
     } catch (e) {

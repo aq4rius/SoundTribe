@@ -9,7 +9,8 @@ export function useArtists(filters: ArtistFilters, page: number = 1, limit: numb
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters?.search) params.append('searchTerm', filters.search);
-      if (filters?.genres && filters.genres.length > 0) params.append('selectedGenres', filters.genres.join(','));
+      if (filters?.genres && filters.genres.length > 0)
+        params.append('selectedGenres', filters.genres.join(','));
       if (filters?.location) params.append('location', filters.location);
       if (filters?.instruments) params.append('instruments', filters.instruments);
       if (filters?.experienceMin) params.append('experienceMin', filters.experienceMin);

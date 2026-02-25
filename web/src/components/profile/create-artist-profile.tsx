@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { env } from '@/lib/env';
 
 function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void }) {
@@ -11,15 +11,22 @@ function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void })
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-8 max-w-sm w-full text-center border border-fuchsia-400">
         <h2 className="text-2xl font-bold mb-2 text-fuchsia-700 dark:text-fuchsia-300">Success!</h2>
-        <p className="mb-4 text-zinc-700 dark:text-zinc-200">Your artist profile was created successfully.</p>
-        <button className="btn btn-primary" onClick={onClose}>OK</button>
+        <p className="mb-4 text-zinc-700 dark:text-zinc-200">
+          Your artist profile was created successfully.
+        </p>
+        <button className="btn btn-primary" onClick={onClose}>
+          OK
+        </button>
       </div>
     </div>
   );
 }
 
 export default function CreateArtistProfile() {
-  const { user, token } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const router = useRouter();
   const [form, setForm] = useState({
     stageName: '',
@@ -48,17 +55,14 @@ export default function CreateArtistProfile() {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/artist-profiles`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ ...form, user: user.id }),
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // TRANSITIONAL: auth header removed until Phase 3
         },
-      );
+        body: JSON.stringify({ ...form, user: user.id }),
+      });
       if (!res.ok) {
         const err = await res.json();
         setError(err.message || 'Artist profile creation failed');
@@ -184,10 +188,13 @@ export default function CreateArtistProfile() {
           </button>
         </div>
       </form>
-      <SuccessModal show={showSuccess} onClose={() => {
-        setShowSuccess(false);
-        router.push('/dashboard');
-      }} />
+      <SuccessModal
+        show={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          router.push('/dashboard');
+        }}
+      />
     </>
   );
 }

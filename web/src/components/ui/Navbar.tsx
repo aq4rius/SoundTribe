@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession, signOut } from 'next-auth/react';
 import {
   useNotifications,
   useMarkNotificationRead,
@@ -11,16 +11,13 @@ import { io } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { env } from '@/lib/env';
 
-// Notification type for navbar — unused locally, imported from @/types
-
 export default function Navbar() {
-  const { user, clearAuth } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const [menuOpen, setMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const token =
-    typeof window !== 'undefined' && localStorage.getItem('auth')
-      ? JSON.parse(localStorage.getItem('auth')!).token
-      : undefined;
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const { data: notifications = [], isLoading: notifLoading } = useNotifications(token);
   const markRead = useMarkNotificationRead(token);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -120,70 +117,72 @@ export default function Navbar() {
                 ) : notifications.length === 0 ? (
                   <div className="p-4 text-center text-white/60">No notifications</div>
                 ) : (
-                  notifications.filter((n) => {
-                    // Debug: log notification objects for troubleshooting
-                    if (n.type === 'new_message') {
-                      // eslint-disable-next-line no-console
-                      console.log('Notification:', n);
-                    }
-                    // Only deduplicate if user is viewing the exact conversation
-                    if (
-                      n.type === 'new_message' &&
-                      typeof window !== 'undefined' &&
-                      window.location.pathname === '/chat' &&
-                      n.relatedEntity?.id &&
-                      window.location.search.includes(`messageId=${n.relatedEntity.id}`)
-                    ) {
-                      return false;
-                    }
-                    return true;
-                  }).map((n) => {
-                    // Always link to chat for new_message, fallback to /chat if missing
-                    let href = '#';
-                    if (n.type === 'new_message' && n.relatedEntity?.id) {
-                      href = `/chat?messageId=${n.relatedEntity.id}`;
-                    } else if (
-                      (n.type === 'application_submitted' || n.type === 'application_status') &&
-                      n.relatedEntity
-                    ) {
-                      href = `/dashboard/applications/${n.relatedEntity.id}`;
-                    } else if (n.relatedEntity && n.relatedEntity.type === 'Event') {
-                      href = `/events/${n.relatedEntity.id}`;
-                    } else if (n.type === 'new_message') {
-                      href = '/chat';
-                    }
-                    return (
-                      <div
-                        key={n._id}
-                        className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-black' : 'bg-fuchsia-950/40'} cursor-pointer`}
-                        onClick={() => {
-                          if (!n.read) markRead.mutate(n._id);
-                          setShowNotifications(false);
-                          window.location.href = href;
-                        }}
-                      >
-                        <div className="flex-shrink-0">
-                          <span className="material-icons text-2xl text-white">
-                            {n.type === 'new_message'
-                              ? 'message'
-                              : n.type === 'application_submitted'
-                              ? 'check_circle'
-                              : n.type === 'application_status'
-                              ? 'info'
-                              : n.relatedEntity && n.relatedEntity.type === 'Event'
-                              ? 'event'
-                              : 'notifications'}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-sm text-white/80">{n.content}</div>
-                          <div className="text-xs text-white/60">
-                            {new Date(n.createdAt).toLocaleString()}
+                  notifications
+                    .filter((n) => {
+                      // Debug: log notification objects for troubleshooting
+                      if (n.type === 'new_message') {
+                        // eslint-disable-next-line no-console
+                        console.log('Notification:', n);
+                      }
+                      // Only deduplicate if user is viewing the exact conversation
+                      if (
+                        n.type === 'new_message' &&
+                        typeof window !== 'undefined' &&
+                        window.location.pathname === '/chat' &&
+                        n.relatedEntity?.id &&
+                        window.location.search.includes(`messageId=${n.relatedEntity.id}`)
+                      ) {
+                        return false;
+                      }
+                      return true;
+                    })
+                    .map((n) => {
+                      // Always link to chat for new_message, fallback to /chat if missing
+                      let href = '#';
+                      if (n.type === 'new_message' && n.relatedEntity?.id) {
+                        href = `/chat?messageId=${n.relatedEntity.id}`;
+                      } else if (
+                        (n.type === 'application_submitted' || n.type === 'application_status') &&
+                        n.relatedEntity
+                      ) {
+                        href = `/dashboard/applications/${n.relatedEntity.id}`;
+                      } else if (n.relatedEntity && n.relatedEntity.type === 'Event') {
+                        href = `/events/${n.relatedEntity.id}`;
+                      } else if (n.type === 'new_message') {
+                        href = '/chat';
+                      }
+                      return (
+                        <div
+                          key={n._id}
+                          className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-black' : 'bg-fuchsia-950/40'} cursor-pointer`}
+                          onClick={() => {
+                            if (!n.read) markRead.mutate(n._id);
+                            setShowNotifications(false);
+                            window.location.href = href;
+                          }}
+                        >
+                          <div className="flex-shrink-0">
+                            <span className="material-icons text-2xl text-white">
+                              {n.type === 'new_message'
+                                ? 'message'
+                                : n.type === 'application_submitted'
+                                  ? 'check_circle'
+                                  : n.type === 'application_status'
+                                    ? 'info'
+                                    : n.relatedEntity && n.relatedEntity.type === 'Event'
+                                      ? 'event'
+                                      : 'notifications'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm text-white/80">{n.content}</div>
+                            <div className="text-xs text-white/60">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })
                 )}
               </div>
             )}
@@ -192,8 +191,8 @@ export default function Navbar() {
         {user ? (
           <button
             className="px-4 py-2 text-sm font-semibold bg-fuchsia-600 hover:bg-fuchsia-700 rounded transition-all"
-            onClick={() => {
-              clearAuth();
+            onClick={async () => {
+              await signOut({ redirect: false });
               window.location.href = '/';
             }}
           >

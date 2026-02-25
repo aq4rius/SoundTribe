@@ -42,10 +42,7 @@ if (process.env.NODE_ENV !== 'production') {
  * );
  * ```
  */
-export async function dbQuery<T>(
-  operation: () => Promise<T>,
-  context?: string,
-): Promise<T> {
+export async function dbQuery<T>(operation: () => Promise<T>, context?: string): Promise<T> {
   try {
     return await operation();
   } catch (error) {

@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import ErrorAlert from '../common/error-alert';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { env } from '@/lib/env';
 import type { IGenre } from '@/types';
 
@@ -34,11 +34,11 @@ async function fetchGenres() {
 }
 
 async function createEvent(data: EventFormValues, token: string | null) {
+  // TRANSITIONAL: auth header removed until Phase 3
   const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/event-postings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
       ...data,
@@ -55,8 +55,12 @@ function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void })
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-8 max-w-sm w-full text-center border border-fuchsia-400">
         <h2 className="text-2xl font-bold mb-2 text-fuchsia-700 dark:text-fuchsia-300">Success!</h2>
-        <p className="mb-4 text-zinc-700 dark:text-zinc-200">Your event was created successfully.</p>
-        <button className="btn btn-primary" onClick={onClose}>OK</button>
+        <p className="mb-4 text-zinc-700 dark:text-zinc-200">
+          Your event was created successfully.
+        </p>
+        <button className="btn btn-primary" onClick={onClose}>
+          OK
+        </button>
       </div>
     </div>
   );
@@ -65,7 +69,8 @@ function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void })
 export default function CreateEventForm() {
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const { token } = useAuth();
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | null = null;
   const { data: genres = [], isLoading: genresLoading } = useQuery({
     queryKey: ['genres'],
     queryFn: fetchGenres,
@@ -106,7 +111,7 @@ export default function CreateEventForm() {
           setShowSuccess(false);
           window.location.href = '/dashboard';
         }, 1400);
-      }
+      },
     });
   };
 
@@ -125,8 +130,14 @@ export default function CreateEventForm() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea {...register('description')} className="w-full px-3 py-2 border rounded" rows={4} />
-          {errors.description && <span className="text-red-500 text-xs">{errors.description.message}</span>}
+          <textarea
+            {...register('description')}
+            className="w-full px-3 py-2 border rounded"
+            rows={4}
+          />
+          {errors.description && (
+            <span className="text-red-500 text-xs">{errors.description.message}</span>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Genres</label>
@@ -166,28 +177,56 @@ export default function CreateEventForm() {
             className="w-full px-3 py-2 border rounded"
             placeholder="Enter instruments separated by commas"
           />
-          {errors.requiredInstruments && <span className="text-red-500 text-xs">{errors.requiredInstruments.message}</span>}
+          {errors.requiredInstruments && (
+            <span className="text-red-500 text-xs">{errors.requiredInstruments.message}</span>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Location</label>
-          <input type="text" {...register('location')} className="w-full px-3 py-2 border rounded" />
-          {errors.location && <span className="text-red-500 text-xs">{errors.location.message}</span>}
+          <input
+            type="text"
+            {...register('location')}
+            className="w-full px-3 py-2 border rounded"
+          />
+          {errors.location && (
+            <span className="text-red-500 text-xs">{errors.location.message}</span>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Event Date</label>
-          <input type="datetime-local" {...register('eventDate')} className="w-full px-3 py-2 border rounded" />
-          {errors.eventDate && <span className="text-red-500 text-xs">{errors.eventDate.message}</span>}
+          <input
+            type="datetime-local"
+            {...register('eventDate')}
+            className="w-full px-3 py-2 border rounded"
+          />
+          {errors.eventDate && (
+            <span className="text-red-500 text-xs">{errors.eventDate.message}</span>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Duration (hours)</label>
-          <input type="number" {...register('duration', { valueAsNumber: true })} className="w-full px-3 py-2 border rounded" min="0" />
-          {errors.duration && <span className="text-red-500 text-xs">{errors.duration.message}</span>}
+          <input
+            type="number"
+            {...register('duration', { valueAsNumber: true })}
+            className="w-full px-3 py-2 border rounded"
+            min="0"
+          />
+          {errors.duration && (
+            <span className="text-red-500 text-xs">{errors.duration.message}</span>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Payment Amount</label>
-            <input type="number" {...register('paymentAmount', { valueAsNumber: true })} className="w-full px-3 py-2 border rounded" min="0" />
-            {errors.paymentAmount && <span className="text-red-500 text-xs">{errors.paymentAmount.message}</span>}
+            <input
+              type="number"
+              {...register('paymentAmount', { valueAsNumber: true })}
+              className="w-full px-3 py-2 border rounded"
+              min="0"
+            />
+            {errors.paymentAmount && (
+              <span className="text-red-500 text-xs">{errors.paymentAmount.message}</span>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Payment Type</label>
@@ -195,32 +234,58 @@ export default function CreateEventForm() {
               <option value="fixed">Fixed</option>
               <option value="hourly">Hourly</option>
             </select>
-            {errors.paymentType && <span className="text-red-500 text-xs">{errors.paymentType.message}</span>}
+            {errors.paymentType && (
+              <span className="text-red-500 text-xs">{errors.paymentType.message}</span>
+            )}
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Required Experience (years)</label>
-          <input type="number" {...register('requiredExperience', { valueAsNumber: true })} className="w-full px-3 py-2 border rounded" min="0" />
-          {errors.requiredExperience && <span className="text-red-500 text-xs">{errors.requiredExperience.message}</span>}
+          <input
+            type="number"
+            {...register('requiredExperience', { valueAsNumber: true })}
+            className="w-full px-3 py-2 border rounded"
+            min="0"
+          />
+          {errors.requiredExperience && (
+            <span className="text-red-500 text-xs">{errors.requiredExperience.message}</span>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Application Deadline</label>
-          <input type="datetime-local" {...register('applicationDeadline')} className="w-full px-3 py-2 border rounded" />
-          {errors.applicationDeadline && <span className="text-red-500 text-xs">{errors.applicationDeadline.message}</span>}
+          <input
+            type="datetime-local"
+            {...register('applicationDeadline')}
+            className="w-full px-3 py-2 border rounded"
+          />
+          {errors.applicationDeadline && (
+            <span className="text-red-500 text-xs">{errors.applicationDeadline.message}</span>
+          )}
         </div>
         <div className="flex justify-end space-x-4">
-          <button type="button" className="btn btn-ghost" onClick={() => window.location.href = '/dashboard'}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => (window.location.href = '/dashboard')}
+          >
             Cancel
           </button>
-          <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" disabled={mutation.isPending}>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            disabled={mutation.isPending}
+          >
             {mutation.isPending ? 'Creating...' : 'Create Event'}
           </button>
         </div>
       </form>
-      <SuccessModal show={showSuccess} onClose={() => {
-        setShowSuccess(false);
-        window.location.href = '/dashboard';
-      }} />
+      <SuccessModal
+        show={showSuccess}
+        onClose={() => {
+          setShowSuccess(false);
+          window.location.href = '/dashboard';
+        }}
+      />
     </>
   );
 }

@@ -37,9 +37,7 @@ const serverSchema = z.object({
   ABLY_API_KEY: z.string().min(1).optional(),
 
   /** Node environment — used for conditional logic. */
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
 
 const clientSchema = z.object({
@@ -75,17 +73,13 @@ function parseEnv() {
   if (!serverResult.success) {
     const formatted = serverResult.error.flatten().fieldErrors;
     console.error('❌ Invalid server environment variables:', formatted);
-    throw new Error(
-      `Invalid server environment variables:\n${JSON.stringify(formatted, null, 2)}`,
-    );
+    throw new Error(`Invalid server environment variables:\n${JSON.stringify(formatted, null, 2)}`);
   }
 
   if (!clientResult.success) {
     const formatted = clientResult.error.flatten().fieldErrors;
     console.error('❌ Invalid client environment variables:', formatted);
-    throw new Error(
-      `Invalid client environment variables:\n${JSON.stringify(formatted, null, 2)}`,
-    );
+    throw new Error(`Invalid client environment variables:\n${JSON.stringify(formatted, null, 2)}`);
   }
 
   return {

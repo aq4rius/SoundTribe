@@ -4,11 +4,7 @@ import Footer from '@/components/ui/footer';
 /**
  * App layout — authenticated shell with Navbar and Footer.
  */
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navbar />

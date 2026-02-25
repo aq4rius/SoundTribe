@@ -56,18 +56,46 @@ function VerifyEmailContent() {
       <h2 className="text-3xl font-extrabold text-center bg-gradient-to-r from-fuchsia-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent mb-8 drop-shadow-lg tracking-tight">
         Email Verification
       </h2>
-      <div className={`text-center text-lg font-semibold space-y-2 ${status === 'success' ? 'text-emerald-300' : status === 'error' ? 'text-red-400' : 'text-white/80'}`}>
+      <div
+        className={`text-center text-lg font-semibold space-y-2 ${status === 'success' ? 'text-emerald-300' : status === 'error' ? 'text-red-400' : 'text-white/80'}`}
+      >
         {status === 'pending' && (
-          <svg className="mx-auto mb-2 animate-spin" width="40" height="40" fill="none" viewBox="0 0 40 40">
-            <circle cx="20" cy="20" r="18" stroke="#06B6D4" strokeWidth="4" strokeDasharray="90 60" />
+          <svg
+            className="mx-auto mb-2 animate-spin"
+            width="40"
+            height="40"
+            fill="none"
+            viewBox="0 0 40 40"
+          >
+            <circle
+              cx="20"
+              cy="20"
+              r="18"
+              stroke="#06B6D4"
+              strokeWidth="4"
+              strokeDasharray="90 60"
+            />
           </svg>
         )}
         {status === 'success' && (
           <svg className="mx-auto mb-2" width="48" height="48" fill="none" viewBox="0 0 48 48">
             <circle cx="24" cy="24" r="24" fill="url(#grad)" />
-            <path d="M16 24l6 6 10-10" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M16 24l6 6 10-10"
+              stroke="#fff"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
             <defs>
-              <linearGradient id="grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+              <linearGradient
+                id="grad"
+                x1="0"
+                y1="0"
+                x2="48"
+                y2="48"
+                gradientUnits="userSpaceOnUse"
+              >
                 <stop stopColor="#D946EF" />
                 <stop offset="0.5" stopColor="#06B6D4" />
                 <stop offset="1" stopColor="#34D399" />
@@ -78,13 +106,21 @@ function VerifyEmailContent() {
         {status === 'error' && (
           <svg className="mx-auto mb-2" width="48" height="48" fill="none" viewBox="0 0 48 48">
             <circle cx="24" cy="24" r="24" fill="#f43f5e" />
-            <path d="M16 16l16 16M32 16L16 32" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+            <path
+              d="M16 16l16 16M32 16L16 32"
+              stroke="#fff"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
           </svg>
         )}
         <div>{message}</div>
         {status === 'error' && (
           <div className="mt-4">
-            <a href="/auth/login" className="text-cyan-300 hover:underline font-semibold transition-colors duration-150">
+            <a
+              href="/auth/login"
+              className="text-cyan-300 hover:underline font-semibold transition-colors duration-150"
+            >
               Go to login
             </a>
           </div>

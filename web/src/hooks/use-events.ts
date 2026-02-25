@@ -8,9 +8,7 @@ export function useEvents(filters: EventFilters) {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters?.search) params.append('searchTerm', filters.search); // Backend expects 'searchTerm'
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/event-postings?${params.toString()}`,
-      );
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/event-postings?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch events');
       const data = await res.json();
       // Defensive: normalise both array and { data: [] } response shapes

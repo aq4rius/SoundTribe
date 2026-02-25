@@ -6,9 +6,7 @@ import { env } from '@/lib/env';
 import type { IGenre } from '@/types';
 
 async function getArtist(id: string) {
-  const res = await fetch(
-    `${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${id}`,
-  );
+  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${id}`);
   if (!res.ok) return null;
   return res.json();
 }
@@ -38,7 +36,9 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
           </div>
           <div>
             <span className="font-semibold">Genres:</span>{' '}
-            {Array.isArray(artist.genres) ? artist.genres.map((g: IGenre) => g.name).join(', ') : ''}
+            {Array.isArray(artist.genres)
+              ? artist.genres.map((g: IGenre) => g.name).join(', ')
+              : ''}
           </div>
           <div>
             <span className="font-semibold">Instruments:</span>{' '}
@@ -65,9 +65,8 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
               <span className="font-semibold">Socials:</span>{' '}
               {Object.entries(artist.socialMediaLinks).map(([platform, url]) => {
                 if (typeof url !== 'string' || !url) return null;
-                const safeUrl = url.startsWith('http://') || url.startsWith('https://')
-                  ? url
-                  : `https://${url}`;
+                const safeUrl =
+                  url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
                 return (
                   <a
                     key={platform}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import CreateArtistProfile from '@/components/profile/create-artist-profile';
 import ArtistCard from '@/components/artists/artist-card';
 import EventCard from '@/components/events/event-card';
@@ -11,7 +11,11 @@ import { useOnboarding } from '@/hooks/use-onboarding';
 import type { IArtistProfile, IEventPosting, IApplication } from '@/types';
 
 export default function DashboardPage() {
-  const { user, token, setAuth } = useAuth();
+  const { data: session } = useSession();
+  // TRANSITIONAL: cast to any — session.user has limited fields; Phase 3 will fetch full profile from DB
+  const user = session?.user as any;
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const router = useRouter();
   const { onboarding, loading: onboardingLoading } = useOnboarding();
   const [artistProfiles, setArtistProfiles] = useState<IArtistProfile[]>([]);
@@ -27,10 +31,11 @@ export default function DashboardPage() {
       setIsLoading(true);
       setError(null);
       try {
+        // TRANSITIONAL: auth header removed until Phase 3
         const [artistRes, eventRes, appRes] = await Promise.all([
-          fetch('/api/artist-profiles/my', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/event-postings/user', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/applications/my-applications', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/artist-profiles/my', { headers: {} }),
+          fetch('/api/event-postings/user', { headers: {} }),
+          fetch('/api/applications/my-applications', { headers: {} }),
         ]);
         if (!artistRes.ok || !eventRes.ok || !appRes.ok)
           throw new Error('Failed to load dashboard data');
@@ -68,13 +73,10 @@ export default function DashboardPage() {
   const handleDeleteProfile = async (profileId: string) => {
     if (!window.confirm('Are you sure you want to delete this artist profile?')) return;
     try {
-      const res = await fetch(
-        `/api/artist-profiles/${profileId}`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`/api/artist-profiles/${profileId}`, {
+        method: 'DELETE',
+        headers: {},
+      });
       if (!res.ok) throw new Error('Error deleting artist profile');
       setArtistProfiles((profiles) => profiles.filter((p) => p._id !== profileId));
     } catch (err) {
@@ -84,13 +86,10 @@ export default function DashboardPage() {
   const handleDeleteEvent = async (eventId: string) => {
     if (!window.confirm('Are you sure you want to delete this event?')) return;
     try {
-      const res = await fetch(
-        `/api/event-postings/${eventId}`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`/api/event-postings/${eventId}`, {
+        method: 'DELETE',
+        headers: {},
+      });
       if (!res.ok) throw new Error('Error deleting event');
       setEvents((evts) => evts.filter((e) => e._id !== eventId));
     } catch (err) {
@@ -140,11 +139,18 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="font-semibold ">Location:</p>
-              <p className="">{user.locationDetails?.city || user.location || 'Not specified'}{user.locationDetails?.region ? `, ${user.locationDetails.region}` : ''}</p>
+              <p className="">
+                {user.locationDetails?.city || user.location || 'Not specified'}
+                {user.locationDetails?.region ? `, ${user.locationDetails.region}` : ''}
+              </p>
             </div>
             <div>
               <p className="font-semibold ">Willing to travel:</p>
-              <p className="">{user.locationDetails?.willingToTravel ? user.locationDetails.willingToTravel + ' km' : 'Not specified'}</p>
+              <p className="">
+                {user.locationDetails?.willingToTravel
+                  ? user.locationDetails.willingToTravel + ' km'
+                  : 'Not specified'}
+              </p>
             </div>
             <div>
               <p className="font-semibold ">Genres:</p>
@@ -216,7 +222,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      
       {/* Artist Profiles Section */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">

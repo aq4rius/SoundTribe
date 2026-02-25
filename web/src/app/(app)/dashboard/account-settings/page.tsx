@@ -1,11 +1,15 @@
-"use client";
-import { useAuth } from '@/hooks/use-auth';
+'use client';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { updateOnboardingState } from '@/services/user';
 import { useRouter } from 'next/navigation';
 
 export default function AccountSettingsPage() {
-  const { user, token, setAuth } = useAuth();
+  const { data: session } = useSession();
+  // TRANSITIONAL: cast to any — session.user has limited fields; Phase 3 will fetch full profile from DB
+  const user = session?.user as any;
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const router = useRouter();
   const [form, setForm] = useState({
     ...user,
@@ -21,13 +25,16 @@ export default function AccountSettingsPage() {
   if (!user) return <div className="p-8">Not logged in.</div>;
 
   const handleChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev: any) => ({ ...prev, [field]: value }));
   };
   const handlePrefChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev) => ({ ...prev, preferences: { ...prev.preferences, [field]: value } }));
+    setForm((prev: any) => ({ ...prev, preferences: { ...prev.preferences, [field]: value } }));
   };
   const handleLocChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev) => ({ ...prev, locationDetails: { ...prev.locationDetails, [field]: value } }));
+    setForm((prev: any) => ({
+      ...prev,
+      locationDetails: { ...prev.locationDetails, [field]: value },
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,15 +53,7 @@ export default function AccountSettingsPage() {
         notificationPreferences: form.notificationPreferences,
         privacySettings: form.privacySettings,
       });
-      // Fetch latest user profile and update Zustand/localStorage
-      const { getUserProfile } = await import('@/services/get-user-profile');
-      const updatedUser = await getUserProfile(token || '');
-      const { _id, ...rest } = updatedUser;
-      const authUser = { ...rest, id: _id };
-      setAuth(authUser, token || '');
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth', JSON.stringify({ user: authUser, token: token || '' }));
-      }
+      // TRANSITIONAL: user profile refresh will be handled in Phase 3
       setSuccess(true);
     } catch (err) {
       setError('Failed to update settings.');
@@ -73,7 +72,7 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.firstName || ''}
-            onChange={e => handleChange('firstName', e.target.value)}
+            onChange={(e) => handleChange('firstName', e.target.value)}
             placeholder="First Name"
           />
         </div>
@@ -83,7 +82,7 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.lastName || ''}
-            onChange={e => handleChange('lastName', e.target.value)}
+            onChange={(e) => handleChange('lastName', e.target.value)}
             placeholder="Last Name"
           />
         </div>
@@ -93,7 +92,7 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.location || ''}
-            onChange={e => handleChange('location', e.target.value)}
+            onChange={(e) => handleChange('location', e.target.value)}
             placeholder="Location"
           />
         </div>
@@ -102,7 +101,7 @@ export default function AccountSettingsPage() {
           <textarea
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.bio || ''}
-            onChange={e => handleChange('bio', e.target.value)}
+            onChange={(e) => handleChange('bio', e.target.value)}
             placeholder="Bio"
             rows={3}
           />
@@ -113,7 +112,15 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.preferences?.genres?.join(', ') || ''}
-            onChange={e => handlePrefChange('genres', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            onChange={(e) =>
+              handlePrefChange(
+                'genres',
+                e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              )
+            }
             placeholder="e.g. Rock, Jazz"
           />
         </div>
@@ -123,7 +130,15 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.preferences?.instruments?.join(', ') || ''}
-            onChange={e => handlePrefChange('instruments', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            onChange={(e) =>
+              handlePrefChange(
+                'instruments',
+                e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              )
+            }
             placeholder="e.g. Guitar, Drums"
           />
         </div>
@@ -133,7 +148,15 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.preferences?.influences?.join(', ') || ''}
-            onChange={e => handlePrefChange('influences', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            onChange={(e) =>
+              handlePrefChange(
+                'influences',
+                e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              )
+            }
             placeholder="e.g. Radiohead, Daft Punk"
           />
         </div>
@@ -143,7 +166,15 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.preferences?.eventTypes?.join(', ') || ''}
-            onChange={e => handlePrefChange('eventTypes', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            onChange={(e) =>
+              handlePrefChange(
+                'eventTypes',
+                e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              )
+            }
             placeholder="e.g. Gigs, Studio, Networking"
           />
         </div>
@@ -153,7 +184,7 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.locationDetails?.city || ''}
-            onChange={e => handleLocChange('city', e.target.value)}
+            onChange={(e) => handleLocChange('city', e.target.value)}
             placeholder="City"
           />
         </div>
@@ -163,7 +194,7 @@ export default function AccountSettingsPage() {
             type="text"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.locationDetails?.region || ''}
-            onChange={e => handleLocChange('region', e.target.value)}
+            onChange={(e) => handleLocChange('region', e.target.value)}
             placeholder="Region"
           />
         </div>
@@ -173,16 +204,24 @@ export default function AccountSettingsPage() {
             type="number"
             className="w-full border rounded px-2 py-1 text-gray-900 bg-gray-50"
             value={form.locationDetails?.willingToTravel || ''}
-            onChange={e => handleLocChange('willingToTravel', Number(e.target.value))}
+            onChange={(e) => handleLocChange('willingToTravel', Number(e.target.value))}
             min={0}
             max={1000}
           />
         </div>
         <div className="flex gap-4 mt-6">
-          <button type="submit" className="px-6 py-2 rounded bg-indigo-500 text-white font-semibold" disabled={saving}>
+          <button
+            type="submit"
+            className="px-6 py-2 rounded bg-indigo-500 text-white font-semibold"
+            disabled={saving}
+          >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
-          <button type="button" className="px-6 py-2 rounded bg-gray-200 text-gray-900" onClick={() => router.push('/dashboard')}>
+          <button
+            type="button"
+            className="px-6 py-2 rounded bg-gray-200 text-gray-900"
+            onClick={() => router.push('/dashboard')}
+          >
             Cancel
           </button>
         </div>

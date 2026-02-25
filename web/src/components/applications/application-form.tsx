@@ -43,23 +43,20 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
     }
     try {
       // Submit application to backend
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/applications`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')!).token : '' : ''}`,
-          },
-          body: JSON.stringify({
-            eventPostingId: event._id,
-            artistProfileId: artistProfile._id,
-            coverLetter: formData.coverLetter,
-            proposedRate: formData.proposedRate,
-            availability: formData.availability,
-          }),
-        }
-      );
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/applications`, {
+        method: 'POST',
+        headers: {
+          // TRANSITIONAL: no auth token available until Phase 3
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventPostingId: event._id,
+          artistProfileId: artistProfile._id,
+          coverLetter: formData.coverLetter,
+          proposedRate: formData.proposedRate,
+          availability: formData.availability,
+        }),
+      });
       if (!res.ok) {
         const err = await res.json();
         setError(err.message || 'Failed to submit application');

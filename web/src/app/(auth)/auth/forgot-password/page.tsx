@@ -29,14 +29,11 @@ export default function ForgotPasswordPage() {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        },
-      );
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
       if (!res.ok) {
         const err = await res.json();
         setError(err.message || 'Failed to send reset email');
@@ -71,9 +68,22 @@ export default function ForgotPasswordPage() {
         >
           <svg className="mx-auto mb-2" width="48" height="48" fill="none" viewBox="0 0 48 48">
             <circle cx="24" cy="24" r="24" fill="url(#grad)" />
-            <path d="M16 24l6 6 10-10" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M16 24l6 6 10-10"
+              stroke="#fff"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
             <defs>
-              <linearGradient id="grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+              <linearGradient
+                id="grad"
+                x1="0"
+                y1="0"
+                x2="48"
+                y2="48"
+                gradientUnits="userSpaceOnUse"
+              >
                 <stop stopColor="#D946EF" />
                 <stop offset="0.5" stopColor="#06B6D4" />
                 <stop offset="1" stopColor="#34D399" />
@@ -97,7 +107,9 @@ export default function ForgotPasswordPage() {
               className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:ring-2 focus:ring-cyan-400 focus:outline-none transition"
               placeholder="you@email.com"
             />
-            {errors.email && <p className="text-fuchsia-400 text-sm mt-1">{errors.email.message}</p>}
+            {errors.email && (
+              <p className="text-fuchsia-400 text-sm mt-1">{errors.email.message}</p>
+            )}
           </div>
           {error && <div className="text-red-400 text-center text-sm">{error}</div>}
           <button
@@ -110,7 +122,10 @@ export default function ForgotPasswordPage() {
         </form>
       )}
       <div className="mt-8 text-center text-white/60 text-sm">
-        <a href="/auth/login" className="text-cyan-300 hover:underline font-semibold transition-colors duration-150">
+        <a
+          href="/auth/login"
+          className="text-cyan-300 hover:underline font-semibold transition-colors duration-150"
+        >
           Back to login
         </a>
       </div>

@@ -10,15 +10,10 @@ export function useMyEntities(token?: string) {
   return useQuery<ChatEntity[]>({
     queryKey: ['my-entities'],
     queryFn: async () => {
+      // TRANSITIONAL: auth header removed until Phase 3
       const [profilesRes, eventsRes] = await Promise.all([
-        fetch(
-          `${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/my`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        ),
-        fetch(
-          `${env.NEXT_PUBLIC_API_URL}/api/event-postings/user`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        ),
+        fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/my`, { headers: {} }),
+        fetch(`${env.NEXT_PUBLIC_API_URL}/api/event-postings/user`, { headers: {} }),
       ]);
       if (!profilesRes.ok || !eventsRes.ok) throw new Error('Failed to fetch entities');
       const profilesJson = await profilesRes.json();

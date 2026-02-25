@@ -8,9 +8,7 @@ import { env } from '@/lib/env';
 import type { IGenre } from '@/types';
 
 async function getEvent(id: string) {
-  const res = await fetch(
-    `${env.NEXT_PUBLIC_API_URL}/api/event-postings/${id}`,
-  );
+  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/event-postings/${id}`);
   if (!res.ok) return null;
   return res.json();
 }
@@ -26,7 +24,7 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
       <div className="mb-6">
         <EventCard event={event} mode="full" />
       </div>
-      
+
       <div className="bg-black/60 rounded-xl p-6 border border-white/10 mb-6">
         <h2 className="text-xl font-bold mb-2 text-cyan-300">Event Details</h2>
         <div className="space-y-2 text-white/90">
@@ -77,11 +75,11 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
           </div>
         </div>
       </div>
-      
+
       <div className="flex gap-4 mb-6">
         <SendMessageButton event={event} />
       </div>
-      
+
       <EventApplication event={event} />
     </div>
   );

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import ApplicationForm from './application-form';
 import ApplicationsList from './applications-list';
 import ErrorAlert from '../common/error-alert';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { env } from '@/lib/env';
 import type { IEventPosting, IApplication, IArtistProfile } from '@/types';
 
@@ -14,7 +14,10 @@ interface EventApplicationProps {
 }
 
 const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
-  const { user, token } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [applications, setApplications] = useState<IApplication[]>([]);
   const [userApplication, setUserApplication] = useState<IApplication | null>(null);
@@ -29,23 +32,27 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
     async function fetchData() {
       try {
         // Fetch user's artist profiles
-        const res = await fetch(
-          `${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/my`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        // TRANSITIONAL: auth header removed until Phase 3
+        const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/my`, {
+          headers: {},
+        });
         if (!res.ok) throw new Error('Failed to fetch artist profiles');
         const profiles = await res.json();
         setArtistProfile(Array.isArray(profiles) && profiles.length > 0 ? profiles[0] : null);
         // Determine if user is event owner
         const postedBy = event.postedBy;
-        const isOwner = user && postedBy && typeof postedBy === 'object' && (user.email === postedBy.email || user.id === postedBy._id);
+        const isOwner =
+          user &&
+          postedBy &&
+          typeof postedBy === 'object' &&
+          (user.email === postedBy.email || user.id === postedBy._id);
         let allApplications: IApplication[] = [];
         let userApp: IApplication | null = null;
         if (isOwner) {
           // Fetch all applications for this event
           const appRes = await fetch(
             `${env.NEXT_PUBLIC_API_URL}/api/applications/event/${event._id}`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: {} },
           );
           if (!appRes.ok) throw new Error('Failed to fetch applications');
           allApplications = await appRes.json();
@@ -54,7 +61,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
           // Fetch only user's applications
           const myAppRes = await fetch(
             `${env.NEXT_PUBLIC_API_URL}/api/applications/my-applications`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: {} },
           );
           if (myAppRes.ok) {
             const myApps = await myAppRes.json();
@@ -70,7 +77,9 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
         }
         setIsLoading(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error fetching artist profile or applications');
+        setError(
+          err instanceof Error ? err.message : 'Error fetching artist profile or applications',
+        );
         setIsLoading(false);
       }
     }
@@ -79,7 +88,11 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
   }, [event._id, user, event.postedBy, refreshKey]);
 
   // Placeholder logic for event owner and application status
-  const isEventOwner = user && event.postedBy && typeof event.postedBy === 'object' && user.email === event.postedBy.email;
+  const isEventOwner =
+    user &&
+    event.postedBy &&
+    typeof event.postedBy === 'object' &&
+    user.email === event.postedBy.email;
   const canApply = event.status === 'open' && !isEventOwner && !userApplication && artistProfile;
 
   if (isLoading) return <div>Loading...</div>;

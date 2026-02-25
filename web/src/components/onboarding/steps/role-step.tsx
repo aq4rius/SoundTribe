@@ -1,11 +1,19 @@
 import React from 'react';
 import type { OnboardingState } from '@/hooks/use-onboarding';
 
-export default function RoleStep({ goNext, onboarding, saveOnboarding }: { goNext: () => void; onboarding: OnboardingState | null; saveOnboarding: (data: Partial<OnboardingState>) => void }) {
+export default function RoleStep({
+  goNext,
+  onboarding,
+  saveOnboarding,
+}: {
+  goNext: () => void;
+  onboarding: OnboardingState | null;
+  saveOnboarding: (data: Partial<OnboardingState>) => void;
+}) {
   const [selected, setSelected] = React.useState<string[]>(onboarding?.roles || []);
 
   const handleSelect = (role: string) => {
-    setSelected((prev) => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
+    setSelected((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
   };
 
   const handleContinue = async () => {

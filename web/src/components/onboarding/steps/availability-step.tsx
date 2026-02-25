@@ -1,13 +1,26 @@
 import React from 'react';
 import type { OnboardingState } from '@/hooks/use-onboarding';
 
-export default function AvailabilityStep({ goNext, goBack, onboarding, saveOnboarding }: { goNext: () => void; goBack: () => void; onboarding: OnboardingState | null; saveOnboarding: (data: Partial<OnboardingState>) => void }) {
+export default function AvailabilityStep({
+  goNext,
+  goBack,
+  onboarding,
+  saveOnboarding,
+}: {
+  goNext: () => void;
+  goBack: () => void;
+  onboarding: OnboardingState | null;
+  saveOnboarding: (data: Partial<OnboardingState>) => void;
+}) {
   const [goals, setGoals] = React.useState<string[]>(onboarding?.preferences?.eventTypes || []);
   // TODO: Branch by role for more advanced logic
   const goalOptions = ['Gigs', 'Tours', 'Remote', 'Studio', 'Networking'];
 
   const handleContinue = async () => {
-    await saveOnboarding({ preferences: { ...onboarding?.preferences, eventTypes: goals }, onboardingStep: 4 });
+    await saveOnboarding({
+      preferences: { ...onboarding?.preferences, eventTypes: goals },
+      onboardingStep: 4,
+    });
     goNext();
   };
 
@@ -21,15 +34,21 @@ export default function AvailabilityStep({ goNext, goBack, onboarding, saveOnboa
             key={g}
             type="button"
             className={`px-3 py-1 rounded-full border ${goals.includes(g) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-900'}`}
-            onClick={() => setGoals((prev) => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
+            onClick={() =>
+              setGoals((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]))
+            }
           >
             {g}
           </button>
         ))}
       </div>
       <div className="flex justify-between">
-        <button onClick={goBack} className="px-4 py-2 rounded bg-gray-200 text-gray-900">Back</button>
-        <button onClick={handleContinue} className="px-4 py-2 rounded bg-indigo-500 text-white">Continue</button>
+        <button onClick={goBack} className="px-4 py-2 rounded bg-gray-200 text-gray-900">
+          Back
+        </button>
+        <button onClick={handleContinue} className="px-4 py-2 rounded bg-indigo-500 text-white">
+          Continue
+        </button>
       </div>
     </div>
   );

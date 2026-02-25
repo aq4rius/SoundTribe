@@ -53,22 +53,14 @@ export type {
 
 // ─── Transitional Types (Express API) ──────────────────────────────────────────
 
-export type {
-  IUser,
-  AuthUser,
-  LoginResponse,
-  RegisterResponse,
-} from './auth';
+export type { IUser, AuthUser, LoginResponse, RegisterResponse } from './auth';
 
 /** @deprecated Alias kept for any imports referencing LegacyAuthUser. */
 export type { AuthUser as LegacyAuthUser } from './auth';
 
 export type { IEventPosting, EventFilters } from './event';
 
-export type {
-  IArtistProfile,
-  ArtistFilters,
-} from './artist';
+export type { IArtistProfile, ArtistFilters } from './artist';
 
 export type {
   IApplication,
@@ -77,22 +69,10 @@ export type {
   PopulatedEventPosting,
 } from './application';
 
-export {
-  isPopulatedArtistProfile,
-  isPopulatedEventPosting,
-  isPopulatedUser,
-} from './application';
+export { isPopulatedArtistProfile, isPopulatedEventPosting, isPopulatedUser } from './application';
 
-export type {
-  IMessage,
-  IConversation,
-  ChatEntity,
-  MessageEntity,
-} from './message';
+export type { IMessage, IConversation, ChatEntity, MessageEntity } from './message';
 
-export type {
-  INotification,
-  NotificationRelatedEntity,
-} from './notification';
+export type { INotification, NotificationRelatedEntity } from './notification';
 
 export type { IGenre } from './genre';

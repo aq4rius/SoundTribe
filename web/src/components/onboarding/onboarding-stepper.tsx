@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 import RoleStep from './steps/role-step';
@@ -36,7 +36,12 @@ export default function OnboardingStepper() {
     <div className="bg-white min-h-[500px] rounded-xl shadow p-4 sm:p-8">
       <div className="flex items-center mb-6">
         {steps.map((s, i) => (
-          <div key={s.label} className={`flex-1 text-center ${i === step ? 'font-bold text-indigo-600' : 'text-gray-400'}`}>{s.label}</div>
+          <div
+            key={s.label}
+            className={`flex-1 text-center ${i === step ? 'font-bold text-indigo-600' : 'text-gray-400'}`}
+          >
+            {s.label}
+          </div>
         ))}
       </div>
       <div className="mb-4">
@@ -48,8 +53,20 @@ export default function OnboardingStepper() {
         />
       </div>
       <div className="flex justify-between">
-        <button onClick={goBack} disabled={step === 0} className="px-4 py-2 rounded bg-gray-200 text-gray-900 disabled:opacity-50">Back</button>
-        <button onClick={goNext} disabled={step === steps.length - 1} className="px-4 py-2 rounded bg-indigo-500 text-white">Next</button>
+        <button
+          onClick={goBack}
+          disabled={step === 0}
+          className="px-4 py-2 rounded bg-gray-200 text-gray-900 disabled:opacity-50"
+        >
+          Back
+        </button>
+        <button
+          onClick={goNext}
+          disabled={step === steps.length - 1}
+          className="px-4 py-2 rounded bg-indigo-500 text-white"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

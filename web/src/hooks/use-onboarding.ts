@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { getOnboardingState, updateOnboardingState } from '../services/user';
-import { useAuth } from './use-auth';
+import { useSession } from 'next-auth/react';
 
 export interface OnboardingPreferences {
   genres?: string[];
@@ -33,7 +33,9 @@ export interface OnboardingState {
 }
 
 export function useOnboarding() {
-  const { token } = useAuth();
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const { data: session } = useSession();
+  const token: string | undefined = undefined;
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

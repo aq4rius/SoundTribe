@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ChatEntity, IMessage, IConversation } from '@/types';
 import { env } from '@/lib/env';
 
+// TRANSITIONAL: auth header removed until Phase 3
 export function useConversations(sender: ChatEntity | null, token?: string) {
   return useQuery<IConversation[]>({
     queryKey: ['conversations', sender?._id, sender?.type],
@@ -10,7 +11,7 @@ export function useConversations(sender: ChatEntity | null, token?: string) {
       const res = await fetch(
         `${env.NEXT_PUBLIC_API_URL}/api/messages/conversations?senderId=${sender._id}&senderType=${sender.type}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {},
         },
       );
       if (!res.ok) throw new Error('Failed to fetch conversations');
@@ -25,7 +26,11 @@ export function useConversations(sender: ChatEntity | null, token?: string) {
   });
 }
 
-export function useMessages(sender: ChatEntity | null, receiver: ChatEntity | null, token?: string) {
+export function useMessages(
+  sender: ChatEntity | null,
+  receiver: ChatEntity | null,
+  token?: string,
+) {
   return useQuery<{ messages: IMessage[] }>({
     queryKey: ['messages', sender?._id, sender?.type, receiver?._id, receiver?.type],
     queryFn: async () => {
@@ -33,7 +38,7 @@ export function useMessages(sender: ChatEntity | null, receiver: ChatEntity | nu
       const res = await fetch(
         `${env.NEXT_PUBLIC_API_URL}/api/messages/convo?senderId=${sender._id}&senderType=${sender.type}&receiverId=${receiver._id}&receiverType=${receiver.type}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {},
         },
       );
       if (!res.ok) throw new Error('Failed to fetch messages');
@@ -56,7 +61,7 @@ export function useUnreadCounts(sender: ChatEntity | null, token?: string) {
       const res = await fetch(
         `${env.NEXT_PUBLIC_API_URL}/api/messages/unread-counts?senderId=${sender._id}&senderType=${sender.type}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {},
         },
       );
       if (!res.ok) throw new Error('Failed to fetch unread counts');
@@ -85,7 +90,7 @@ export function useDeleteConversation(token?: string) {
         `${env.NEXT_PUBLIC_API_URL}/api/messages/convo?senderId=${senderId}&senderType=${senderType}&receiverId=${receiverId}&receiverType=${receiverType}`,
         {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {},
         },
       );
       if (!res.ok) throw new Error('Failed to delete conversation');
@@ -107,24 +112,14 @@ export function useDeleteConversation(token?: string) {
 export function useAddReaction(token?: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      messageId,
-      emoji,
-    }: {
-      messageId: string;
-      emoji: string;
-    }) => {
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/reaction`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ emoji }),
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/reaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({ emoji }),
+      });
       if (!res.ok) throw new Error('Failed to add reaction');
       return res.json();
     },
@@ -140,24 +135,14 @@ export function useAddReaction(token?: string) {
 export function useRemoveReaction(token?: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      messageId,
-      emoji,
-    }: {
-      messageId: string;
-      emoji: string;
-    }) => {
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/reaction`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ emoji }),
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/reaction`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({ emoji }),
+      });
       if (!res.ok) throw new Error('Failed to remove reaction');
       return res.json();
     },

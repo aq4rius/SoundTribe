@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +21,11 @@ const schema = z.object({
 type EditProfileFormValues = z.infer<typeof schema>;
 
 export default function EditProfilePage() {
-  const { user, setAuth } = useAuth();
+  const { data: session } = useSession();
+  // TRANSITIONAL: cast to any — session.user has limited fields; Phase 3 will fetch full profile from DB
+  const user = session?.user as any;
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,39 +64,19 @@ export default function EditProfilePage() {
     setIsLoading(true);
     setSuccess(false);
     try {
-      let token = '';
-      if (typeof window !== 'undefined') {
-        const auth = localStorage.getItem('auth');
-        if (auth) {
-          try {
-            token = JSON.parse(auth).token;
-          } catch {}
-        }
-      }
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/users/profile`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify(data),
-          credentials: 'include',
+      // TRANSITIONAL: Express API call will not work without token until Phase 3
+      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
       if (!res.ok) {
         const err = await res.json();
         setError(err.message || 'Profile update failed');
         return;
-      }
-      const updated = await res.json();
-      setAuth(
-        updated,
-        token,
-      );
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth', JSON.stringify({ user: updated, token }));
       }
       setSuccess(true);
       setTimeout(() => router.push('/dashboard'), 1200);
@@ -115,8 +99,14 @@ export default function EditProfilePage() {
       <h2 className="text-2xl font-bold text-center mb-4 bg-gradient-to-r from-fuchsia-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-lg">
         Edit Your Profile
       </h2>
-      {error && <div className="bg-red-500/20 text-red-400 p-2 rounded text-center mb-2">{error}</div>}
-      {success && <div className="bg-emerald-500/20 text-emerald-300 p-2 rounded text-center mb-2 animate-pulse">Profile updated!</div>}
+      {error && (
+        <div className="bg-red-500/20 text-red-400 p-2 rounded text-center mb-2">{error}</div>
+      )}
+      {success && (
+        <div className="bg-emerald-500/20 text-emerald-300 p-2 rounded text-center mb-2 animate-pulse">
+          Profile updated!
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-5">
         <div>
           <label className="block mb-1 text-white/80 font-semibold">Username</label>
@@ -126,7 +116,9 @@ export default function EditProfilePage() {
             required
             minLength={3}
           />
-          {errors.username && <p className="text-fuchsia-400 text-sm mt-1">{errors.username.message}</p>}
+          {errors.username && (
+            <p className="text-fuchsia-400 text-sm mt-1">{errors.username.message}</p>
+          )}
         </div>
         <div>
           <label className="block mb-1 text-white/80 font-semibold">Email</label>
@@ -140,43 +132,32 @@ export default function EditProfilePage() {
         </div>
         <div>
           <label className="block mb-1 text-white/80 font-semibold">First Name</label>
-          <input
-            {...register('firstName')}
-            className="input input-bordered w-full"
-          />
-          {errors.firstName && <p className="text-fuchsia-400 text-sm mt-1">{errors.firstName.message}</p>}
+          <input {...register('firstName')} className="input input-bordered w-full" />
+          {errors.firstName && (
+            <p className="text-fuchsia-400 text-sm mt-1">{errors.firstName.message}</p>
+          )}
         </div>
         <div>
           <label className="block mb-1 text-white/80 font-semibold">Last Name</label>
-          <input
-            {...register('lastName')}
-            className="input input-bordered w-full"
-          />
-          {errors.lastName && <p className="text-fuchsia-400 text-sm mt-1">{errors.lastName.message}</p>}
+          <input {...register('lastName')} className="input input-bordered w-full" />
+          {errors.lastName && (
+            <p className="text-fuchsia-400 text-sm mt-1">{errors.lastName.message}</p>
+          )}
         </div>
         <div>
           <label className="block mb-1 text-white/80 font-semibold">Location</label>
-          <input
-            {...register('location')}
-            className="input input-bordered w-full"
-          />
-          {errors.location && <p className="text-fuchsia-400 text-sm mt-1">{errors.location.message}</p>}
+          <input {...register('location')} className="input input-bordered w-full" />
+          {errors.location && (
+            <p className="text-fuchsia-400 text-sm mt-1">{errors.location.message}</p>
+          )}
         </div>
         <div>
           <label className="block mb-1 text-white/80 font-semibold">Bio</label>
-          <textarea
-            {...register('bio')}
-            className="input input-bordered w-full"
-            rows={3}
-          />
+          <textarea {...register('bio')} className="input input-bordered w-full" rows={3} />
           {errors.bio && <p className="text-fuchsia-400 text-sm mt-1">{errors.bio.message}</p>}
         </div>
       </div>
-      <button
-        type="submit"
-        className="btn btn-primary w-full mt-6"
-        disabled={isLoading}
-      >
+      <button type="submit" className="btn btn-primary w-full mt-6" disabled={isLoading}>
         {isLoading ? 'Saving...' : 'Save Changes'}
       </button>
     </motion.form>

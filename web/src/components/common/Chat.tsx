@@ -11,7 +11,7 @@ import {
   useDeleteConversation,
   useAddReaction,
 } from '@/hooks/use-chat';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { useSendMessage } from '@/hooks/use-send-message';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
@@ -34,8 +34,11 @@ const SOCKET_URL = env.NEXT_PUBLIC_SOCKET_URL;
 
 const Chat = () => {
   // All hooks at the top, no early returns
-  const { user, token } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const searchParams = useSearchParams();
+  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
+  const token: string | undefined = undefined;
   const safeToken = token || undefined;
   const { data: myEntities = [], isLoading: entitiesLoading } = useMyEntities(safeToken);
   const [selectedSender, setSelectedSender] = useState<any>(null);
@@ -91,7 +94,8 @@ const Chat = () => {
     if (receiverId && receiverType && receiverName) {
       // Check if conversation already exists
       const existingConv = conversations.find(
-        (conv: IConversation) => conv.entity._id === receiverId && conv.entity.type === receiverType,
+        (conv: IConversation) =>
+          conv.entity._id === receiverId && conv.entity.type === receiverType,
       );
 
       if (existingConv) {
@@ -131,7 +135,8 @@ const Chat = () => {
     if (receiverId && receiverType && receiverName && selectedSender) {
       // Check if this conversation already exists in the list
       const exists = conversations.some(
-        (conv: IConversation) => conv.entity._id === receiverId && conv.entity.type === receiverType,
+        (conv: IConversation) =>
+          conv.entity._id === receiverId && conv.entity.type === receiverType,
       );
 
       if (!exists) {
@@ -162,7 +167,10 @@ const Chat = () => {
     socket.emit('join-entity', { entityId: selectedSender._id, entityType: selectedSender.type });
 
     // Emit mark-delivered for this sender entity (to mark all messages sent to this entity as delivered)
-    socket.emit('mark-delivered', { entityId: selectedSender._id, entityType: selectedSender.type });
+    socket.emit('mark-delivered', {
+      entityId: selectedSender._id,
+      entityType: selectedSender.type,
+    });
 
     socket.on('new-message', (msg: SocketNewMessage) => {
       const isCurrentConversation =
@@ -695,10 +703,13 @@ const Chat = () => {
                           <div className="flex gap-1 mt-1">
                             {/* Group reactions by emoji */}
                             {Object.entries(
-                              msg.reactions.reduce((acc: Record<string, number>, reaction: MessageReaction) => {
-                                acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
-                                return acc;
-                              }, {}),
+                              msg.reactions.reduce(
+                                (acc: Record<string, number>, reaction: MessageReaction) => {
+                                  acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
+                                  return acc;
+                                },
+                                {},
+                              ),
                             ).map(([emoji, count]) => (
                               <span key={emoji} className="text-xs bg-gray-600 rounded px-1 py-0.5">
                                 {emoji} {count as number}

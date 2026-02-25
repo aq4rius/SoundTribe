@@ -9,11 +9,12 @@
  *
  * Features:
  * - Base URL from validated env
- * - JWT auth header injection from Zustand store
- * - 401 interceptor: clears auth state and redirects to login
+ * - Cookies sent automatically via withCredentials (httpOnly session cookie)
+ * - 401 interceptor: signs out via NextAuth and redirects to login
  */
 
 import axios from 'axios';
+import { signOut } from 'next-auth/react';
 import { env } from '@/lib/env';
 
 const api = axios.create({
@@ -25,41 +26,17 @@ const api = axios.create({
 });
 
 // ---------------------------------------------------------------------------
-// Request interceptor — attach JWT token
-// ---------------------------------------------------------------------------
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    try {
-      const auth = localStorage.getItem('auth');
-      if (auth) {
-        const { token } = JSON.parse(auth) as { token?: string };
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      }
-    } catch {
-      // localStorage unavailable or corrupt — proceed without token
-    }
-  }
-  return config;
-});
-
-// ---------------------------------------------------------------------------
 // Response interceptor — handle 401
 // ---------------------------------------------------------------------------
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (
       axios.isAxiosError(error) &&
       error.response?.status === 401 &&
       typeof window !== 'undefined'
     ) {
-      // Lazy import to avoid circular dependency with Zustand store
-      import('@/store/auth-store').then(({ useAuthStore }) => {
-        useAuthStore.getState().clearAuth();
-      });
-      localStorage.removeItem('auth');
+      await signOut({ redirect: false });
       window.location.href = '/auth/login';
     }
     return Promise.reject(error);
