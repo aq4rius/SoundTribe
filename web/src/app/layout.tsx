@@ -14,9 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'SoundTribe — Discover, Connect & Create Music',
+  title: {
+    default: 'SoundTribe — Discover, Connect & Create Music',
+    template: '%s | SoundTribe',
+  },
   description:
     'SoundTribe connects musicians, organizers, and music enthusiasts. Find gigs, discover artists, and build your music career.',
+  icons: { icon: '/icon.svg' },
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'https://soundtribe.vercel.app'),
   openGraph: {
     title: 'SoundTribe',
     description:
