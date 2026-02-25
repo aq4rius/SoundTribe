@@ -4,6 +4,9 @@ import { getArtistProfilesAction } from '@/actions/artist-profiles';
 import { getGenres } from '@/actions/genres';
 import ArtistCard from '@/components/artists/artist-card';
 import Pagination from '@/components/common/pagination';
+import { EmptyState } from '@/components/shared/empty-state';
+import { ArtistCardSkeleton } from '@/components/shared/skeletons';
+import { Users } from 'lucide-react';
 
 interface ArtistFilters {
   search: string;
@@ -44,11 +47,7 @@ export default function ArtistsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [artists, setArtists] = useState<ArtistResult[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    getGenres().then(setGenreOptions).catch(() => setGenreOptions([]));
-  }, []);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchArtists = useCallback(async () => {
     setIsLoading(true);
@@ -71,6 +70,19 @@ export default function ArtistsPage() {
       setIsLoading(false);
     }
   }, [filters, currentPage]);
+
+  useEffect(() => {
+    // Load genres and initial artists in parallel on mount
+    const loadInitial = async () => {
+      const [genresResult] = await Promise.all([
+        getGenres().catch(() => [] as Genre[]),
+        fetchArtists(),
+      ]);
+      setGenreOptions(genresResult);
+    };
+    loadInitial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchArtists();
@@ -211,9 +223,17 @@ export default function ArtistsPage() {
         {/* Artists Grid with Pagination */}
         <div className="flex-1">
           {isLoading ? (
-            <div className="text-center py-16 text-lg text-white/60 animate-pulse">
-              Loading artists...
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <ArtistCardSkeleton key={i} />
+              ))}
             </div>
+          ) : artists.length === 0 ? (
+            <EmptyState
+              icon={<Users className="h-12 w-12" />}
+              title="No artists found"
+              description="Try adjusting your filters or check back later for new artists."
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {artists.map((artist) => (

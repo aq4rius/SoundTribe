@@ -8,6 +8,8 @@ import {
   markAllAsReadAction,
 } from '@/actions/notifications';
 import { updateNotificationPreferencesAction } from '@/actions/users';
+import { EmptyState } from '@/components/shared/empty-state';
+import { Bell } from 'lucide-react';
 
 interface NotificationItem {
   id: string;
@@ -83,7 +85,11 @@ export default function NotificationsPage() {
         {isLoading ? (
           <div className="p-6 text-center text-white/60">Loading...</div>
         ) : notifications.length === 0 ? (
-          <div className="p-6 text-center text-white/60">No notifications found.</div>
+          <EmptyState
+            icon={<Bell className="h-10 w-10" />}
+            title="No notifications"
+            description="You're all caught up! New notifications will appear here."
+          />
         ) : (
           notifications.map((n) => {
             let href = '#';

@@ -10,6 +10,9 @@ import { getMyArtistProfileAction, deleteArtistProfileAction } from '@/actions/a
 import { getMyEventsAction, deleteEventAction } from '@/actions/events';
 import { getMyApplicationsAction } from '@/actions/applications';
 import { getOnboardingStateAction } from '@/actions/users';
+import { EmptyState } from '@/components/shared/empty-state';
+import { DashboardSkeleton } from '@/components/shared/skeletons';
+import { Calendar, Music, FileText } from 'lucide-react';
 
 interface DashboardEvent {
   id: string;
@@ -109,10 +112,10 @@ export default function DashboardPage() {
   }, [user, onboardingLoading, fetchData]);
 
   if (onboardingLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return <DashboardSkeleton />;
   }
 
-  if (isLoading) return <div className="text-center text-white/80 py-12">Loading dashboard...</div>;
+  if (isLoading) return <DashboardSkeleton />;
   if (error) return <div className="text-center text-red-400 py-12">{error}</div>;
 
   if (!user) return <div className="text-center text-red-400 py-12">User not found.</div>;
@@ -231,8 +234,12 @@ export default function DashboardPage() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {events.length === 0 ? (
-            <div className="col-span-full text-center text-white/60 py-4">
-              No events found. Create your first event!
+            <div className="col-span-full">
+              <EmptyState
+                icon={<Calendar className="h-10 w-10" />}
+                title="No events yet"
+                description="Create your first event to start finding artists."
+              />
             </div>
           ) : (
             events.map((event) => (
@@ -305,15 +312,25 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center text-white/60 py-4">
-            No artist profile found.
-          </div>
+          <EmptyState
+            icon={<Music className="h-10 w-10" />}
+            title="No artist profile yet"
+            description="Create a profile to showcase your talent and connect with events."
+          />
         )}
       </div>
       {/* Applications Section */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2 text-white">My Applications</h2>
-        <ApplicationsList applications={applications} />
+        {applications.length === 0 ? (
+          <EmptyState
+            icon={<FileText className="h-10 w-10" />}
+            title="No applications yet"
+            description="Apply to events to start performing."
+          />
+        ) : (
+          <ApplicationsList applications={applications} />
+        )}
       </div>
       {deleteError && <div className="text-center text-red-400 py-2">{deleteError}</div>}
     </div>

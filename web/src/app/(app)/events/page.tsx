@@ -4,6 +4,9 @@ import { getEventsAction } from '@/actions/events';
 import { getGenres } from '@/actions/genres';
 import EventCard from '@/components/events/event-card';
 import Pagination from '@/components/common/pagination';
+import { EmptyState } from '@/components/shared/empty-state';
+import { EventCardSkeleton } from '@/components/shared/skeletons';
+import { Calendar } from 'lucide-react';
 
 interface EventFilters {
   search: string;
@@ -41,11 +44,7 @@ export default function EventsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [events, setEvents] = useState<EventResult[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    getGenres().then(setGenreOptions).catch(() => setGenreOptions([]));
-  }, []);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchEvents = useCallback(async () => {
     setIsLoading(true);
@@ -71,6 +70,19 @@ export default function EventsPage() {
       setIsLoading(false);
     }
   }, [filters, currentPage]);
+
+  useEffect(() => {
+    // Load genres and initial events in parallel on mount
+    const loadInitial = async () => {
+      const [genresResult] = await Promise.all([
+        getGenres().catch(() => [] as { id: string; name: string }[]),
+        fetchEvents(),
+      ]);
+      setGenreOptions(genresResult);
+    };
+    loadInitial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchEvents();
@@ -239,9 +251,17 @@ export default function EventsPage() {
         {/* Events Grid with Pagination */}
         <div className="flex-1">
           {isLoading ? (
-            <div className="text-center py-16 text-lg text-white/60 animate-pulse">
-              Loading events...
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
             </div>
+          ) : events.length === 0 ? (
+            <EmptyState
+              icon={<Calendar className="h-12 w-12" />}
+              title="No events found"
+              description="Try adjusting your filters or check back later for new events."
+            />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {events.map((event) => (
