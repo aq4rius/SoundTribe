@@ -61,7 +61,8 @@ function ChatContent() {
               <div className="md:hidden border-b border-white/10 px-3 py-2">
                 <button
                   onClick={handleBackToList}
-                  className="flex items-center gap-1 text-sm text-white/60 hover:text-white/80"
+                  className="flex items-center gap-1 text-sm text-white/60 hover:text-white/80 min-h-[44px] min-w-[44px]"
+                  aria-label="Back to conversations"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back
