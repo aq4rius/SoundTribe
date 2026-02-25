@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { sendMessageAction } from '@/actions/messages';
+import { uploadAttachmentAction } from '@/actions/upload';
 import type { SenderEntity } from './conversation-list';
 import type { EntityType } from '@prisma/client';
 import { Loader2, Paperclip, Send, Smile } from 'lucide-react';
@@ -32,6 +33,7 @@ export default function MessageInput({
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,8 +66,24 @@ export default function MessageInput({
 
     setSending(true);
     try {
-      // TODO(phase-5): Upload file to Cloudinary, get URL back
-      // For now, only text messages are supported
+      let attachmentUrl: string | undefined;
+      let attachmentType: string | undefined;
+
+      if (file) {
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadResult = await uploadAttachmentAction(formData);
+        setUploading(false);
+        if (!uploadResult.success) {
+          alert(uploadResult.error);
+          setSending(false);
+          return;
+        }
+        attachmentUrl = uploadResult.data.url;
+        attachmentType = uploadResult.data.type;
+      }
+
       await sendMessageAction({
         conversationId,
         senderEntityId: sender.id,
@@ -73,8 +91,8 @@ export default function MessageInput({
         receiverEntityId,
         receiverEntityType,
         content: content.trim() || undefined,
-        attachmentUrl: undefined,
-        attachmentType: undefined,
+        attachmentUrl,
+        attachmentType,
       });
 
       setContent('');
@@ -119,7 +137,7 @@ export default function MessageInput({
 
   const charCount = content.length;
   const isOverLimit = charCount > MAX_CHARS;
-  const canSend = (content.trim().length > 0 || file) && !isOverLimit && !sending;
+  const canSend = (content.trim().length > 0 || file) && !isOverLimit && !sending && !uploading;
 
   return (
     <div className="border-t border-white/10 bg-white/[0.02]">
@@ -129,9 +147,11 @@ export default function MessageInput({
           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg text-sm">
             <Paperclip className="h-3.5 w-3.5 text-white/40" />
             <span className="text-white/60 max-w-[200px] truncate">{file.name}</span>
+            {uploading && <Loader2 className="h-3.5 w-3.5 text-white/40 animate-spin" />}
             <button
               onClick={() => setFile(null)}
-              className="text-white/40 hover:text-white/70 ml-1"
+              disabled={uploading}
+              className="text-white/40 hover:text-white/70 ml-1 disabled:opacity-30"
             >
               ×
             </button>
@@ -161,7 +181,7 @@ export default function MessageInput({
         {/* Emoji button */}
         <button
           onClick={() => setShowEmoji(!showEmoji)}
-          className={`p-2 rounded-lg transition-colors ${
+          className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${
             showEmoji
               ? 'bg-primary/20 text-primary'
               : 'text-white/40 hover:text-white/60 hover:bg-white/5'
@@ -174,7 +194,7 @@ export default function MessageInput({
         {/* File attachment button */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/5 transition-colors"
+          className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Attach file"
         >
           <Paperclip className="h-5 w-5" />
