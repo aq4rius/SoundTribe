@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { requireAuth, withActionHandler } from '@/lib/action-utils';
 import type { ActionResult } from '@/types/actions';
 import { ApplicationStatus } from '@prisma/client';
+import { publishToChannel, channelNames } from '@/lib/ably';
 
 // ─── Mutations ─────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export async function createApplicationAction(
       });
 
       // Create notification for event organizer
-      await db.notification.create({
+      const notification = await db.notification.create({
         data: {
           recipientId: event.organizerId,
           type: 'application_submitted',
@@ -76,6 +77,13 @@ export async function createApplicationAction(
           relatedApplicationId: application.id,
         },
       });
+
+      // Publish real-time notification via Ably
+      await publishToChannel(
+        channelNames.notifications(event.organizerId),
+        'new-notification',
+        { notification },
+      );
 
       return { id: application.id };
     } catch (err: unknown) {
@@ -198,7 +206,7 @@ export async function updateApplicationStatusAction(
     }
 
     // Notify applicant
-    await db.notification.create({
+    const notification = await db.notification.create({
       data: {
         recipientId: application.applicantId,
         type: 'application_status',
@@ -208,6 +216,13 @@ export async function updateApplicationStatusAction(
         relatedApplicationId: applicationId,
       },
     });
+
+    // Publish real-time notification via Ably
+    await publishToChannel(
+      channelNames.notifications(application.applicantId),
+      'new-notification',
+      { notification },
+    );
   });
 }
 
