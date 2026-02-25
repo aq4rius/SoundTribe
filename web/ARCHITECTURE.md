@@ -1,6 +1,6 @@
 # SoundTribe — Architecture Decision Document
 
-> **Living document.** Last updated: 2026-02-25.
+> **Living document.** Last updated: 2025-07-23.
 > Read [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) first for product context.
 > All architectural decisions exist to serve the product vision — when they conflict, the product vision wins.
 
@@ -12,28 +12,28 @@ Before any decisions, it's critical to document the **real** current state — n
 
 ### What `web/` actually is today
 
-`web/` is a **Next.js 15 (App Router) application** in a transitional state between client-side SPA and full-stack Next.js.
+`web/` is a **fully self-contained Next.js 15 (App Router) application** with zero dependency on the Express server for data operations.
 
-**Completed (Phases 0–2):**
+**Completed (Phases 0–3):**
 - ✅ Prisma 6 + PostgreSQL (Neon) as the database layer
 - ✅ NextAuth v5 with Credentials provider, JWT strategy, httpOnly cookie sessions
 - ✅ Middleware-level route protection (auth.config.ts + middleware.ts)
-- ✅ Server Actions for auth flows (login, register, logout)
+- ✅ Server Actions for ALL domains (auth, events, artists, applications, users, genres, notifications, networking)
 - ✅ Zod-validated environment variables (lib/env.ts)
-- ✅ TypeScript types for all domain models (types/)
+- ✅ TypeScript types for all domain models (types/) — zero transitional types remain
+- ✅ All TanStack Query hooks removed and replaced with Server Actions
+- ✅ All Axios/fetch calls to Express removed
+- ✅ axios, @tanstack/react-query, socket.io-client uninstalled
 
-**Still in transition (waiting for Phase 3):**
-- ❌ TanStack Query hooks are disabled (`enabled: false`) — all data still comes from Express API
-- ❌ Server Components not yet used for data fetching
-- ❌ Express API still required for CRUD operations
+**Still pending:**
+- ❌ Real-time messaging (chat) — placeholder page, waiting for Ably integration (Phase 4)
+- ❌ Real-time notification push — using 30s polling as interim solution
 
 `web/` currently uses:
 - ✅ Next.js 15 with Turbopack
 - ✅ **NextAuth v5** (httpOnly cookie sessions, JWT strategy, Prisma adapter)
 - ✅ **Prisma 6** → PostgreSQL (Neon serverless)
-- ✅ The legacy **Express.js + MongoDB API** (`server/`) for data CRUD — via fetch at `NEXT_PUBLIC_API_URL`
-- ✅ **TanStack Query v5** for data fetching (all hooks disabled pending Phase 3 migration)
-- ✅ **Socket.IO client** for real-time messaging
+- ✅ **Server Actions** for all data mutations and fetching
 - ✅ **shadcn/ui** + **Radix UI** + **Tailwind CSS v4** for UI
 - ✅ **React Hook Form** + **Zod** for forms
 - ✅ **Framer Motion** for animations
@@ -52,22 +52,20 @@ A fully working **Express.js + TypeScript + MongoDB (Mongoose)** API hosted on *
 
 The original **React 18 + Vite + TanStack Query** frontend. The `web/` directory is a port of this to Next.js. `client/` is fully superseded — it only exists for reference.
 
-### The Actual Architecture (as-is, post Phase 2)
+### The Actual Architecture (as-is, post Phase 3)
 
 ```
 Browser
-  └── web/ (Next.js 15 — transitional)
+  └── web/ (Next.js 15 — fully self-contained)
         ├── NextAuth v5 (httpOnly cookie JWT sessions)
-        ├── Prisma 6 → PostgreSQL (Neon) — auth only, CRUD pending Phase 3
-        ├── Server Actions (auth flows: login, register, logout)
+        ├── Prisma 6 → PostgreSQL (Neon) — ALL domains
+        ├── Server Actions (auth, events, artists, applications, users, genres, notifications, networking)
         ├── Middleware (route protection via auth.config.ts)
-        ├── TanStack Query (disabled — all hooks have enabled: false)
-        ├── Socket.IO client (real-time chat — still connects to Express)
-        └── fetch() ──────────────────► server/ (Express.js on Render)
-                                                     ├── MongoDB Atlas
-                                                     ├── Cloudinary (images)
-                                                     └── Socket.IO server
+        ├── Cloudinary (image uploads via presigned URLs)
+        └── Polling (30s interval for notification unread count — interim until Ably)
 ```
+
+The Express server (`server/`) is no longer required for any data operations. It remains in the repo for reference only.
 
 ---
 
@@ -107,64 +105,84 @@ Browser
 | **Rendering** | Client-side SPA (`'use client'` everywhere) | Server Components by default, Client Components only for interactivity | Phase 1–3 |
 | **Auth** | ~~Zustand + localStorage JWT~~ | **NextAuth v5** (httpOnly cookie sessions, Credentials + future OAuth) | ✅ Phase 2 |
 | **Database** | ~~MongoDB Atlas (via Express)~~ | **PostgreSQL (Neon serverless)** via **Prisma 6** | ✅ Phase 1 |
-| **Data fetching** | TanStack Query + fetch → Express API | **Server Components** (reads) + **Server Actions** (mutations) | Phase 3 |
-| **Real-time** | Socket.IO client → Express Socket.IO server | **Ably** (`@ably/react` hooks, server-side publish) | Phase 4 |
+| **Data fetching** | ~~TanStack Query + fetch → Express API~~ | **Server Actions** (reads + mutations) | ✅ Phase 3 |
+| **Real-time** | ~~Socket.IO client → Express Socket.IO server~~ | **Ably** (`@ably/react` hooks, server-side publish) — polling interim | Phase 4 |
 | **File uploads** | Express + Multer + Cloudinary | **Cloudinary** (presigned upload URLs via Server Action) | Phase 2 |
 | **UI** | shadcn/ui + Radix UI + Tailwind CSS v4 | Same — no change | Already in place |
 | **Animations** | Framer Motion | Same — no change | Already in place |
 | **Forms** | React Hook Form + Zod | Same — no change | Already in place |
 | **Component dev** | Storybook 8 | Same — no change | Already in place |
-| **State** | ~~Zustand (auth)~~ + TanStack Query (server) | Auth via NextAuth session; server state via RSC | ✅ Phase 2 (auth) / Phase 3 (data) |
+| **State** | ~~Zustand (auth)~~ + ~~TanStack Query (server)~~ | Auth via NextAuth session; server state via Server Actions | ✅ Phase 2 (auth) / ✅ Phase 3 (data) |
 
 ### Transitional Dependencies (removed after migration)
 
-These packages are currently in `package.json` and will be removed domain-by-domain:
+These packages have been removed from `package.json`:
 
-| Package | Purpose | Remove in |
+| Package | Purpose | Removed in |
 |---|---|---|
-| `axios` | HTTP client for Express API | Phase 3 |
-| `@tanstack/react-query` | Client-side data fetching/caching | Phase 3 |
-| `zustand` | Client-side auth state | ✅ Removed in Phase 2 |
-| `socket.io-client` | Real-time messaging via Express | Phase 4 |
+| `axios` | HTTP client for Express API | ✅ Phase 3 |
+| `@tanstack/react-query` | Client-side data fetching/caching | ✅ Phase 3 |
+| `zustand` | Client-side auth state | ✅ Phase 2 |
+| `socket.io-client` | Real-time messaging via Express | ✅ Phase 3 |
 | `browser-image-compression` | Client-side image compression before upload | Phase 2 (replace with server-side) |
 
 ---
 
 ## B. Folder Structure
 
-### Current Structure (as-is)
+### Current Structure (as-is, post Phase 3)
 
 ```
 web/src/
+├── actions/
+│   ├── applications.ts  # Apply, accept/reject, withdraw, get applications
+│   ├── artist-profiles.ts # CRUD + search for artist profiles
+│   ├── auth.ts          # Register, login, logout, forgot/reset password, verify email
+│   ├── events.ts        # CRUD + search + my events
+│   ├── genres.ts        # Get all genres (24h unstable_cache)
+│   ├── networking.ts    # Connection requests: send, accept, reject, list
+│   ├── notifications.ts # Get, mark read, delete, unread count
+│   └── users.ts         # Profile update, password change, account settings, onboarding
 ├── app/
-│   ├── artists/        # Artist browse + detail + create + edit
-│   ├── auth/           # login, register, forgot-password, reset-password, verify-email
-│   ├── chat/           # Full-page chat
-│   ├── dashboard/      # Main dashboard + account-settings + edit-profile + notifications
-│   ├── events/         # Event browse + detail + create + edit
-│   ├── onboarding/     # Multi-step onboarding
+│   ├── (app)/           # Route group: authenticated app shell
+│   │   ├── artists/     # Artist browse + detail
+│   │   ├── chat/        # Placeholder (Phase 4: Ably integration)
+│   │   ├── dashboard/   # Main dashboard + account-settings + edit-profile + notifications
+│   │   ├── events/      # Event browse + detail + create + edit
+│   │   ├── onboarding/  # Multi-step onboarding
+│   │   └── layout.tsx   # App shell layout with Navbar
+│   ├── (auth)/          # Route group: unauthenticated pages
+│   │   └── auth/        # login, register, forgot-password, reset-password, verify-email
 │   ├── globals.css
-│   ├── layout.tsx      # Root layout: Navbar + Footer + Providers
-│   └── page.tsx        # Landing page (animated hero)
+│   ├── layout.tsx       # Root layout (fonts, metadata, Providers)
+│   └── page.tsx         # Landing page (animated hero)
 ├── components/
-│   ├── applications/   # ApplicationForm, ApplicationsList, EventApplication
-│   ├── artists/        # ArtistCard
-│   ├── auth/           # LoginForm, RegisterForm, ResendVerification
-│   ├── common/         # Chat, ErrorAlert, Pagination, Providers
-│   ├── events/         # CreateEventForm, EditEventForm, EventCard, SendMessageButton
-│   ├── onboarding/     # OnboardingStepper + 7 step components
-│   ├── profile/        # CreateArtistProfile, EditArtistProfile, ProfileSetup
-│   └── ui/             # Navbar, Footer (NOT shadcn — these are custom)
-├── hooks/              # useAuth, useArtists, useChat, useEvents, useMyEntities,
-│                       # useNotifications, useOnboarding, useSendMessage,
-│                       # useUpdateApplicationStatus
+│   ├── applications/    # ApplicationForm, ApplicationsList, EventApplication
+│   ├── artists/         # ArtistCard
+│   ├── auth/            # LoginForm, RegisterForm, ResendVerification
+│   ├── common/          # ErrorAlert, Pagination, Providers
+│   ├── events/          # EventForm (merged create+edit), EventCard
+│   ├── onboarding/      # OnboardingStepper + 7 step components
+│   ├── profile/         # CreateArtistProfile, EditArtistProfile, ProfileSetup
+│   └── ui/              # Navbar, Footer + shadcn components
 ├── lib/
-│   └── utils.ts        # cn() utility only
-├── services/           # api.ts (axios), event.ts, genre.ts, getUserProfile.ts, user.ts
-├── store/
-│   └── authStore.ts    # Zustand auth store
-└── stories/            # Storybook (generic placeholder stories — not real component stories yet)
+│   ├── action-utils.ts  # AuthenticatedSession, requireAuth(), hasRole(), withActionHandler()
+│   ├── auth.ts          # NextAuth v5 config
+│   ├── auth.config.ts   # Edge-compatible auth config
+│   ├── env.ts           # Zod-validated env vars
+│   └── utils.ts         # cn() utility
+├── types/               # Prisma-derived canonical types + filters + onboarding
+├── validations/         # Zod schemas: users, artist-profiles, events, applications
+└── stories/             # Storybook (placeholder stories)
 ```
+
+**Deleted in Phase 3:**
+- `hooks/` — All 8 TanStack Query hooks removed (replaced by server actions)
+- `services/` — All 5 service files removed (replaced by server actions)
+- `lib/api.ts` — Axios client removed
+- `components/common/Chat.tsx` — Removed (Phase 4: Ably)
+- `components/events/create-event-form.tsx` + `edit-event-form.tsx` — Merged into `event-form.tsx`
+- `components/events/send-message-button.tsx` — Removed (Phase 4: Ably)
 
 ### Target Structure (to-be)
 
@@ -298,9 +316,9 @@ Accuracy-audited against actual source files (not guessed).
 | Middleware route protection | ✅ Working | `middleware.ts` + `lib/auth.config.ts` | Edge-compatible, protects all (app) routes |
 | Session management | ✅ Working | `lib/auth.ts` | JWT strategy, 30-day maxAge, SessionProvider in providers.tsx |
 | Type-safe session | ✅ Working | `types/next-auth.d.ts` | Module augmentation: id, roles, onboardingComplete, onboardingStep, username, profileImage |
-| Forgot password flow | 🟡 UI only | `auth/forgot-password/` | Page exists, backend endpoint not wired |
-| Reset password flow | 🟡 UI only | `auth/reset-password/` | Same |
-| Email verification | 🟡 UI only | `auth/verify-email/` | Backend model has the fields; frontend flow unclear |
+| Forgot password flow | 🟡 UI + action | `auth/forgot-password/` + `actions/auth.ts` | Server action exists; email sending placeholder (Phase 4) |
+| Reset password flow | 🟡 UI + action | `auth/reset-password/` + `actions/auth.ts` | Same |
+| Email verification | 🟡 UI + action | `auth/verify-email/` + `actions/auth.ts` | Token generation works; email delivery pending |
 | Token refresh / expiry handling | ✅ Handled | NextAuth manages cookie refresh automatically | No manual refresh needed |
 
 ### Onboarding
@@ -332,13 +350,13 @@ Accuracy-audited against actual source files (not guessed).
 
 | Feature | Status | File | Notes |
 |---|---|---|---|
-| Browse events (list + filters) | ✅ Working | `app/events/page.tsx` + `useEvents` hook | Genre + location filters implemented |
+| Browse events (list + filters) | ✅ Working | `app/events/page.tsx` + `actions/events.ts` | Genre + location filters via server actions |
 | Event detail page | ✅ Working | `app/events/[id]/page.tsx` | |
-| Create event posting | ✅ Working | `app/events/create/` + `CreateEventForm.tsx` | Rich form with all model fields |
-| Edit event posting | ✅ Working | `app/events/edit/[id]/` + `EditEventForm.tsx` | |
+| Create event posting | ✅ Working | `app/events/create/` + `EventForm.tsx` | Merged create/edit form |
+| Edit event posting | ✅ Working | `app/events/edit/[id]/` + `EventForm.tsx` | Same merged form |
 | Delete event | 🟡 Partial | — | Exists in Express controller but unclear if wired in web/ UI |
 | Pagination | ✅ Working | `components/common/Pagination.tsx` + `useEvents` pagination support | |
-| "My events" (organizer view) | ✅ Working | `dashboard/page.tsx` fetches `/api/event-postings/user` | Not a dedicated page though |
+| "My events" (organizer view) | ✅ Working | `dashboard/page.tsx` via `getMyEventsAction` | |
 
 ### Artist Profiles
 
@@ -346,7 +364,7 @@ Accuracy-audited against actual source files (not guessed).
 |---|---|---|---|
 | Create artist profile | ✅ Working | `components/profile/CreateArtistProfile.tsx` | |
 | Edit artist profile | ✅ Working | `app/artists/edit/[id]/` + `components/profile/EditArtistProfile.tsx` | |
-| Browse artists (list + filters) | ✅ Working | `app/artists/page.tsx` + `useArtists` hook | |
+| Browse artists (list + filters) | ✅ Working | `app/artists/page.tsx` + `actions/artist-profiles.ts` | |
 | Artist detail page | ✅ Working | `app/artists/[id]/page.tsx` | |
 | Portfolio items (audio/video/image) | ✅ Model + form | `ArtistProfile.ts` model has `portfolioItems[]` | Display implementation needs verification |
 | Availability display | 🟡 Partial | Set in onboarding; not sure if shown on artist card/detail |
@@ -357,42 +375,38 @@ Accuracy-audited against actual source files (not guessed).
 |---|---|---|---|
 | Apply to event (with message) | ✅ Working | `components/applications/ApplicationForm.tsx` | |
 | View applications on event | ✅ Working | `components/applications/ApplicationsList.tsx` | Organizer view |
-| Accept / reject application | ✅ Working | `hooks/useUpdateApplicationStatus.ts` | |
-| My applications (artist view) | ✅ Working | `dashboard/page.tsx` fetches `/api/applications/my-applications` | |
-| Withdraw application | 🔴 Missing | — | Not in Express controller or web/ UI |
+| Accept / reject application | ✅ Working | `actions/applications.ts` | |
+| My applications (artist view) | ✅ Working | `dashboard/page.tsx` via `getMyApplicationsAction` | |
+| Withdraw application | ✅ Working | `actions/applications.ts` | `withdrawApplicationAction` |
 
 ### Messaging
 
 | Feature | Status | File | Notes |
 |---|---|---|---|
-| Full-page chat UI | ✅ Working | `app/chat/page.tsx` + `components/common/Chat.tsx` | Rich UI: conversations list + message thread |
-| Send text messages | ✅ Working | `hooks/useSendMessage.ts` | |
-| Send file attachments | ✅ Working | Implemented in Chat.tsx | |
-| Message reactions (emoji) | ✅ Working | `hooks/useChat.ts` → `useAddReaction` | |
-| Read / Delivered / Sent status | ✅ Working | Message model + Socket.IO events (last commit: "polish messenger, add read/delivered/sent indicators") | |
-| Typing indicators | ✅ Working | Socket.IO `typing` events in Chat.tsx | |
-| Real-time via Socket.IO | ✅ Working | Socket.IO client in Chat.tsx; server has Socket.IO | |
-| Entity-to-entity messaging (ArtistProfile ↔ Event) | ✅ Working | `useMyEntities` hook fetches user's entities; sender selection in Chat UI | |
-| Emoji picker in input | ✅ Working | Chat.tsx has `showInputEmojiPicker` state | |
-| Delete conversation | ✅ Working | `useDeleteConversation` hook | |
-| Message deep-link (open chat with specific user) | ✅ Working | Chat reads `?senderId=&receiverId=` from URL params | |
-| Unread message count in sidebar | 🟡 Partial | `useUnreadCounts` hook exists; integration in Navbar unclear |
+| Full-page chat UI | 🔴 Placeholder | `app/chat/page.tsx` | "Coming soon" — pending Ably integration (Phase 4) |
+| Send text messages | 🔴 Pending | — | Requires Ably (Phase 4) |
+| Send file attachments | 🔴 Pending | — | Requires Ably (Phase 4) |
+| Message reactions (emoji) | 🔴 Pending | — | Requires Ably (Phase 4) |
+| Read / Delivered / Sent status | 🔴 Pending | — | Requires Ably (Phase 4) |
+| Typing indicators | 🔴 Pending | — | Requires Ably (Phase 4) |
+| Real-time via Ably | 🔴 Pending | — | Phase 4 |
+| Entity-to-entity messaging | 🔴 Pending | — | Phase 4 |
 
 ### Notifications
 
 | Feature | Status | File | Notes |
 |---|---|---|---|
-| Notification list page | ✅ Working | `dashboard/notifications/page.tsx` | |
-| Mark as read | ✅ Working | `hooks/useNotifications.ts` | |
-| Real-time push | 🟡 Socket.IO | Server emits notification events; unclear if web/ subscribes to them |
-| Notification badge in Navbar | 🟡 Partial | `useNotifications` hook exists; badge integration unclear |
+| Notification list page | ✅ Working | `dashboard/notifications/page.tsx` + `actions/notifications.ts` | |
+| Mark as read | ✅ Working | `actions/notifications.ts` | |
+| Real-time push | 🟡 Polling | Navbar polls `getUnreadCountAction` every 30s | Ably in Phase 4 |
+| Notification badge in Navbar | ✅ Working | `components/ui/Navbar.tsx` | Red badge with unread count |
 
 ### Genres
 
 | Feature | Status | File | Notes |
 |---|---|---|---|
-| Genre list (from API) | ✅ Working | `services/genre.ts` | |
-| Genre selector in forms | ✅ Working | Used in CreateEventForm, EditEventForm, profile forms | |
+| Genre list (from server action) | ✅ Working | `actions/genres.ts` | 24h `unstable_cache` |
+| Genre selector in forms | ✅ Working | Used in EventForm, profile forms | |
 
 ---
 
@@ -400,35 +414,35 @@ Accuracy-audited against actual source files (not guessed).
 
 ### 🔴 Critical (blocks core functionality or is a security issue)
 
-**BUG-001: JWT in localStorage (XSS vulnerability)**
-JWT access tokens stored in `localStorage` are readable by any JavaScript on the page. An XSS attack anywhere on the domain can steal the token.
-_Fix:_ Move to `httpOnly` cookies via a Next.js API route proxy that sets the cookie, or at minimum add a `Content-Security-Policy` header.
+**BUG-001: JWT in localStorage (XSS vulnerability)** ✅ FIXED Phase 2
+JWT access tokens stored in `localStorage` are readable by any JavaScript on the page.
+_Fix:_ Migrated to NextAuth v5 httpOnly cookie sessions. No tokens in localStorage.
 
-**BUG-002: No middleware-level auth guard**
-Any user can navigate directly to `/events/create`, `/dashboard`, etc. without being logged in. Protection is only via `useEffect` redirects (client-side), which means the page flashes before redirect, and server-rendered content can leak.
-_Fix:_ Add `middleware.ts` that checks for a valid auth token and redirects to `/auth/login` for protected routes.
+**BUG-002: No middleware-level auth guard** ✅ FIXED Phase 2
+Any user can navigate directly to `/events/create`, `/dashboard`, etc. without being logged in.
+_Fix:_ Added `middleware.ts` with NextAuth edge-compatible config. All `(app)` routes protected.
 
-**BUG-003: Token expiry not handled**
-When the JWT expires, API calls silently fail. There's no Axios interceptor catching 401 responses to redirect to login or attempt refresh.
-_Fix:_ Add a 401 interceptor in `src/lib/api.ts` that calls `clearAuth()` and redirects to `/auth/login`.
+**BUG-003: Token expiry not handled** ✅ FIXED Phase 2
+When the JWT expires, API calls silently fail.
+_Fix:_ NextAuth manages JWT refresh automatically via httpOnly cookies. No manual interceptor needed.
 
-**BUG-004: No validated environment variables**
-`process.env.NEXT_PUBLIC_API_URL` and `process.env.NEXT_PUBLIC_SOCKET_URL` are referenced directly with `|| 'http://localhost:5000'` fallbacks. If these are missing in production, the app silently hits localhost.
-_Fix:_ Add `src/lib/env.ts` with Zod validation. Build fails if required vars are missing.
+**BUG-004: No validated environment variables** ✅ FIXED Phase 2 + Phase 3
+`process.env.NEXT_PUBLIC_API_URL` and `process.env.NEXT_PUBLIC_SOCKET_URL` are referenced directly with `|| 'http://localhost:5000'` fallbacks.
+_Fix:_ Added `src/lib/env.ts` with Zod validation. `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_SOCKET_URL` fully removed in Phase 3.
 
-**BUG-005: Inconsistent API base URL**
-Some fetch calls in `dashboard/page.tsx` use `/api/...` (relative URL, would hit Next.js routes, not Express — these would 404 in production), while `services/api.ts` uses `NEXT_PUBLIC_API_URL`. Mixed patterns cause silent production failures.
-_Fix:_ All API calls must go through the centralized Axios instance in `src/lib/api.ts`.
+**BUG-005: Inconsistent API base URL** ✅ FIXED Phase 3
+Some fetch calls in `dashboard/page.tsx` use `/api/...` while `services/api.ts` uses `NEXT_PUBLIC_API_URL`.
+_Fix:_ All data fetching now goes through Server Actions + Prisma. No API base URL needed. Axios removed.
 
-**BUG-006: Socket.IO client created on every Chat render**
-`io()` is called inside the `Chat` component's body. This creates a new socket connection every time the component mounts, and potentially multiple connections if the component re-renders. Socket is cleaned up in `useEffect`, but there's a race condition window.
-_Fix:_ Move Socket.IO client to `src/lib/socket.ts` as a singleton. Connect once on app init.
+**BUG-006: Socket.IO client created on every Chat render** ✅ FIXED Phase 3
+`io()` is called inside the `Chat` component's body on every mount.
+_Fix:_ Socket.IO client fully removed. Chat page is now a placeholder pending Ably integration (Phase 4).
 
 ### 🟡 Moderate (degraded UX or data integrity risk)
 
-**BUG-007: `any` types pervasive throughout**
-`dashboard/page.tsx` uses `useState<any[]>` for events, artists, applications. All TanStack Query responses are untyped. This masks bugs and removes IDE assistance.
-_Fix:_ Define `types/` directory with interfaces mirroring all Mongoose models. Apply to all hooks and components.
+**BUG-007: `any` types pervasive throughout** ✅ FIXED Phase 3
+`dashboard/page.tsx` uses `useState<any[]>` for events, artists, applications.
+_Fix:_ All types derived from Prisma schema. Server Actions have typed `ActionResult<T>` returns. Zero `any` casts remain in data layer.
 
 **BUG-008: Storybook stories are Create React App placeholders**
 `src/stories/` contains the default CRA Storybook stories (Button, Header, Page) — not SoundTribe components. Storybook is set up but provides zero value.
@@ -462,13 +476,13 @@ _Fix:_ Add error boundary around chat; show "Couldn't load your profiles" with a
 If events list returns 0 results after filtering, the page shows nothing. No "No events found" message, no suggestion to reset filters.
 _Fix:_ Add `components/shared/empty-state.tsx` and use it on events, artists, applications lists.
 
-**BUG-016: `EditEventForm` and `CreateEventForm` are separate components with duplicated logic**
-Both forms have the same field definitions, the same validation, the same genre fetching. Any field change has to be made in two places.
-_Fix:_ Merge into a single `EventForm` accepting a `mode: 'create' | 'edit'` and optional `initialData` prop.
+**BUG-016: `EditEventForm` and `CreateEventForm` are separate components with duplicated logic** ✅ FIXED Phase 3
+Both forms have the same field definitions, the same validation, the same genre fetching.
+_Fix:_ Merged into single `EventForm` component with `mode: 'create' | 'edit'` and optional `initialData` prop.
 
-**BUG-017: Application withdrawal not implemented**
-An artist cannot cancel or withdraw a pending application. The Express controller has no `DELETE /applications/:id` endpoint from the artist's side.
-_Fix:_ Add `DELETE /applications/:id` to Express + `useWithdrawApplication` hook in web/.
+**BUG-017: Application withdrawal not implemented** ✅ FIXED Phase 3
+An artist cannot cancel or withdraw a pending application.
+_Fix:_ Added `withdrawApplicationAction` in `actions/applications.ts`.
 
 **BUG-018: No accessibility on icon-only buttons**
 Multiple icon-only buttons (notification bell, chat menu, reaction picker toggle) have no `aria-label`. Screen readers cannot navigate the app.
@@ -480,7 +494,9 @@ _Fix:_ Add `aria-label` to all icon-only interactive elements.
 
 **BUG-020: `ui/Navbar.tsx` and `ui/Footer.tsx` are in `components/ui/`** — the `ui/` directory is reserved for shadcn auto-generated components. Custom layout components belong in `components/layout/`.
 
-**BUG-021: Chat component is 800+ lines** — `components/common/Chat.tsx` handles conversations list, message thread, socket management, emoji picker, and file upload all in one component. Should be split into `ConversationList`, `MessageThread`, `MessageInput`, and a `useSocket` hook.
+**BUG-021: Chat component is 800+ lines** ✅ FIXED Phase 3
+`components/common/Chat.tsx` handles conversations list, message thread, socket management, emoji picker, and file upload all in one component.
+_Fix:_ Entire Chat.tsx deleted. Will be rebuilt from scratch as decomposed components (conversation-list, message-thread, message-input) with Ably in Phase 4.
 
 **BUG-022: Storybook default stories pollute component stories** — `src/stories/Button.tsx` is the CRA default Button, not a SoundTribe component.
 
@@ -553,49 +569,61 @@ Each phase produces a **shippable, working increment**. No phase leaves the app 
 
 ---
 
-### Phase 3 — Server Actions & Data Layer (next up)
-**Goal:** Replace all TanStack Query hooks + Axios calls with Server Actions and Server Components. Re-enable data fetching. Zero `any` types.
+### Phase 3 — Server Actions & Data Layer ✅
+**Goal:** Replace all TanStack Query hooks + Axios calls with Server Actions. Zero dependency on Express server. Zero `any` types.
 
-Files to **create:**
-- `src/app/(app)/dashboard/loading.tsx`
-- `src/app/(app)/events/loading.tsx`, `error.tsx`
-- `src/app/(app)/events/[id]/loading.tsx`, `error.tsx`
-- `src/app/(app)/artists/loading.tsx`, `error.tsx`
-- `src/app/(app)/artists/[id]/loading.tsx`, `error.tsx`
-- `src/components/shared/empty-state.tsx`
-- `src/components/shared/confirm-dialog.tsx`
-- Skeleton UI components for EventCard, ArtistCard (loading variants)
+**Delivered:**
+- `ActionResult<T>` pattern: `{ success: true; data: T } | { success: false; error: string; fieldErrors?: Record<string, string[]> }`
+- `AuthenticatedSession` interface extending NextAuth `Session` with guaranteed `user.id: string`
+- `requireAuth()` / `hasRole()` / `withActionHandler()` helpers in `lib/action-utils.ts`
+- 7 server action files covering all domains: auth, events, artists, applications, users, genres, notifications, networking
+- 4 Zod validation schemas: users, artist-profiles, events, applications
+- `OnboardingState` type extracted to `types/onboarding.ts`
+- All pages migrated from `useEffect` + API fetch to direct server action calls
+- Merged duplicate `CreateEventForm` + `EditEventForm` → single `EventForm`
+- Navbar notifications: Socket.IO replaced with 30s polling via `getUnreadCountAction`
+- Providers simplified: `QueryClientProvider` removed, only `SessionProvider` remains
+- All transitional types removed (IUser, IEventPosting, IArtistProfile, etc.)
+- Chat page: placeholder "coming soon" (Phase 4: Ably)
+- Packages uninstalled: `axios`, `@tanstack/react-query`, `socket.io-client`
+- 8 hooks deleted, 5 services deleted, `lib/api.ts` deleted
 
-Files to **modify:**
-- `components/events/EventCard.tsx` — Add skeleton loading variant
-- `components/artists/ArtistCard.tsx` — Add skeleton loading variant
-- All browse pages — Use `empty-state.tsx` for zero-results
+**Commits:** `efb405b`, `2ebe0a6`, `e9e414a`, `6866feb`, `a4474bb`
 
-**Commits:** `feat: add loading and error boundaries to all routes`, `feat: add empty state components`
+#### Phase 3 Decisions
+
+| Decision | Rationale |
+|---|---|
+| **Server Actions for reads too** (not just mutations) | Simpler than mixing Server Components + Server Actions. All pages are `'use client'` and call actions directly. Can migrate to RSC later. |
+| **ActionResult<T> pattern** | Consistent error handling across all actions. No try/catch in components — just check `result.success`. |
+| **AuthenticatedSession type** | `session.user.id` is `string \| undefined` in NextAuth types. Creating `AuthenticatedSession` avoids `as string` casts everywhere. |
+| **Prisma.JsonNull for nullable JSON** | Prisma requires `Prisma.JsonNull` (not `null`) for JSON? columns. Caught by TypeScript strict mode. |
+| **Inferred return types on actions** | Explicit `ReturnType<typeof db...>` doesn't capture Prisma `include` types. Letting TypeScript infer gives correct types. |
+| **Polling over WebSockets** | Socket.IO removed; Ably not yet integrated. 30s interval for notification count is sufficient interim. |
+| **Chat placeholder** | Full chat requires Ably (Phase 4). Placeholder avoids broken imports. |
 
 ---
 
-### Phase 4 — Events & Artist Profile Completeness
-**Goal:** Merge duplicate forms; wire delete; wire file uploads end-to-end; ensure all fields display correctly.
-**Product Vision link:** Core loop for both personas — things must work flawlessly.
+### Phase 4 — Real-time via Ably + Chat (next up)
+**Goal:** Replace Socket.IO with Ably. Rebuild chat. Live messaging + notification push.
+**Product Vision link:** Real-time is core to the marketplace feel.
 
 Files to **create:**
-- `src/components/events/EventForm.tsx` — Merged create/edit form
-- `src/components/shared/image-upload.tsx` — Reusable image upload with preview + compression
-- `src/components/shared/genre-selector.tsx` — Extracted genre multi-select
+- `src/lib/ably.ts` — Server-side Ably client
+- `src/app/api/ably-auth/route.ts` — Token auth endpoint for Ably client SDK
+- `src/hooks/use-ably.ts` — Custom channel subscription hook
+- `src/components/chat/conversation-list.tsx`
+- `src/components/chat/message-thread.tsx`
+- `src/components/chat/message-input.tsx`
 
 Files to **modify:**
-- `app/events/create/page.tsx`, `app/events/edit/[id]/page.tsx` — Use merged `EventForm`
-- `components/profile/CreateArtistProfile.tsx`, `EditArtistProfile.tsx` — Merge into `ArtistProfileForm`
-- `services/events.ts` — Add `deleteEvent()` function
-- `app/events/[id]/page.tsx` — Wire delete button with `confirm-dialog.tsx`
-
-**Commits:** `refactor: merge duplicate event forms`, `feat: wire event delete with confirmation`, `feat: unified image upload component`
+- `src/app/(app)/chat/page.tsx` — Replace placeholder with full chat UI
+- `src/components/ui/Navbar.tsx` — Replace 30s polling with Ably channel subscription
 
 ---
 
 ### Phase 5 — Applications Completeness
-**Goal:** Full apply → review → accept/reject → withdraw loop.
+**Goal:** Full apply → review → accept/reject → withdraw loop via Server Actions.
 **Product Vision link:** "Completed Connection" is the North Star metric — this is the most direct path to it.
 
 Files to **create:**
@@ -611,26 +639,13 @@ Files to **modify:**
 
 ---
 
-### Phase 5 — Applications (Server Actions + Prisma)
+### Phase 5 — Applications Completeness
 **Goal:** Full apply → review → accept/reject → withdraw loop via Server Actions.
 
 ---
 
-### Phase 6 — Real-time via Ably
-**Goal:** Replace Socket.IO with Ably. Decompose the 800-line Chat component. Live messaging + notification push.
-
-Files to **create:**
-- `src/lib/ably.ts` — Server-side Ably client
-- `src/app/api/ably-auth/route.ts` — Token auth endpoint for Ably client SDK
-- `src/hooks/use-ably.ts` — Custom channel subscription hook
-- `src/components/chat/conversation-list.tsx` — Extracted from Chat.tsx
-- `src/components/chat/message-thread.tsx` — Extracted from Chat.tsx
-- `src/components/chat/message-input.tsx` — Extracted from Chat.tsx
-
-Files to **delete:**
-- `src/components/common/Chat.tsx` — Decomposed into above
-
-**Commits:** `feat: replace Socket.IO with Ably for real-time`, `refactor: decompose Chat into focused components`
+### Phase 6 — Loading States, Error Boundaries & Polish
+**Goal:** Add loading.tsx, error.tsx, empty states, and skeleton UIs to all routes.
 
 ---
 
@@ -694,16 +709,16 @@ All variables validated by `src/lib/env.ts`. App throws a clear error at startup
 | `ABLY_API_KEY` | Server-side Ably API key |
 | `NEXT_PUBLIC_ABLY_KEY` | Client-side Ably publishable key |
 
-### Legacy (remove after Phase 4)
+### Legacy (removed in Phase 3 — no longer needed)
 
 | Variable | Description |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | Express API URL (e.g. `http://localhost:5000`) |
-| `NEXT_PUBLIC_SOCKET_URL` | Socket.IO server URL |
+| ~~`NEXT_PUBLIC_API_URL`~~ | Express API URL — removed |
+| ~~`NEXT_PUBLIC_SOCKET_URL`~~ | Socket.IO server URL — removed |
 
 ## Appendix: How to Run Everything Locally
 
-### Target stack (after Phase 1+)
+### Current (post Phase 3) — Express no longer needed
 ```bash
 cd web
 npm install
@@ -714,9 +729,9 @@ npx prisma db seed     # seeds genres
 npm run dev            # runs on http://localhost:3000
 ```
 
-### During migration (Phases 0–3) — Express still needed
+### Legacy (Phases 0–2 only) — Express was still needed
 ```bash
-# Terminal 1: Express backend
+# Terminal 1: Express backend (no longer required)
 cd server
 npm install
 cp .env.example .env   # fill in MONGODB_URI, JWT_SECRET, CLOUDINARY_*
@@ -731,20 +746,18 @@ npm run dev            # runs on http://localhost:3000
 
 ## Appendix: Hosting Setup
 
-### Target (post-Phase 4)
+### Current (post Phase 3)
 
 | Service | Platform | Notes |
 |---|---|---|
 | Next.js App (full-stack) | **Vercel** (free Hobby) | Server Components + Server Actions + Route Handlers |
 | PostgreSQL | **Neon** (free tier) | Serverless, auto-scales, generous free tier |
 | Images | **Cloudinary** (free tier) | 25GB storage, 25GB bandwidth/month |
-| Real-time | **Ably** (free tier) | 6M messages/month |
+| Real-time | **Ably** (free tier) — Phase 4 | 6M messages/month |
 
-### During migration (Phases 0–3)
+### Legacy (Phases 0–2 — no longer needed)
 
 | Service | Platform | Notes |
 |---|---|---|
-| Express API + Socket.IO | **Render** (free Web Service) | Kept running as safety net |
-| MongoDB | **MongoDB Atlas** (free M0) | Used by Express backend |
-| Next.js Frontend | **Vercel** | Proxies to Render for API calls |
-| Images | **Cloudinary** | Used by Express for uploads |
+| ~~Express API + Socket.IO~~ | ~~Render~~ | Decommissioned — no longer required |
+| ~~MongoDB~~ | ~~MongoDB Atlas~~ | Decommissioned — all data in PostgreSQL |
