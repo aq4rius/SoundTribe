@@ -3,7 +3,7 @@
  *
  * Import from '@/types' for convenience:
  * ```ts
- * import type { AuthUser, IEventPosting, PrismaMessage } from '@/types';
+ * import type { PrismaAuthUser, PrismaEventPosting, PrismaMessage } from '@/types';
  * ```
  */
 
@@ -40,39 +40,20 @@ export type {
 export type { SocialMediaLinks, PortfolioItem, Availability } from './artist';
 export type { MessageReaction } from './message';
 
-// ─── Socket Event Types ────────────────────────────────────────────────────────
+// ─── Filter Types ──────────────────────────────────────────────────────────────
+
+export type { EventFilters } from './event';
+export type { ArtistFilters } from './artist';
+
+// ─── Onboarding ────────────────────────────────────────────────────────────────
 
 export type {
-  SocketNewMessage,
-  SocketMessagesStatusUpdate,
-  SocketMessageStatusChange,
-  SocketMessageReaction,
-  SocketTypingEvent,
-  UnreadCount,
-} from './message';
+  OnboardingState,
+  OnboardingPreferences,
+  OnboardingLocationDetails,
+  OnboardingNotificationPreferences,
+} from './onboarding';
 
-// ─── Transitional Types (Express API) ──────────────────────────────────────────
+// ─── Action Result Type ────────────────────────────────────────────────────────
 
-export type { IUser, AuthUser, LoginResponse, RegisterResponse } from './auth';
-
-/** @deprecated Alias kept for any imports referencing LegacyAuthUser. */
-export type { AuthUser as LegacyAuthUser } from './auth';
-
-export type { IEventPosting, EventFilters } from './event';
-
-export type { IArtistProfile, ArtistFilters } from './artist';
-
-export type {
-  IApplication,
-  PopulatedUser,
-  PopulatedArtistProfile,
-  PopulatedEventPosting,
-} from './application';
-
-export { isPopulatedArtistProfile, isPopulatedEventPosting, isPopulatedUser } from './application';
-
-export type { IMessage, IConversation, ChatEntity, MessageEntity } from './message';
-
-export type { INotification, NotificationRelatedEntity } from './notification';
-
-export type { IGenre } from './genre';
+export type { ActionResult } from './actions';

@@ -1,9 +1,9 @@
-// CreateArtistProfile for Next.js app (after profile setup)
+// CreateArtistProfile for Next.js app
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { env } from '@/lib/env';
+import { createOrUpdateArtistProfileAction } from '@/actions/artist-profiles';
 
 function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void }) {
   if (!show) return null;
@@ -25,8 +25,6 @@ function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void })
 export default function CreateArtistProfile() {
   const { data: session } = useSession();
   const user = session?.user;
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
   const router = useRouter();
   const [form, setForm] = useState({
     stageName: '',
@@ -55,17 +53,29 @@ export default function CreateArtistProfile() {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // TRANSITIONAL: auth header removed until Phase 3
-        },
-        body: JSON.stringify({ ...form, user: user.id }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || 'Artist profile creation failed');
+      const formData = new FormData();
+      formData.append('stageName', form.stageName);
+      formData.append('biography', form.biography);
+      // Split comma-separated instruments into array entries
+      form.instruments
+        .split(',')
+        .map((i) => i.trim())
+        .filter(Boolean)
+        .forEach((inst) => formData.append('instruments', inst));
+      formData.append('yearsOfExperience', String(form.yearsOfExperience));
+      formData.append('location', form.location);
+      if (form.websiteUrl) formData.append('websiteUrl', form.websiteUrl);
+      const socialMediaLinks: Record<string, string> = {};
+      if (form.facebook) socialMediaLinks.facebook = form.facebook;
+      if (form.instagram) socialMediaLinks.instagram = form.instagram;
+      if (form.twitter) socialMediaLinks.twitter = form.twitter;
+      if (form.youtube) socialMediaLinks.youtube = form.youtube;
+      if (Object.keys(socialMediaLinks).length > 0) {
+        formData.append('socialMediaLinks', JSON.stringify(socialMediaLinks));
+      }
+      const result = await createOrUpdateArtistProfileAction(formData);
+      if (!result.success) {
+        setError(result.error);
         return;
       }
       setShowSuccess(true);

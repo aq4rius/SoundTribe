@@ -1,9 +1,16 @@
 import { FC } from 'react';
 import Link from 'next/link';
-import type { IEventPosting } from '@/types';
+
+interface EventCardEvent {
+  id: string;
+  title: string;
+  location?: string | null;
+  description?: string | null;
+  eventDate?: Date | string | null;
+}
 
 interface EventCardProps {
-  event: IEventPosting;
+  event: EventCardEvent;
   mode?: 'compact' | 'full';
 }
 
@@ -13,15 +20,7 @@ const EventCard: FC<EventCardProps> = ({ event, mode = 'compact' }) => {
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center text-2xl font-bold text-white">
           {/* Placeholder for event image */}
-          {event.image ? (
-            <img
-              src={event.image}
-              alt={event.title}
-              className="w-full h-full rounded-xl object-cover"
-            />
-          ) : (
-            (event.title && event.title[0]) || '?' // Defensive for undefined
-          )}
+          {(event.title && event.title[0]) || '?'}
         </div>
         <div>
           <div className="font-bold text-lg text-white">{event.title || 'Untitled'}</div>
@@ -39,7 +38,7 @@ const EventCard: FC<EventCardProps> = ({ event, mode = 'compact' }) => {
     </div>
   );
   if (mode === 'full') return cardContent;
-  return <Link href={`/events/${event._id}`}>{cardContent}</Link>;
+  return <Link href={`/events/${event.id}`}>{cardContent}</Link>;
 };
 
 export default EventCard;

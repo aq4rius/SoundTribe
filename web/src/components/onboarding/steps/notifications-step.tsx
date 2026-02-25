@@ -1,5 +1,5 @@
 import React from 'react';
-import type { OnboardingState } from '@/hooks/use-onboarding';
+import type { OnboardingState } from '@/types/onboarding';
 
 export default function NotificationsStep({
   goNext,

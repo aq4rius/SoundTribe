@@ -1,8 +1,7 @@
 /**
  * EventPosting types.
  *
- * CANONICAL: Prisma-derived (PrismaEventPosting, PrismaEventPostingCard).
- * TRANSITIONAL: IEventPosting (Express API shape with _id).
+ * Prisma-derived (PrismaEventPosting, PrismaEventPostingCard).
  */
 
 import type { Prisma } from '@prisma/client';
@@ -37,36 +36,7 @@ export type PrismaEventPostingCard = Prisma.EventPostingGetPayload<{
   };
 }>;
 
-// ─── Transitional Types (Express API shape) ────────────────────────────────────
-
-/** @deprecated TRANSITIONAL — genre type from Express API. */
-import type { IGenre } from './genre';
-
-/**
- * @deprecated TRANSITIONAL — used by components still calling the Express API.
- */
-export interface IEventPosting {
-  _id: string;
-  postedBy: string | { _id: string; username: string; email?: string };
-  /** Optional image URL for the event. */
-  image?: string;
-  title: string;
-  description: string;
-  genres: (string | IGenre)[];
-  requiredInstruments: string[];
-  location: string;
-  eventDate: string;
-  /** Duration in hours. */
-  duration: number;
-  paymentAmount: number;
-  paymentType: string;
-  /** Required years of experience. */
-  requiredExperience: number;
-  applicationDeadline: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// ─── Filter Types ──────────────────────────────────────────────────────────────
 
 /** Filters accepted by the search endpoint. */
 export interface EventFilters {

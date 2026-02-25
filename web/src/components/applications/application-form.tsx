@@ -1,28 +1,24 @@
-// ApplicationForm migrated from client/src/components/applications/ApplicationForm.tsx
+// ApplicationForm — submit an application to an event
 'use client';
 
 import { useState } from 'react';
 import ErrorAlert from '../common/error-alert';
-import { env } from '@/lib/env';
-import type { IEventPosting, IArtistProfile } from '@/types';
+import { createApplicationAction } from '@/actions/applications';
 
 interface ApplicationFormProps {
-  event: IEventPosting;
-  artistProfile: IArtistProfile;
+  eventId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 const ApplicationForm: React.FC<ApplicationFormProps> = ({
-  event,
-  artistProfile,
+  eventId,
   onSuccess,
   onCancel,
 }) => {
   const [formData, setFormData] = useState({
     coverLetter: '',
-    proposedRate: event.paymentAmount,
-    availability: [] as Date[],
+    proposedRate: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,35 +27,24 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+
     if (!formData.coverLetter.trim()) {
       setError('Cover letter is required.');
       setIsSubmitting(false);
       return;
     }
-    if (formData.proposedRate < 0) {
-      setError('Proposed rate must be non-negative.');
-      setIsSubmitting(false);
-      return;
-    }
+
     try {
-      // Submit application to backend
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/applications`, {
-        method: 'POST',
-        headers: {
-          // TRANSITIONAL: no auth token available until Phase 3
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventPostingId: event._id,
-          artistProfileId: artistProfile._id,
-          coverLetter: formData.coverLetter,
-          proposedRate: formData.proposedRate,
-          availability: formData.availability,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || 'Failed to submit application');
+      const fd = new FormData();
+      fd.set('eventPostingId', eventId);
+      fd.set('coverLetter', formData.coverLetter);
+      if (formData.proposedRate > 0) {
+        fd.set('proposedRate', String(formData.proposedRate));
+      }
+
+      const result = await createApplicationAction(fd);
+      if (!result.success) {
+        setError(result.error);
         setIsSubmitting(false);
         return;
       }
@@ -84,9 +69,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1 text-base-content">
-          Proposed Rate (${event.paymentType})
-        </label>
+        <label className="block text-sm font-medium mb-1 text-base-content">Proposed Rate ($)</label>
         <input
           type="number"
           value={formData.proposedRate}
@@ -97,9 +80,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({
       </div>
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
       <div className="flex justify-end space-x-4">
-        <button type="button" onClick={onCancel} className="btn btn-ghost">
-          Cancel
-        </button>
+        <button type="button" onClick={onCancel} className="btn btn-ghost">Cancel</button>
         <button type="submit" disabled={isSubmitting} className="btn btn-primary">
           {isSubmitting ? 'Submitting...' : 'Submit Application'}
         </button>

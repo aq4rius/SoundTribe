@@ -6,31 +6,27 @@ import { z } from 'zod';
  * Import `env` from this module instead of reading `process.env` directly.
  * The app will throw a clear error at startup if any required variable is
  * missing or malformed.
- *
- * During the migration (Phases 0–3) the Express-era NEXT_PUBLIC_* vars are
- * still required. They will be removed after Phase 4 when the Express server
- * is decommissioned.
  */
 
 // --- schema ----------------------------------------------------------------
 
 const serverSchema = z.object({
-  /** PostgreSQL connection string (Neon). Required from Phase 1 onward. */
+  /** PostgreSQL connection string (Neon). */
   DATABASE_URL: z.string().url().optional(),
 
-  /** NextAuth secret — min 32 characters. Required from Phase 1 onward. */
+  /** NextAuth secret — min 32 characters. */
   AUTH_SECRET: z.string().min(32).optional(),
 
   /** Full canonical URL of the app (e.g. https://soundtribe.vercel.app). */
   NEXTAUTH_URL: z.string().url().optional(),
 
-  /** Cloudinary cloud name. Required from Phase 2 onward. */
+  /** Cloudinary cloud name. */
   CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
 
-  /** Cloudinary API key. Required from Phase 2 onward. */
+  /** Cloudinary API key. */
   CLOUDINARY_API_KEY: z.string().min(1).optional(),
 
-  /** Cloudinary API secret. Required from Phase 2 onward. */
+  /** Cloudinary API secret. */
   CLOUDINARY_API_SECRET: z.string().min(1).optional(),
 
   /** Server-side Ably API key. Required from Phase 4 onward. */
@@ -46,18 +42,6 @@ const clientSchema = z.object({
    * Prefixed with NEXT_PUBLIC_ so it's available in the browser.
    */
   NEXT_PUBLIC_ABLY_KEY: z.string().min(1).optional(),
-
-  /**
-   * @deprecated Legacy — Express API URL. Remove after Phase 4.
-   * Falls back to http://localhost:5000 if not set during migration.
-   */
-  NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:5000'),
-
-  /**
-   * @deprecated Legacy — Socket.IO server URL. Remove after Phase 4.
-   * Falls back to http://localhost:5000 if not set during migration.
-   */
-  NEXT_PUBLIC_SOCKET_URL: z.string().url().default('http://localhost:5000'),
 });
 
 // --- parsing ----------------------------------------------------------------
@@ -66,8 +50,6 @@ function parseEnv() {
   const serverResult = serverSchema.safeParse(process.env);
   const clientResult = clientSchema.safeParse({
     NEXT_PUBLIC_ABLY_KEY: process.env.NEXT_PUBLIC_ABLY_KEY,
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
   });
 
   if (!serverResult.success) {
@@ -94,7 +76,7 @@ function parseEnv() {
  * Usage:
  * ```ts
  * import { env } from '@/lib/env';
- * const url = env.NEXT_PUBLIC_API_URL;
+ * const dbUrl = env.DATABASE_URL;
  * ```
  */
 export const env = parseEnv();

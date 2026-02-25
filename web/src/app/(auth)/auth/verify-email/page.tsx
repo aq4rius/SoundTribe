@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { env } from '@/lib/env';
+import { verifyEmailAction } from '@/actions/auth';
 
 export default function VerifyEmailPage() {
   return (
@@ -26,16 +26,15 @@ function VerifyEmailContent() {
       setMessage('Missing verification token.');
       return;
     }
-    fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/verify-email?token=${token}`)
-      .then(async (res) => {
-        const data = await res.json();
-        if (res.ok) {
+    verifyEmailAction(token)
+      .then((result) => {
+        if (result.success) {
           setStatus('success');
           setMessage('Your email has been verified! You can now log in.');
           setTimeout(() => router.push('/auth/login'), 2500);
         } else {
           setStatus('error');
-          setMessage(data.message || 'Verification failed.');
+          setMessage(result.error || 'Verification failed.');
         }
       })
       .catch(() => {

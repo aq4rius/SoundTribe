@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { env } from '@/lib/env';
+import { resetPasswordAction } from '@/actions/auth';
 
 const schema = z
   .object({
@@ -47,14 +47,9 @@ function ResetPasswordForm() {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password: data.password }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || 'Failed to reset password');
+      const result = await resetPasswordAction(token || '', data.password);
+      if (!result.success) {
+        setError(result.error);
         return;
       }
       setSubmitted(true);

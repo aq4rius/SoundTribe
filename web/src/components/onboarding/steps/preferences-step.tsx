@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { getAllGenres } from '@/services/genre';
-import type { OnboardingState } from '@/hooks/use-onboarding';
-import type { IGenre } from '@/types';
+import { getGenres } from '@/actions/genres';
+import type { OnboardingState } from '@/types/onboarding';
+import type { Genre } from '@prisma/client';
 
 export default function PreferencesStep({
   goNext,
@@ -25,8 +25,8 @@ export default function PreferencesStep({
   const [error, setError] = React.useState<string | null>(null);
 
   useEffect(() => {
-    getAllGenres().then((data) => {
-      setGenreOptions(data.map((g: IGenre) => g.name));
+    getGenres().then((data) => {
+      setGenreOptions(data.map((g: Genre) => g.name));
     });
   }, []);
 

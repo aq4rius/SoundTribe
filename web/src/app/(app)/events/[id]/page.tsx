@@ -1,23 +1,15 @@
 // Event details page for /events/[id]
 import { notFound } from 'next/navigation';
 import EventCard from '@/components/events/event-card';
-import Link from 'next/link';
 import EventApplication from '@/components/applications/event-application';
-import SendMessageButton from '@/components/events/send-message-button';
-import { env } from '@/lib/env';
-import type { IGenre } from '@/types';
-
-async function getEvent(id: string) {
-  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/event-postings/${id}`);
-  if (!res.ok) return null;
-  return res.json();
-}
+import { getEventByIdAction } from '@/actions/events';
 
 export default async function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (id === 'create') return notFound();
-  const event = await getEvent(id);
-  if (!event) return notFound();
+  const result = await getEventByIdAction(id);
+  if (!result.success || !result.data) return notFound();
+  const event = result.data;
 
   return (
     <div className="max-w-2xl mx-auto py-8">
@@ -46,14 +38,14 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
           </div>
           <div>
             <span className="font-semibold">Genres:</span>{' '}
-            {Array.isArray(event.genres) ? event.genres.map((g: IGenre) => g.name).join(', ') : ''}
+            {Array.isArray(event.genres) ? event.genres.map((g: { name: string }) => g.name).join(', ') : ''}
           </div>
           <div>
             <span className="font-semibold">Required Instruments:</span>{' '}
             {Array.isArray(event.requiredInstruments) ? event.requiredInstruments.join(', ') : ''}
           </div>
           <div>
-            <span className="font-semibold">Payment:</span> {event.paymentAmount} (
+            <span className="font-semibold">Payment:</span> {String(event.paymentAmount)} (
             {event.paymentType})
           </div>
           <div>
@@ -71,16 +63,12 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
           </div>
           <div>
             <span className="font-semibold">Posted By:</span>{' '}
-            {event.postedBy?.username || event.postedBy?.email || 'Unknown'}
+            {event.organizer?.username || event.organizer?.email || 'Unknown'}
           </div>
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6">
-        <SendMessageButton event={event} />
-      </div>
-
-      <EventApplication event={event} />
+      <EventApplication eventId={event.id} organizerId={event.organizerId} status={event.status} />
     </div>
   );
 }

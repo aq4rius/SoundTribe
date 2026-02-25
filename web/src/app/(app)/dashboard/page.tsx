@@ -1,64 +1,112 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import CreateArtistProfile from '@/components/profile/create-artist-profile';
 import ArtistCard from '@/components/artists/artist-card';
 import EventCard from '@/components/events/event-card';
 import ApplicationsList from '@/components/applications/applications-list';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useOnboarding } from '@/hooks/use-onboarding';
-import type { IArtistProfile, IEventPosting, IApplication } from '@/types';
+import { getMyArtistProfileAction, deleteArtistProfileAction } from '@/actions/artist-profiles';
+import { getMyEventsAction, deleteEventAction } from '@/actions/events';
+import { getMyApplicationsAction } from '@/actions/applications';
+import { getOnboardingStateAction } from '@/actions/users';
+
+interface DashboardEvent {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  eventDate: string | Date;
+  genres: { id: string; name: string }[];
+  paymentType: string;
+  paymentAmount: unknown;
+  status: string;
+  _count?: { applications: number };
+}
+
+interface DashboardArtistProfile {
+  id: string;
+  stageName: string;
+  biography: string;
+  location: string;
+  instruments: string[];
+  yearsOfExperience: number;
+  genres: { id: string; name: string }[];
+  user: { id: string; username: string; profileImage: string | null };
+  profileImage?: string | null;
+}
+
+interface DashboardApplication {
+  id: string;
+  status: string;
+  coverLetter: string;
+  proposedRate: number | null;
+  createdAt: Date;
+  eventPosting: {
+    id: string;
+    title: string;
+  };
+  artistProfile: {
+    id: string;
+    stageName: string;
+  };
+}
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  // TODO(phase-3): replace `as any` with a proper user profile type once full profile is fetched via Server Action
-  const user = session?.user as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
+  const user = session?.user as Record<string, unknown> | undefined;
   const router = useRouter();
-  const { onboarding, loading: onboardingLoading } = useOnboarding();
-  const [artistProfiles, setArtistProfiles] = useState<IArtistProfile[]>([]);
-  const [events, setEvents] = useState<IEventPosting[]>([]);
-  const [applications, setApplications] = useState<IApplication[]>([]);
+  const [artistProfile, setArtistProfile] = useState<DashboardArtistProfile | null>(null);
+  const [events, setEvents] = useState<DashboardEvent[]>([]);
+  const [applications, setApplications] = useState<DashboardApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [onboardingLoading, setOnboardingLoading] = useState(true);
 
+  // Check onboarding
   useEffect(() => {
-    if (!user || !token) return;
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // TRANSITIONAL: auth header removed until Phase 3
-        const [artistRes, eventRes, appRes] = await Promise.all([
-          fetch('/api/artist-profiles/my', { headers: {} }),
-          fetch('/api/event-postings/user', { headers: {} }),
-          fetch('/api/applications/my-applications', { headers: {} }),
-        ]);
-        if (!artistRes.ok || !eventRes.ok || !appRes.ok)
-          throw new Error('Failed to load dashboard data');
-        const artistProfilesData = await artistRes.json();
-        const eventsData = await eventRes.json();
-        const applicationsData = await appRes.json();
-        setArtistProfiles(artistProfilesData);
-        setEvents(eventsData);
-        setApplications(applicationsData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
-      } finally {
-        setIsLoading(false);
+    async function checkOnboarding() {
+      const result = await getOnboardingStateAction();
+      if (result.success && result.data.onboardingComplete === false) {
+        router.push('/onboarding');
+        return;
       }
-    };
-    fetchData();
-  }, [user, token]);
+      setOnboardingLoading(false);
+    }
+    if (user) checkOnboarding();
+    else setOnboardingLoading(false);
+  }, [user, router]);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [profileResult, eventsResult, appsResult] = await Promise.all([
+        getMyArtistProfileAction(),
+        getMyEventsAction(),
+        getMyApplicationsAction(),
+      ]);
+
+      if (profileResult.success) {
+        setArtistProfile(profileResult.data as DashboardArtistProfile | null);
+      }
+      if (eventsResult.success) {
+        setEvents(eventsResult.data as unknown as DashboardEvent[]);
+      }
+      if (appsResult.success) {
+        setApplications(appsResult.data as unknown as DashboardApplication[]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!onboardingLoading && onboarding && onboarding.onboardingComplete === false) {
-      router.push('/onboarding');
-    }
-  }, [onboarding, onboardingLoading, router]);
+    if (user && !onboardingLoading) fetchData();
+  }, [user, onboardingLoading, fetchData]);
 
   if (onboardingLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -69,16 +117,14 @@ export default function DashboardPage() {
 
   if (!user) return <div className="text-center text-red-400 py-12">User not found.</div>;
 
-  // Delete handlers (artist profile/event)
-  const handleDeleteProfile = async (profileId: string) => {
+  // Delete handlers
+  const handleDeleteProfile = async () => {
+    if (!artistProfile) return;
     if (!window.confirm('Are you sure you want to delete this artist profile?')) return;
     try {
-      const res = await fetch(`/api/artist-profiles/${profileId}`, {
-        method: 'DELETE',
-        headers: {},
-      });
-      if (!res.ok) throw new Error('Error deleting artist profile');
-      setArtistProfiles((profiles) => profiles.filter((p) => p._id !== profileId));
+      const result = await deleteArtistProfileAction(artistProfile.id);
+      if (!result.success) throw new Error(result.error);
+      setArtistProfile(null);
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Error deleting artist profile');
     }
@@ -86,12 +132,9 @@ export default function DashboardPage() {
   const handleDeleteEvent = async (eventId: string) => {
     if (!window.confirm('Are you sure you want to delete this event?')) return;
     try {
-      const res = await fetch(`/api/event-postings/${eventId}`, {
-        method: 'DELETE',
-        headers: {},
-      });
-      if (!res.ok) throw new Error('Error deleting event');
-      setEvents((evts) => evts.filter((e) => e._id !== eventId));
+      const result = await deleteEventAction(eventId);
+      if (!result.success) throw new Error(result.error);
+      setEvents((evts) => evts.filter((e) => e.id !== eventId));
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Error deleting event');
     }
@@ -115,58 +158,58 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="font-semibold ">Username:</p>
-              <p className="">{user.username}</p>
+              <p className="">{user.username as string}</p>
             </div>
             <div>
               <p className="font-semibold ">Email:</p>
-              <p className="">{user.email}</p>
+              <p className="">{user.email as string}</p>
             </div>
             <div>
               <p className="font-semibold ">First Name:</p>
-              <p className="">{user.firstName || 'Not specified'}</p>
+              <p className="">{(user.firstName as string) || 'Not specified'}</p>
             </div>
             <div>
               <p className="font-semibold ">Last Name:</p>
-              <p className="">{user.lastName || 'Not specified'}</p>
+              <p className="">{(user.lastName as string) || 'Not specified'}</p>
             </div>
             <div>
               <p className="font-semibold ">Bio:</p>
-              <p className="">{user.bio || 'Not specified'}</p>
+              <p className="">{(user.bio as string) || 'Not specified'}</p>
             </div>
             <div>
               <p className="font-semibold ">Roles:</p>
-              <p className="">{user.roles?.join(', ') || 'Not specified'}</p>
+              <p className="">{(user.roles as string[])?.join(', ') || 'Not specified'}</p>
             </div>
             <div>
               <p className="font-semibold ">Location:</p>
               <p className="">
-                {user.locationDetails?.city || user.location || 'Not specified'}
-                {user.locationDetails?.region ? `, ${user.locationDetails.region}` : ''}
+                {(user.locationDetails as Record<string, unknown>)?.city as string || (user.location as string) || 'Not specified'}
+                {(user.locationDetails as Record<string, unknown>)?.region ? `, ${(user.locationDetails as Record<string, unknown>).region}` : ''}
               </p>
             </div>
             <div>
               <p className="font-semibold ">Willing to travel:</p>
               <p className="">
-                {user.locationDetails?.willingToTravel
-                  ? user.locationDetails.willingToTravel + ' km'
+                {(user.locationDetails as Record<string, unknown>)?.willingToTravel
+                  ? (user.locationDetails as Record<string, unknown>).willingToTravel + ' km'
                   : 'Not specified'}
               </p>
             </div>
             <div>
               <p className="font-semibold ">Genres:</p>
-              <p className="">{user.preferences?.genres?.join(', ') || 'Not specified'}</p>
+              <p className="">{((user.preferences as Record<string, unknown>)?.genres as string[])?.join(', ') || 'Not specified'}</p>
             </div>
             <div>
               <p className="font-semibold ">Instruments:</p>
-              <p className="">{user.preferences?.instruments?.join(', ') || 'Not specified'}</p>
+              <p className="">{((user.preferences as Record<string, unknown>)?.instruments as string[])?.join(', ') || 'Not specified'}</p>
             </div>
             <div>
               <p className="font-semibold ">Influences:</p>
-              <p className="">{user.preferences?.influences?.join(', ') || 'Not specified'}</p>
+              <p className="">{((user.preferences as Record<string, unknown>)?.influences as string[])?.join(', ') || 'Not specified'}</p>
             </div>
             <div>
               <p className="font-semibold ">Goals:</p>
-              <p className="">{user.preferences?.eventTypes?.join(', ') || 'Not specified'}</p>
+              <p className="">{((user.preferences as Record<string, unknown>)?.eventTypes as string[])?.join(', ') || 'Not specified'}</p>
             </div>
           </div>
         </div>
@@ -194,22 +237,22 @@ export default function DashboardPage() {
           ) : (
             events.map((event) => (
               <div
-                key={event._id}
+                key={event.id}
                 className="hover:shadow-2xl transition-shadow rounded-xl bg-black/80 border border-cyan-900"
               >
-                <div onClick={() => router.push(`/events/${event._id}`)} className="cursor-pointer">
+                <div onClick={() => router.push(`/events/${event.id}`)} className="cursor-pointer">
                   <EventCard event={event} mode="full" />
                 </div>
                 <div className="flex gap-2 p-2">
                   <button
-                    onClick={() => router.push(`/events/edit/${event._id}`)}
+                    onClick={() => router.push(`/events/edit/${event.id}`)}
                     className="btn btn-outline btn-primary btn-xs"
                     aria-label={`Edit event ${event.title}`}
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteEvent(event._id)}
+                    onClick={() => handleDeleteEvent(event.id)}
                     className="btn btn-outline btn-error btn-xs"
                     aria-label={`Delete event ${event.title}`}
                   >
@@ -222,55 +265,50 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Artist Profiles Section */}
+      {/* Artist Profile Section */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold text-white">Artist Profiles</h2>
-          <button
-            onClick={() => router.push('/artists/create')}
-            className="btn btn-success btn-sm"
-            aria-label="Create New Artist Profile"
-          >
-            Create New Artist Profile
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {artistProfiles.length === 0 ? (
-            <div className="col-span-full text-center text-white/60 py-4">
-              No artist profiles found.
-            </div>
-          ) : (
-            artistProfiles.map((profile) => (
-              <div
-                key={profile._id}
-                className="hover:shadow-2xl transition-shadow rounded-xl bg-black/80 border border-fuchsia-900"
-              >
-                <div
-                  onClick={() => router.push(`/artists/${profile._id}`)}
-                  className="cursor-pointer"
-                >
-                  <ArtistCard artist={profile} mode="full" />
-                </div>
-                <div className="flex gap-2 p-2">
-                  <button
-                    onClick={() => router.push(`/artists/edit/${profile._id}`)}
-                    className="btn btn-outline btn-primary btn-xs"
-                    aria-label={`Edit artist profile ${profile.stageName}`}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProfile(profile._id)}
-                    className="btn btn-outline btn-error btn-xs"
-                    aria-label={`Delete artist profile ${profile.stageName}`}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))
+          <h2 className="text-xl font-semibold text-white">Artist Profile</h2>
+          {!artistProfile && (
+            <button
+              onClick={() => router.push('/artists/create')}
+              className="btn btn-success btn-sm"
+              aria-label="Create Artist Profile"
+            >
+              Create Artist Profile
+            </button>
           )}
         </div>
+        {artistProfile ? (
+          <div className="hover:shadow-2xl transition-shadow rounded-xl bg-black/80 border border-fuchsia-900">
+            <div
+              onClick={() => router.push(`/artists/${artistProfile.id}`)}
+              className="cursor-pointer"
+            >
+              <ArtistCard artist={artistProfile} mode="full" />
+            </div>
+            <div className="flex gap-2 p-2">
+              <button
+                onClick={() => router.push(`/artists/edit/${artistProfile.id}`)}
+                className="btn btn-outline btn-primary btn-xs"
+                aria-label={`Edit artist profile ${artistProfile.stageName}`}
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDeleteProfile}
+                className="btn btn-outline btn-error btn-xs"
+                aria-label={`Delete artist profile ${artistProfile.stageName}`}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center text-white/60 py-4">
+            No artist profile found.
+          </div>
+        )}
       </div>
       {/* Applications Section */}
       <div className="mb-8">

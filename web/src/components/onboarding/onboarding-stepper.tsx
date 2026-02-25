@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import RoleStep from './steps/role-step';
 import PreferencesStep from './steps/preferences-step';
 import LocationStep from './steps/location-step';
@@ -8,7 +8,8 @@ import AvailabilityStep from './steps/availability-step';
 import ProfileStep from './steps/profile-step';
 import NotificationsStep from './steps/notifications-step';
 import SummaryStep from './steps/summary-step';
-import { useOnboarding } from '../../hooks/use-onboarding';
+import { getOnboardingStateAction, updateOnboardingAction } from '@/actions/users';
+import type { OnboardingState } from '@/types/onboarding';
 
 const steps = [
   { label: 'Role', component: RoleStep },
@@ -23,12 +24,37 @@ const steps = [
 export default function OnboardingStepper() {
   const [step, setStep] = useState(0);
   const StepComponent = steps[step].component;
-  const { onboarding, loading, error, saveOnboarding } = useOnboarding();
+  const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const result = await getOnboardingStateAction();
+      if (result.success) {
+        setOnboarding(result.data as unknown as OnboardingState);
+      } else {
+        setError(result.error);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const saveOnboarding = useCallback(
+    async (updates: Partial<OnboardingState>) => {
+      const result = await updateOnboardingAction(updates as Record<string, unknown>);
+      if (result.success) {
+        setOnboarding((prev) => (prev ? { ...prev, ...updates } : null));
+      } else {
+        setError(result.error);
+      }
+    },
+    [],
+  );
 
   const goNext = () => setStep((s) => Math.min(s + 1, steps.length - 1));
   const goBack = () => setStep((s) => Math.max(s - 1, 0));
 
-  // Optionally, show loading or error
   if (loading) return <div className="text-center py-8">Loading onboarding...</div>;
   if (error) return <div className="text-center text-red-500 py-8">{error}</div>;
 

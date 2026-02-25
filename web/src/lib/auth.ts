@@ -24,7 +24,8 @@ const credentialsSchema = z.object({
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  // TODO(phase-3): remove `as any` when @auth/prisma-adapter ships stable types matching next-auth v5 GA\n  adapter: PrismaAdapter(db) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  // KNOWN: `as any` required until @auth/prisma-adapter ships stable types matching next-auth v5 GA
+  adapter: PrismaAdapter(db) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days

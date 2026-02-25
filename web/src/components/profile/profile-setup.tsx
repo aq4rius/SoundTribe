@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { env } from '@/lib/env';
+import { updateProfileAction } from '@/actions/users';
 
 export default function ProfileSetup() {
   const { data: session } = useSession();
@@ -29,18 +29,15 @@ export default function ProfileSetup() {
     setError(null);
     setIsLoading(true);
     try {
-      // TRANSITIONAL: Express API call will not work without token until Phase 3
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...form }),
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || 'Profile update failed');
+      const formData = new FormData();
+      formData.append('username', user?.name || '');
+      formData.append('firstName', form.firstName);
+      formData.append('lastName', form.lastName);
+      formData.append('location', form.location);
+      formData.append('bio', form.bio);
+      const result = await updateProfileAction(formData);
+      if (!result.success) {
+        setError(result.error);
         return;
       }
       router.push('/dashboard');

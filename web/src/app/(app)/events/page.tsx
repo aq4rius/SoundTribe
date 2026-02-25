@@ -1,10 +1,29 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { searchEventPostings, getAllGenres } from '@/services/event';
-import { useEvents } from '@/hooks/use-events';
+import { useState, useEffect, useCallback } from 'react';
+import { getEventsAction } from '@/actions/events';
+import { getGenres } from '@/actions/genres';
 import EventCard from '@/components/events/event-card';
 import Pagination from '@/components/common/pagination';
-import type { IGenre, IEventPosting, EventFilters } from '@/types';
+
+interface EventFilters {
+  search: string;
+  genres: string[];
+  location: string;
+  dateFrom: string;
+  dateTo: string;
+  paymentMin: string;
+  paymentMax: string;
+  paymentType: string;
+  status: string;
+}
+
+type EventResult = {
+  id: string;
+  title: string;
+  location: string;
+  description: string;
+  eventDate: Date | string;
+};
 
 export default function EventsPage() {
   const [filters, setFilters] = useState<EventFilters>({
@@ -18,45 +37,44 @@ export default function EventsPage() {
     paymentType: '',
     status: '',
   });
-  const [genreOptions, setGenreOptions] = useState<IGenre[]>([]);
+  const [genreOptions, setGenreOptions] = useState<{ id: string; name: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [events, setEvents] = useState<IEventPosting[]>([]);
+  const [events, setEvents] = useState<EventResult[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    async function fetchGenres() {
-      try {
-        const genres = await getAllGenres();
-        setGenreOptions(genres);
-      } catch {
-        setGenreOptions([]);
-      }
-    }
-    fetchGenres();
+    getGenres().then(setGenreOptions).catch(() => setGenreOptions([]));
   }, []);
 
-  useEffect(() => {
+  const fetchEvents = useCallback(async () => {
     setIsLoading(true);
-    searchEventPostings({
-      searchTerm: filters.search,
-      selectedGenres: filters.genres,
-      location: filters.location,
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo,
-      paymentMin: filters.paymentMin,
-      paymentMax: filters.paymentMax,
-      paymentType: filters.paymentType,
-      status: filters.status,
-      page: currentPage,
-      limit: 9,
-    })
-      .then((data) => {
-        setEvents(data.data || []);
-        setTotalPages(data.totalPages || 1);
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const result = await getEventsAction({
+        search: filters.search || undefined,
+        genres: filters.genres.length > 0 ? filters.genres : undefined,
+        location: filters.location || undefined,
+        dateFrom: filters.dateFrom || undefined,
+        dateTo: filters.dateTo || undefined,
+        paymentMin: filters.paymentMin || undefined,
+        paymentMax: filters.paymentMax || undefined,
+        paymentType: filters.paymentType || undefined,
+        status: filters.status || undefined,
+        page: currentPage,
+        limit: 9,
+      });
+      if (result.success) {
+        setEvents(result.data.data as EventResult[]);
+        setTotalPages(result.data.totalPages);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }, [filters, currentPage]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const handleFilterChange = (key: keyof EventFilters, value: EventFilters[keyof EventFilters]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -106,15 +124,15 @@ export default function EventsPage() {
                 </label>
                 <div className="space-y-1">
                   {genreOptions.map((genre) => (
-                    <label key={genre._id} className="flex items-center gap-2">
+                    <label key={genre.id} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={(filters.genres ?? []).includes(genre._id)}
+                        checked={(filters.genres ?? []).includes(genre.id)}
                         onChange={() => {
                           const current = filters.genres ?? [];
-                          const newGenres = current.includes(genre._id)
-                            ? current.filter((id) => id !== genre._id)
-                            : [...current, genre._id];
+                          const newGenres = current.includes(genre.id)
+                            ? current.filter((id) => id !== genre.id)
+                            : [...current, genre.id];
                           handleFilterChange('genres', newGenres);
                         }}
                         className="checkbox checkbox-sm"
@@ -226,8 +244,8 @@ export default function EventsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {events.map((event: IEventPosting, i: number) => (
-                <EventCard key={i} event={event} />
+              {events.map((event) => (
+                <EventCard key={event.id} event={event} />
               ))}
             </div>
           )}

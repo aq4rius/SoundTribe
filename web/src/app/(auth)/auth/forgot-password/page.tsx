@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { env } from '@/lib/env';
+import { forgotPasswordAction } from '@/actions/auth';
 
 const schema = z.object({
   email: z.string().email('Please provide a valid email'),
@@ -29,14 +29,9 @@ export default function ForgotPasswordPage() {
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || 'Failed to send reset email');
+      const result = await forgotPasswordAction(data.email);
+      if (!result.success) {
+        setError(result.error);
         return;
       }
       setSubmitted(true);

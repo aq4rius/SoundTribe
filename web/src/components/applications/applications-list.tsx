@@ -1,15 +1,21 @@
-// ApplicationsList migrated from client/src/components/applications/ApplicationsList.tsx
+// ApplicationsList — displays a list of applications with accept/reject controls
 'use client';
 
 import { useState } from 'react';
 import ErrorAlert from '../common/error-alert';
-import { useUpdateApplicationStatus } from '@/hooks/use-update-application-status';
-import { useSession } from 'next-auth/react';
-import type { IApplication } from '@/types';
-import { isPopulatedArtistProfile, isPopulatedEventPosting } from '@/types';
+import { updateApplicationStatusAction } from '@/actions/applications';
+
+interface ApplicationItem {
+  id: string;
+  status: string;
+  coverLetter: string;
+  proposedRate: number | null;
+  createdAt: Date;
+  artistProfile?: { id: string; stageName: string };
+}
 
 interface ApplicationsListProps {
-  applications: IApplication[];
+  applications: ApplicationItem[];
   isEventOwner?: boolean;
   onStatusUpdate?: () => void;
 }
@@ -19,10 +25,6 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
   isEventOwner = false,
   onStatusUpdate,
 }) => {
-  const { data: session } = useSession();
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const safeToken: string | undefined = undefined;
-  const updateStatusMutation = useUpdateApplicationStatus(safeToken);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,10 +32,14 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      await updateStatusMutation.mutateAsync({ applicationId, status });
-      onStatusUpdate?.();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to update application status');
+      const result = await updateApplicationStatusAction(applicationId, status);
+      if (!result.success) {
+        setError(result.error);
+      } else {
+        onStatusUpdate?.();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update application status');
     } finally {
       setIsLoading(false);
     }
@@ -44,22 +50,13 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
       {isLoading && <div>Updating...</div>}
       {applications.map((application) => (
-        <div key={application._id} className="bg-base-100 rounded-lg shadow p-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-primary">
-              {isEventOwner ? 'Applications' : 'My Application'}
-            </h2>
-          </div>
+        <div key={application.id} className="bg-base-100 rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-lg font-semibold text-primary">
                 {isEventOwner
-                  ? isPopulatedArtistProfile(application.artistProfile)
-                    ? application.artistProfile.stageName
-                    : 'Unknown Artist'
-                  : isPopulatedEventPosting(application.eventPosting)
-                    ? application.eventPosting.title
-                    : 'Unknown Event'}
+                  ? application.artistProfile?.stageName ?? 'Unknown Artist'
+                  : 'My Application'}
               </h3>
               <p className="text-base-content">
                 Submitted on{' '}
@@ -77,13 +74,11 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
                     : 'bg-error text-error-content'
               }`}
             >
-              {application.status
-                ? application.status.charAt(0).toUpperCase() + application.status.slice(1)
-                : 'Unknown'}
+              {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-base-content">{application.coverLetter || ''}</p>
+            <p className="text-base-content">{application.coverLetter}</p>
           </div>
           <div className="mt-4">
             <p className="text-sm text-base-content">
@@ -93,13 +88,13 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
           {isEventOwner && application.status === 'pending' && (
             <div className="mt-4 flex space-x-4">
               <button
-                onClick={() => handleStatusUpdate(application._id, 'accepted')}
+                onClick={() => handleStatusUpdate(application.id, 'accepted')}
                 className="btn btn-success"
               >
                 Accept
               </button>
               <button
-                onClick={() => handleStatusUpdate(application._id, 'rejected')}
+                onClick={() => handleStatusUpdate(application.id, 'rejected')}
                 className="btn btn-error"
               >
                 Reject

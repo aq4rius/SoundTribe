@@ -1,10 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useArtists } from '@/hooks/use-artists';
+import { useEffect, useState, useCallback } from 'react';
+import { getArtistProfilesAction } from '@/actions/artist-profiles';
+import { getGenres } from '@/actions/genres';
 import ArtistCard from '@/components/artists/artist-card';
 import Pagination from '@/components/common/pagination';
-import { getAllGenres } from '@/services/genre';
-import type { IArtistProfile } from '@/types';
 
 interface ArtistFilters {
   search: string;
@@ -17,9 +16,19 @@ interface ArtistFilters {
 }
 
 interface Genre {
-  _id: string;
+  id: string;
   name: string;
 }
+
+type ArtistResult = {
+  id: string;
+  stageName: string;
+  location: string | null;
+  profileImage: string | null;
+  instruments: string[];
+  ratePerHour: number | null;
+  genres: { id: string; name: string }[];
+};
 
 export default function ArtistsPage() {
   const [filters, setFilters] = useState<ArtistFilters>({
@@ -33,21 +42,39 @@ export default function ArtistsPage() {
   });
   const [genreOptions, setGenreOptions] = useState<Genre[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const { data, isLoading } = useArtists(filters, currentPage, 9);
-  const artists = data?.data || [];
-  const totalPages = data?.totalPages || 1;
+  const [artists, setArtists] = useState<ArtistResult[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    async function fetchGenres() {
-      try {
-        const genres = await getAllGenres();
-        setGenreOptions(genres);
-      } catch (e) {
-        setGenreOptions([]);
-      }
-    }
-    fetchGenres();
+    getGenres().then(setGenreOptions).catch(() => setGenreOptions([]));
   }, []);
+
+  const fetchArtists = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await getArtistProfilesAction({
+        search: filters.search || undefined,
+        genres: filters.genres.length > 0 ? filters.genres : undefined,
+        location: filters.location || undefined,
+        instruments: filters.instruments
+          ? filters.instruments.split(',').map((i) => i.trim()).filter(Boolean)
+          : undefined,
+        page: currentPage,
+        limit: 9,
+      });
+      if (result.success) {
+        setArtists(result.data.profiles as ArtistResult[]);
+        setTotalPages(result.data.totalPages);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters, currentPage]);
+
+  useEffect(() => {
+    fetchArtists();
+  }, [fetchArtists]);
 
   const handleFilterChange = (key: string, value: string | string[]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -95,14 +122,14 @@ export default function ArtistsPage() {
                 </label>
                 <div className="space-y-1">
                   {genreOptions.map((genre) => (
-                    <label key={genre._id} className="flex items-center gap-2">
+                    <label key={genre.id} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={filters.genres.includes(genre._id)}
+                        checked={filters.genres.includes(genre.id)}
                         onChange={() => {
-                          const newGenres = filters.genres.includes(genre._id)
-                            ? filters.genres.filter((id) => id !== genre._id)
-                            : [...filters.genres, genre._id];
+                          const newGenres = filters.genres.includes(genre.id)
+                            ? filters.genres.filter((id) => id !== genre.id)
+                            : [...filters.genres, genre.id];
                           handleFilterChange('genres', newGenres);
                         }}
                         className="checkbox checkbox-sm"
@@ -189,8 +216,8 @@ export default function ArtistsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {artists.map((artist: IArtistProfile, i: number) => (
-                <ArtistCard key={i} artist={artist} />
+              {artists.map((artist) => (
+                <ArtistCard key={artist.id} artist={artist} />
               ))}
             </div>
           )}

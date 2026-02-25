@@ -1,21 +1,14 @@
 // Artist details page for /artists/[id]
 import { notFound } from 'next/navigation';
 import ArtistCard from '@/components/artists/artist-card';
-import Link from 'next/link';
-import { env } from '@/lib/env';
-import type { IGenre } from '@/types';
-
-async function getArtist(id: string) {
-  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${id}`);
-  if (!res.ok) return null;
-  return res.json();
-}
+import { getArtistProfileByIdAction } from '@/actions/artist-profiles';
 
 export default async function ArtistDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (id === 'create') return notFound();
-  const artist = await getArtist(id);
-  if (!artist) return notFound();
+  const result = await getArtistProfileByIdAction(id);
+  if (!result.success || !result.data) return notFound();
+  const artist = result.data;
   return (
     <div className="max-w-2xl mx-auto py-8">
       <div className="mb-6">
@@ -37,7 +30,7 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
           <div>
             <span className="font-semibold">Genres:</span>{' '}
             {Array.isArray(artist.genres)
-              ? artist.genres.map((g: IGenre) => g.name).join(', ')
+              ? artist.genres.map((g: { id: string; name: string }) => g.name).join(', ')
               : ''}
           </div>
           <div>

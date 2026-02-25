@@ -1,22 +1,56 @@
 'use client';
 import { useSession } from 'next-auth/react';
-import {
-  useNotifications,
-  useMarkNotificationRead,
-  useDeleteNotification,
-} from '@/hooks/use-notifications';
 import Link from 'next/link';
-import { useState } from 'react';
-import { env } from '@/lib/env';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  getNotificationsAction,
+  markAsReadAction,
+  markAllAsReadAction,
+} from '@/actions/notifications';
+import { updateNotificationPreferencesAction } from '@/actions/users';
+
+interface NotificationItem {
+  id: string;
+  type: string;
+  message: string;
+  read: boolean;
+  relatedEntityId: string | null;
+  relatedEntityType: string | null;
+  createdAt: string | Date;
+}
 
 export default function NotificationsPage() {
   const { data: session } = useSession();
   const user = session?.user;
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
-  const { data: notifications = [], isLoading } = useNotifications(token);
-  const markRead = useMarkNotificationRead(token);
-  const deleteNotif = useDeleteNotification(token);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchNotifications = useCallback(async () => {
+    setIsLoading(true);
+    const result = await getNotificationsAction(1, 50);
+    if (result.success) {
+      setNotifications(result.data.data as unknown as NotificationItem[]);
+    }
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchNotifications();
+  }, [user, fetchNotifications]);
+
+  const handleMarkRead = async (id: string) => {
+    const result = await markAsReadAction(id);
+    if (result.success) {
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    const result = await markAllAsReadAction();
+    if (result.success) {
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    }
+  };
 
   if (!user) {
     return (
@@ -35,8 +69,16 @@ export default function NotificationsPage() {
       <h1 className="text-3xl font-bold mb-6 text-white">Notification Center</h1>
       <NotificationPreferencesSection />
       <div className="bg-black/80 rounded-lg shadow border border-fuchsia-900 mt-8">
-        <div className="p-4 border-b border-fuchsia-900 text-lg font-semibold text-white">
-          All Notifications
+        <div className="p-4 border-b border-fuchsia-900 text-lg font-semibold text-white flex items-center justify-between">
+          <span>All Notifications</span>
+          {notifications.some((n) => !n.read) && (
+            <button
+              className="text-xs text-fuchsia-400 hover:underline"
+              onClick={handleMarkAllRead}
+            >
+              Mark all as read
+            </button>
+          )}
         </div>
         {isLoading ? (
           <div className="p-6 text-center text-white/60">Loading...</div>
@@ -45,27 +87,27 @@ export default function NotificationsPage() {
         ) : (
           notifications.map((n) => {
             let href = '#';
-            if (n.type === 'new_message' && n.relatedEntity) {
-              href = `/chat?messageId=${n.relatedEntity.id}`;
+            if (n.type === 'new_message' && n.relatedEntityId) {
+              href = `/chat?messageId=${n.relatedEntityId}`;
             } else if (
               (n.type === 'application_submitted' || n.type === 'application_status') &&
-              n.relatedEntity
+              n.relatedEntityId
             ) {
-              href = `/dashboard/applications/${n.relatedEntity.id}`;
-            } else if (n.relatedEntity && n.relatedEntity.type === 'Event') {
-              href = `/events/${n.relatedEntity.id}`;
+              href = `/events/${n.relatedEntityId}`;
+            } else if (n.relatedEntityType === 'event_posting' && n.relatedEntityId) {
+              href = `/events/${n.relatedEntityId}`;
             }
             return (
               <div
-                key={n._id}
+                key={n.id}
                 className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-black' : 'bg-fuchsia-950/40'} cursor-pointer`}
                 onClick={() => {
-                  if (!n.read) markRead.mutate(n._id);
+                  if (!n.read) handleMarkRead(n.id);
                   if (href !== '#') window.location.href = href;
                 }}
               >
                 <div className="flex-1">
-                  <div className="font-medium text-sm text-white">{n.content}</div>
+                  <div className="font-medium text-sm text-white">{n.message}</div>
                   <div className="text-xs text-white/40">
                     {new Date(n.createdAt).toLocaleString()}
                   </div>
@@ -74,21 +116,12 @@ export default function NotificationsPage() {
                       className="text-xs text-blue-400 mr-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        markRead.mutate(n._id);
+                        handleMarkRead(n.id);
                       }}
                     >
                       Mark as read
                     </button>
                   )}
-                  <button
-                    className="text-xs text-gray-400 hover:text-red-500"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteNotif.mutate(n._id);
-                    }}
-                  >
-                    &times;
-                  </button>
                 </div>
               </div>
             );
@@ -101,12 +134,10 @@ export default function NotificationsPage() {
 
 function NotificationPreferencesSection() {
   const { data: session } = useSession();
-  // TODO(phase-3): replace `as any` with a proper user profile type once full profile is fetched via Server Action
-  const user = session?.user as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
-  const [email, setEmail] = useState(user?.notificationPreferences?.email ?? true);
-  const [push, setPush] = useState(user?.notificationPreferences?.push ?? true);
+  const user = session?.user as Record<string, unknown> | undefined;
+  const notifPrefs = user?.notificationPreferences as Record<string, boolean> | undefined;
+  const [email, setEmail] = useState(notifPrefs?.email ?? true);
+  const [push, setPush] = useState(notifPrefs?.push ?? true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,15 +148,8 @@ function NotificationPreferencesSection() {
     setError(null);
     setSuccess(false);
     try {
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/users/me`, {
-        method: 'PUT',
-        headers: {
-          // TRANSITIONAL: no auth token available until Phase 3
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ notificationPreferences: { email, push } }),
-      });
-      if (!res.ok) throw new Error('Failed to update preferences');
+      const result = await updateNotificationPreferencesAction({ email, push });
+      if (!result.success) throw new Error(result.error);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update preferences');

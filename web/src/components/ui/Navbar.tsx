@@ -1,43 +1,67 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import {
-  useNotifications,
-  useMarkNotificationRead,
-  useDeleteNotification,
-} from '@/hooks/use-notifications';
-import { io } from 'socket.io-client';
-import { useQueryClient } from '@tanstack/react-query';
-import { env } from '@/lib/env';
+  getNotificationsAction,
+  markAsReadAction,
+  getUnreadCountAction,
+} from '@/actions/notifications';
+
+interface NavNotification {
+  id: string;
+  type: string;
+  message: string;
+  read: boolean;
+  relatedEntityId: string | null;
+  relatedEntityType: string | null;
+  createdAt: string | Date;
+}
 
 export default function Navbar() {
   const { data: session } = useSession();
   const user = session?.user;
   const [menuOpen, setMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
-  const { data: notifications = [], isLoading: notifLoading } = useNotifications(token);
-  const markRead = useMarkNotificationRead(token);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const deleteNotif = useDeleteNotification(token);
-  const queryClient = useQueryClient();
+  const [notifications, setNotifications] = useState<NavNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifLoading, setNotifLoading] = useState(false);
 
-  // Real-time notifications via socket.io
+  const fetchUnreadCount = useCallback(async () => {
+    const result = await getUnreadCountAction();
+    if (result.success) setUnreadCount(result.data);
+  }, []);
+
+  const fetchNotifications = useCallback(async () => {
+    setNotifLoading(true);
+    const result = await getNotificationsAction(1, 10);
+    if (result.success) {
+      setNotifications(result.data.data as unknown as NavNotification[]);
+      setUnreadCount(result.data.unreadCount);
+    }
+    setNotifLoading(false);
+  }, []);
+
+  // Poll unread count every 30 seconds
   useEffect(() => {
     if (!user) return;
-    const socket = io(env.NEXT_PUBLIC_SOCKET_URL, { withCredentials: true });
-    socket.emit('join-entity', { entityId: user.id, entityType: 'User' });
-    socket.on('new-notification', () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    });
-    return () => {
-      socket.off('new-notification');
-      socket.emit('leave-entity', { entityId: user.id, entityType: 'User' });
-      socket.disconnect();
-    };
-  }, [user, queryClient]);
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [user, fetchUnreadCount]);
+
+  // Fetch full notifications when dropdown opens
+  useEffect(() => {
+    if (showNotifications && user) fetchNotifications();
+  }, [showNotifications, user, fetchNotifications]);
+
+  const handleMarkRead = async (id: string) => {
+    const result = await markAsReadAction(id);
+    if (result.success) {
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 w-full z-30 flex items-center justify-between px-4 md:px-8 py-4 bg-black/60 backdrop-blur-md border-b border-white/10">
@@ -68,15 +92,6 @@ export default function Navbar() {
         </Link>
         {user && (
           <Link
-            href="/chat"
-            className="hover:text-emerald-400 transition-colors"
-            onClick={() => setMenuOpen(false)}
-          >
-            Chat
-          </Link>
-        )}
-        {user && (
-          <Link
             href="/dashboard"
             className="hover:text-white transition-colors"
             onClick={() => setMenuOpen(false)}
@@ -94,7 +109,7 @@ export default function Navbar() {
               onClick={() => setShowNotifications((v) => !v)}
             >
               <span className="material-icons align-middle text-white">notifications</span>
-              {notifications.some((n) => !n.read) && (
+              {unreadCount > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               )}
             </button>
@@ -117,72 +132,48 @@ export default function Navbar() {
                 ) : notifications.length === 0 ? (
                   <div className="p-4 text-center text-white/60">No notifications</div>
                 ) : (
-                  notifications
-                    .filter((n) => {
-                      // Debug: log notification objects for troubleshooting
-                      if (n.type === 'new_message') {
-                        // eslint-disable-next-line no-console
-                        console.log('Notification:', n);
-                      }
-                      // Only deduplicate if user is viewing the exact conversation
-                      if (
-                        n.type === 'new_message' &&
-                        typeof window !== 'undefined' &&
-                        window.location.pathname === '/chat' &&
-                        n.relatedEntity?.id &&
-                        window.location.search.includes(`messageId=${n.relatedEntity.id}`)
-                      ) {
-                        return false;
-                      }
-                      return true;
-                    })
-                    .map((n) => {
-                      // Always link to chat for new_message, fallback to /chat if missing
-                      let href = '#';
-                      if (n.type === 'new_message' && n.relatedEntity?.id) {
-                        href = `/chat?messageId=${n.relatedEntity.id}`;
-                      } else if (
-                        (n.type === 'application_submitted' || n.type === 'application_status') &&
-                        n.relatedEntity
-                      ) {
-                        href = `/dashboard/applications/${n.relatedEntity.id}`;
-                      } else if (n.relatedEntity && n.relatedEntity.type === 'Event') {
-                        href = `/events/${n.relatedEntity.id}`;
-                      } else if (n.type === 'new_message') {
-                        href = '/chat';
-                      }
-                      return (
-                        <div
-                          key={n._id}
-                          className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-black' : 'bg-fuchsia-950/40'} cursor-pointer`}
-                          onClick={() => {
-                            if (!n.read) markRead.mutate(n._id);
-                            setShowNotifications(false);
-                            window.location.href = href;
-                          }}
-                        >
-                          <div className="flex-shrink-0">
-                            <span className="material-icons text-2xl text-white">
-                              {n.type === 'new_message'
-                                ? 'message'
-                                : n.type === 'application_submitted'
-                                  ? 'check_circle'
-                                  : n.type === 'application_status'
-                                    ? 'info'
-                                    : n.relatedEntity && n.relatedEntity.type === 'Event'
-                                      ? 'event'
-                                      : 'notifications'}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm text-white/80">{n.content}</div>
-                            <div className="text-xs text-white/60">
-                              {new Date(n.createdAt).toLocaleString()}
-                            </div>
+                  notifications.map((n) => {
+                    let href = '#';
+                    if (n.type === 'new_message' && n.relatedEntityId) {
+                      href = `/chat?messageId=${n.relatedEntityId}`;
+                    } else if (
+                      (n.type === 'application_submitted' || n.type === 'application_status') &&
+                      n.relatedEntityId
+                    ) {
+                      href = `/events/${n.relatedEntityId}`;
+                    } else if (n.relatedEntityType === 'event_posting' && n.relatedEntityId) {
+                      href = `/events/${n.relatedEntityId}`;
+                    }
+                    return (
+                      <div
+                        key={n.id}
+                        className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-black' : 'bg-fuchsia-950/40'} cursor-pointer`}
+                        onClick={() => {
+                          if (!n.read) handleMarkRead(n.id);
+                          setShowNotifications(false);
+                          if (href !== '#') window.location.href = href;
+                        }}
+                      >
+                        <div className="flex-shrink-0">
+                          <span className="material-icons text-2xl text-white">
+                            {n.type === 'new_message'
+                              ? 'message'
+                              : n.type === 'application_submitted'
+                                ? 'check_circle'
+                                : n.type === 'application_status'
+                                  ? 'info'
+                                  : 'notifications'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm text-white/80">{n.message}</div>
+                          <div className="text-xs text-white/60">
+                            {new Date(n.createdAt).toLocaleString()}
                           </div>
                         </div>
-                      );
-                    })
+                      </div>
+                    );
+                  })
                 )}
               </div>
             )}

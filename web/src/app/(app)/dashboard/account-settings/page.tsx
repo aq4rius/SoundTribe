@@ -1,22 +1,48 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
-import { updateOnboardingState } from '@/services/user';
+import { updateAccountSettingsAction } from '@/actions/users';
 import { useRouter } from 'next/navigation';
+
+interface Preferences {
+  genres?: string[];
+  instruments?: string[];
+  influences?: string[];
+  eventTypes?: string[];
+  [key: string]: unknown;
+}
+
+interface LocationDetail {
+  city?: string;
+  region?: string;
+  willingToTravel?: number;
+  [key: string]: unknown;
+}
+
+interface AccountForm {
+  firstName: string;
+  lastName: string;
+  location: string;
+  bio: string;
+  preferences: Preferences;
+  locationDetails: LocationDetail;
+  notificationPreferences: Record<string, unknown>;
+  privacySettings: Record<string, unknown>;
+}
 
 export default function AccountSettingsPage() {
   const { data: session } = useSession();
-  // TODO(phase-3): replace `as any` with a proper user profile type once full profile is fetched via Server Action
-  const user = session?.user as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
+  const user = session?.user as Record<string, unknown> | undefined;
   const router = useRouter();
-  const [form, setForm] = useState({
-    ...user,
-    preferences: { ...user?.preferences },
-    locationDetails: { ...user?.locationDetails },
-    notificationPreferences: { ...user?.notificationPreferences },
-    privacySettings: { ...user?.privacySettings },
+  const [form, setForm] = useState<AccountForm>({
+    firstName: (user?.firstName as string) || '',
+    lastName: (user?.lastName as string) || '',
+    location: (user?.location as string) || '',
+    bio: (user?.bio as string) || '',
+    preferences: { ...(user?.preferences as Preferences) },
+    locationDetails: { ...(user?.locationDetails as LocationDetail) },
+    notificationPreferences: { ...(user?.notificationPreferences as Record<string, unknown>) },
+    privacySettings: { ...(user?.privacySettings as Record<string, unknown>) },
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,15 +50,14 @@ export default function AccountSettingsPage() {
 
   if (!user) return <div className="p-8">Not logged in.</div>;
 
-  // TODO(phase-3): replace `any` with a proper AccountSettingsForm type once full profile is fetched via Server Action
-  const handleChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev: any) => ({ ...prev, [field]: value })); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const handleChange = (field: keyof AccountForm, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
   const handlePrefChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev: any) => ({ ...prev, preferences: { ...prev.preferences, [field]: value } })); // eslint-disable-line @typescript-eslint/no-explicit-any
+    setForm((prev) => ({ ...prev, preferences: { ...prev.preferences, [field]: value } }));
   };
-  const handleLocChange = (field: string, value: string | string[] | boolean | number) => {
-    setForm((prev: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+  const handleLocChange = (field: string, value: string | number) => {
+    setForm((prev) => ({
       ...prev,
       locationDetails: { ...prev.locationDetails, [field]: value },
     }));
@@ -44,19 +69,22 @@ export default function AccountSettingsPage() {
     setError(null);
     setSuccess(false);
     try {
-      await updateOnboardingState(token || '', {
-        firstName: form.firstName,
-        lastName: form.lastName,
-        location: form.location,
-        bio: form.bio,
-        preferences: form.preferences,
-        locationDetails: form.locationDetails,
-        notificationPreferences: form.notificationPreferences,
-        privacySettings: form.privacySettings,
-      });
-      // TRANSITIONAL: user profile refresh will be handled in Phase 3
+      const formData = new FormData();
+      formData.append('firstName', form.firstName);
+      formData.append('lastName', form.lastName);
+      formData.append('location', form.location);
+      formData.append('bio', form.bio);
+      formData.append('preferences', JSON.stringify(form.preferences));
+      formData.append('locationDetails', JSON.stringify(form.locationDetails));
+      formData.append('notificationPreferences', JSON.stringify(form.notificationPreferences));
+      formData.append('privacySettings', JSON.stringify(form.privacySettings));
+      const result = await updateAccountSettingsAction(formData);
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError('Failed to update settings.');
     } finally {
       setSaving(false);

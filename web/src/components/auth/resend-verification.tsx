@@ -1,7 +1,7 @@
 // ResendVerification.tsx
 'use client';
 import { useState } from 'react';
-import { env } from '@/lib/env';
+import { resendVerificationAction } from '@/actions/auth';
 
 export default function ResendVerification({ email }: { email: string }) {
   const [message, setMessage] = useState<string | null>(null);
@@ -13,14 +13,9 @@ export default function ResendVerification({ email }: { email: string }) {
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/auth/resend-verification-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to resend verification email');
-      setMessage('Verification email sent! Please check your inbox.');
+      const result = await resendVerificationAction(email);
+      if (!result.success) throw new Error(result.error);
+      setMessage(result.data.message);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to resend verification email');
     } finally {

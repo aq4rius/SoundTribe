@@ -7,11 +7,10 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { env } from '@/lib/env';
+import { updateProfileAction } from '@/actions/users';
 
 const schema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
-  email: z.string().email('Please provide a valid email'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   location: z.string().min(1, 'Location is required'),
@@ -22,10 +21,7 @@ type EditProfileFormValues = z.infer<typeof schema>;
 
 export default function EditProfilePage() {
   const { data: session } = useSession();
-  // TODO(phase-3): replace `as any` with a proper user profile type once full profile is fetched via Server Action
-  const user = session?.user as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
+  const user = session?.user as Record<string, unknown> | undefined;
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,23 +35,21 @@ export default function EditProfilePage() {
   } = useForm<EditProfileFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      username: user?.username || '',
-      email: user?.email || '',
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      location: user?.location || '',
-      bio: user?.bio || '',
+      username: (user?.username as string) || '',
+      firstName: (user?.firstName as string) || '',
+      lastName: (user?.lastName as string) || '',
+      location: (user?.location as string) || '',
+      bio: (user?.bio as string) || '',
     },
   });
 
   useEffect(() => {
     if (user) {
-      setValue('username', user.username || '');
-      setValue('email', user.email || '');
-      setValue('firstName', user.firstName || '');
-      setValue('lastName', user.lastName || '');
-      setValue('location', user.location || '');
-      setValue('bio', user.bio || '');
+      setValue('username', (user.username as string) || '');
+      setValue('firstName', (user.firstName as string) || '');
+      setValue('lastName', (user.lastName as string) || '');
+      setValue('location', (user.location as string) || '');
+      setValue('bio', (user.bio as string) || '');
     }
   }, [user, setValue]);
 
@@ -64,18 +58,15 @@ export default function EditProfilePage() {
     setIsLoading(true);
     setSuccess(false);
     try {
-      // TRANSITIONAL: Express API call will not work without token until Phase 3
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || 'Profile update failed');
+      const formData = new FormData();
+      formData.append('username', data.username);
+      formData.append('firstName', data.firstName);
+      formData.append('lastName', data.lastName);
+      formData.append('location', data.location);
+      formData.append('bio', data.bio);
+      const result = await updateProfileAction(formData);
+      if (!result.success) {
+        setError(result.error);
         return;
       }
       setSuccess(true);
@@ -119,16 +110,6 @@ export default function EditProfilePage() {
           {errors.username && (
             <p className="text-fuchsia-400 text-sm mt-1">{errors.username.message}</p>
           )}
-        </div>
-        <div>
-          <label className="block mb-1 text-white/80 font-semibold">Email</label>
-          <input
-            {...register('email')}
-            type="email"
-            className="input input-bordered w-full"
-            required
-          />
-          {errors.email && <p className="text-fuchsia-400 text-sm mt-1">{errors.email.message}</p>}
         </div>
         <div>
           <label className="block mb-1 text-white/80 font-semibold">First Name</label>

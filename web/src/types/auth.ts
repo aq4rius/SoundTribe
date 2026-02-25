@@ -1,9 +1,7 @@
 /**
  * User & auth types.
  *
- * CANONICAL types are Prisma-derived (e.g., PrismaAuthUser, PrismaUserFull).
- * TRANSITIONAL types (I-prefixed) are used by components still talking
- * to the Express API and will be removed when the Express layer is retired.
+ * Prisma-derived (PrismaAuthUser, PrismaUserFull).
  */
 
 import type { Prisma } from '@prisma/client';
@@ -75,50 +73,4 @@ export interface NotificationPreferences {
 export interface PrivacySettings {
   showEmail: boolean;
   showLocation: boolean;
-}
-
-// ─── Transitional Types (Express API shape) ────────────────────────────────────
-
-/**
- * @deprecated TRANSITIONAL — used by components still calling the Express API.
- * Will be replaced by PrismaUserFull when API routes move to Next.js.
- */
-export interface IUser {
-  _id: string;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  location?: string;
-  bio?: string;
-  roles: string[];
-  onboardingStep: number;
-  onboardingComplete: boolean;
-  preferences: UserPreferences;
-  locationDetails?: LocationDetails;
-  notificationPreferences?: NotificationPreferences;
-  privacySettings?: PrivacySettings;
-  emailVerified?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-/**
- * @deprecated TRANSITIONAL — Express API auth user (id instead of _id).
- */
-export interface AuthUser extends Omit<IUser, '_id'> {
-  id: string;
-}
-
-/** Shape returned by POST /api/auth/login (Express). */
-export interface LoginResponse {
-  token: string;
-  user: AuthUser;
-}
-
-/** Shape returned by POST /api/auth/register (Express). */
-export interface RegisterResponse {
-  message: string;
-  user: AuthUser;
-  token: string;
 }

@@ -1,8 +1,7 @@
 /**
  * ArtistProfile types.
  *
- * CANONICAL: Prisma-derived (PrismaArtistProfile, PrismaArtistProfileCard).
- * TRANSITIONAL: IArtistProfile (Express API shape with _id).
+ * Prisma-derived (PrismaArtistProfile, PrismaArtistProfileCard).
  */
 
 import type { Prisma } from '@prisma/client';
@@ -55,32 +54,7 @@ export interface Availability {
   availableDates?: string[];
 }
 
-// ─── Transitional Types (Express API shape) ────────────────────────────────────
-
-/** @deprecated TRANSITIONAL */
-import type { IGenre } from './genre';
-
-/**
- * @deprecated TRANSITIONAL — used by components still calling the Express API.
- */
-export interface IArtistProfile {
-  _id: string;
-  user: string | { _id: string; username: string };
-  stageName: string;
-  biography?: string;
-  genres: (string | IGenre)[];
-  instruments: string[];
-  yearsOfExperience: number;
-  location: string;
-  websiteUrl?: string;
-  socialMediaLinks?: SocialMediaLinks;
-  profileImage?: string;
-  portfolioItems?: PortfolioItem[];
-  availability: Availability;
-  ratePerHour?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+// ─── Filter Types ──────────────────────────────────────────────────────────────
 
 /** Filters accepted by the artist search endpoint. */
 export interface ArtistFilters {

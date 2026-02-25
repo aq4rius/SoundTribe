@@ -1,4 +1,4 @@
-// EventApplication migrated from client/src/components/applications/EventApplication.tsx
+// EventApplication — handles apply, view own application, and owner's application list
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,101 +6,106 @@ import ApplicationForm from './application-form';
 import ApplicationsList from './applications-list';
 import ErrorAlert from '../common/error-alert';
 import { useSession } from 'next-auth/react';
-import { env } from '@/lib/env';
-import type { IEventPosting, IApplication, IArtistProfile } from '@/types';
+import { getMyArtistProfileAction } from '@/actions/artist-profiles';
+import {
+  getApplicationsForEventAction,
+  getMyApplicationsAction,
+} from '@/actions/applications';
 
 interface EventApplicationProps {
-  event: IEventPosting;
+  eventId: string;
+  organizerId: string;
+  status: string;
 }
 
-const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
+const EventApplication: React.FC<EventApplicationProps> = ({ eventId, organizerId, status }) => {
   const { data: session } = useSession();
   const user = session?.user;
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
   const [showApplicationForm, setShowApplicationForm] = useState(false);
-  const [applications, setApplications] = useState<IApplication[]>([]);
-  const [userApplication, setUserApplication] = useState<IApplication | null>(null);
-  const [artistProfile, setArtistProfile] = useState<IArtistProfile | null>(null);
+  const [applications, setApplications] = useState<
+    { id: string; status: string; coverLetter: string; proposedRate: number | null; createdAt: Date; artistProfile: { id: string; stageName: string } }[]
+  >([]);
+  const [userApplication, setUserApplication] = useState<{
+    id: string;
+    status: string;
+    coverLetter: string;
+    proposedRate: number | null;
+    createdAt: Date;
+  } | null>(null);
+  const [hasArtistProfile, setHasArtistProfile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const isEventOwner = user?.id === organizerId;
+
   useEffect(() => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+
     async function fetchData() {
       try {
-        // Fetch user's artist profiles
-        // TRANSITIONAL: auth header removed until Phase 3
-        const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/my`, {
-          headers: {},
-        });
-        if (!res.ok) throw new Error('Failed to fetch artist profiles');
-        const profiles = await res.json();
-        setArtistProfile(Array.isArray(profiles) && profiles.length > 0 ? profiles[0] : null);
-        // Determine if user is event owner
-        const postedBy = event.postedBy;
-        const isOwner =
-          user &&
-          postedBy &&
-          typeof postedBy === 'object' &&
-          (user.email === postedBy.email || user.id === postedBy._id);
-        let allApplications: IApplication[] = [];
-        let userApp: IApplication | null = null;
-        if (isOwner) {
-          // Fetch all applications for this event
-          const appRes = await fetch(
-            `${env.NEXT_PUBLIC_API_URL}/api/applications/event/${event._id}`,
-            { headers: {} },
-          );
-          if (!appRes.ok) throw new Error('Failed to fetch applications');
-          allApplications = await appRes.json();
-          setApplications(Array.isArray(allApplications) ? allApplications : []);
-        } else if (user) {
-          // Fetch only user's applications
-          const myAppRes = await fetch(
-            `${env.NEXT_PUBLIC_API_URL}/api/applications/my-applications`,
-            { headers: {} },
-          );
-          if (myAppRes.ok) {
-            const myApps = await myAppRes.json();
-            userApp = myApps.find((a: IApplication) => {
-              const ep = a.eventPosting;
-              return typeof ep === 'object' ? ep._id === event._id : ep === event._id;
-            });
-            setUserApplication(userApp || null);
+        const profileResult = await getMyArtistProfileAction();
+        const hasProfile = profileResult.success && !!profileResult.data;
+        setHasArtistProfile(hasProfile);
+
+        if (isEventOwner) {
+          const appsResult = await getApplicationsForEventAction(eventId);
+          if (appsResult.success) {
+            setApplications(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              appsResult.data.map((a: any) => ({
+                id: a.id,
+                status: a.status,
+                coverLetter: a.coverLetter,
+                proposedRate: a.proposedRate,
+                createdAt: a.createdAt,
+                artistProfile: a.artistProfile,
+                applicant: a.applicant,
+              })),
+            );
+          }
+        } else {
+          const myAppsResult = await getMyApplicationsAction();
+          if (myAppsResult.success) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const myApp = myAppsResult.data.find(
+              (a: any) => a.eventPosting?.id === eventId || a.eventPostingId === eventId,
+            );
+            if (myApp) {
+              setUserApplication({
+                id: myApp.id,
+                status: myApp.status,
+                coverLetter: myApp.coverLetter,
+                proposedRate: myApp.proposedRate,
+                createdAt: myApp.createdAt,
+              });
+            }
           }
         }
-        if (isOwner) {
-          setUserApplication(null); // Owners don't apply
-        }
-        setIsLoading(false);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Error fetching artist profile or applications',
-        );
+        setError(err instanceof Error ? err.message : 'Error loading applications');
+      } finally {
         setIsLoading(false);
       }
     }
-    if (user) fetchData();
-    else setIsLoading(false);
-  }, [event._id, user, event.postedBy, refreshKey]);
 
-  // Placeholder logic for event owner and application status
-  const isEventOwner =
-    user &&
-    event.postedBy &&
-    typeof event.postedBy === 'object' &&
-    user.email === event.postedBy.email;
-  const canApply = event.status === 'open' && !isEventOwner && !userApplication && artistProfile;
+    fetchData();
+  }, [user, eventId, isEventOwner, refreshKey]);
+
+  const canApply = status === 'open' && !isEventOwner && !userApplication && hasArtistProfile;
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <ErrorAlert message={error} />;
 
   return (
     <div className="mt-8 space-y-6">
-      {!artistProfile && !isEventOwner && (
+      {!hasArtistProfile && !isEventOwner && user && (
         <div className="text-center p-4 bg-yellow-50 text-yellow-700 rounded">
           You need to create an artist profile before applying to events.
         </div>
@@ -113,15 +118,14 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
           Apply for this Event
         </button>
       )}
-      {showApplicationForm && artistProfile && (
+      {showApplicationForm && (
         <div className="mt-6 bg-base-100 rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold text-primary mb-2">Submit Application</h2>
           <ApplicationForm
-            event={event}
-            artistProfile={artistProfile}
+            eventId={eventId}
             onSuccess={() => {
               setShowApplicationForm(false);
-              setRefreshKey((k) => k + 1); // force refetch
+              setRefreshKey((k) => k + 1);
             }}
             onCancel={() => setShowApplicationForm(false)}
           />
@@ -130,7 +134,32 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
       {userApplication && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-4">Your Application</h2>
-          <ApplicationsList applications={[userApplication]} />
+          <div className="bg-base-100 rounded-lg shadow p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-base-content">
+                  Submitted on {new Date(userApplication.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <div
+                className={`px-3 py-1 rounded-full text-sm ${
+                  userApplication.status === 'pending'
+                    ? 'bg-warning text-warning-content'
+                    : userApplication.status === 'accepted'
+                      ? 'bg-success text-success-content'
+                      : 'bg-error text-error-content'
+                }`}
+              >
+                {userApplication.status.charAt(0).toUpperCase() + userApplication.status.slice(1)}
+              </div>
+            </div>
+            <p className="mt-4 text-base-content">{userApplication.coverLetter}</p>
+            {userApplication.proposedRate != null && (
+              <p className="mt-2 text-sm text-base-content">
+                Proposed Rate: ${userApplication.proposedRate}
+              </p>
+            )}
+          </div>
         </div>
       )}
       {isEventOwner && applications.length > 0 && (
@@ -139,9 +168,7 @@ const EventApplication: React.FC<EventApplicationProps> = ({ event }) => {
           <ApplicationsList
             applications={applications}
             isEventOwner={true}
-            onStatusUpdate={() => {
-              setRefreshKey((k) => k + 1); // force refetch
-            }}
+            onStatusUpdate={() => setRefreshKey((k) => k + 1)}
           />
         </div>
       )}

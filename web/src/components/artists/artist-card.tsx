@@ -1,9 +1,16 @@
 import { FC } from 'react';
 import Link from 'next/link';
-import type { IArtistProfile } from '@/types';
+
+interface ArtistCardArtist {
+  id: string;
+  stageName: string;
+  location?: string | null;
+  biography?: string | null;
+  profileImage?: string | null;
+}
 
 interface ArtistCardProps {
-  artist: IArtistProfile;
+  artist: ArtistCardArtist;
   mode?: 'compact' | 'full';
 }
 
@@ -34,7 +41,7 @@ const ArtistCard: FC<ArtistCardProps> = ({ artist, mode = 'compact' }) => {
     </div>
   );
   if (mode === 'full') return cardContent;
-  return <Link href={`/artists/${artist._id}`}>{cardContent}</Link>;
+  return <Link href={`/artists/${artist.id}`}>{cardContent}</Link>;
 };
 
 export default ArtistCard;

@@ -2,10 +2,27 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { getAllGenres } from '@/services/genre';
-import { env } from '@/lib/env';
-import type { IArtistProfile, IGenre } from '@/types';
+import { getGenres } from '@/actions/genres';
+import {
+  getArtistProfileByIdAction,
+  createOrUpdateArtistProfileAction,
+} from '@/actions/artist-profiles';
+
+interface Genre {
+  id: string;
+  name: string;
+}
+
+interface ProfileForm {
+  stageName: string;
+  biography: string;
+  instruments: string[];
+  yearsOfExperience: number;
+  location: string;
+  websiteUrl: string;
+  socialMediaLinks: Record<string, string>;
+  genres: string[]; // genre IDs
+}
 
 function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void }) {
   if (!show) return null;
@@ -25,40 +42,40 @@ function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void })
 }
 
 export default function EditArtistProfile({ artistId }: { artistId: string }) {
-  // TRANSITIONAL: token is undefined until Phase 3 migrates Express API calls
-  const token: string | undefined = undefined;
   const router = useRouter();
-  const [profile, setProfile] = useState<IArtistProfile | null>(null);
+  const [profile, setProfile] = useState<ProfileForm | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [genreOptions, setGenreOptions] = useState<IGenre[]>([]);
+  const [genreOptions, setGenreOptions] = useState<Genre[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    async function fetchProfile() {
+    async function fetchData() {
       setIsLoading(true);
       try {
-        const res = await fetch(
-          `${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${artistId}`,
-          // TRANSITIONAL: auth header removed until Phase 3
-          { headers: {} },
-        );
-        if (!res.ok) throw new Error('Failed to fetch artist profile');
-        const data = await res.json();
-        // Ensure all fields are present for editing
+        const [profileResult, genres] = await Promise.all([
+          getArtistProfileByIdAction(artistId),
+          getGenres(),
+        ]);
+        setGenreOptions(genres.map((g) => ({ id: g.id, name: g.name })));
+        if (!profileResult.success) {
+          setError(profileResult.error);
+          return;
+        }
+        const data = profileResult.data;
         setProfile({
-          ...data,
+          stageName: data.stageName || '',
+          biography: data.biography || '',
+          instruments: Array.isArray(data.instruments) ? data.instruments : [],
+          yearsOfExperience: data.yearsOfExperience || 0,
+          location: data.location || '',
           websiteUrl: data.websiteUrl || '',
-          socialMediaLinks: data.socialMediaLinks || {
-            facebook: '',
-            instagram: '',
-            twitter: '',
-            youtube: '',
-            tiktok: '',
-            other: '',
-          },
+          socialMediaLinks:
+            typeof data.socialMediaLinks === 'object' && data.socialMediaLinks
+              ? (data.socialMediaLinks as Record<string, string>)
+              : { facebook: '', instagram: '', twitter: '', youtube: '' },
           genres: Array.isArray(data.genres)
-            ? data.genres.map((g: string | IGenre) => (typeof g === 'string' ? g : g._id))
+            ? data.genres.map((g: { id: string }) => g.id)
             : [],
         });
       } catch (err) {
@@ -67,33 +84,8 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
         setIsLoading(false);
       }
     }
-    if (artistId) fetchProfile();
-  }, [artistId, token]);
-
-  // Fix: Ensure genres are populated as objects for display in edit form
-  useEffect(() => {
-    async function fetchGenres() {
-      try {
-        const genres = await getAllGenres();
-        setGenreOptions(genres);
-        // If profile is already loaded, patch genres to be objects for display
-        setProfile((p) => {
-          if (!p || !Array.isArray(p.genres)) return p;
-          // If genres are just IDs, map to objects
-          const genreIds = p.genres.map((g: string | IGenre) =>
-            typeof g === 'string' ? g : g._id,
-          );
-          return {
-            ...p,
-            genres: genreIds,
-          };
-        });
-      } catch {
-        setGenreOptions([]);
-      }
-    }
-    fetchGenres();
-  }, []);
+    if (artistId) fetchData();
+  }, [artistId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile((p) => (p ? { ...p, [e.target.name]: e.target.value } : p));
@@ -114,15 +106,26 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profile) return;
     setError(null);
     setIsLoading(true);
     try {
-      const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/artist-profiles/${artistId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile),
-      });
-      if (!res.ok) throw new Error('Failed to update artist profile');
+      const formData = new FormData();
+      formData.append('stageName', profile.stageName);
+      formData.append('biography', profile.biography);
+      profile.instruments.forEach((inst) => formData.append('instruments', inst));
+      formData.append('yearsOfExperience', String(profile.yearsOfExperience));
+      formData.append('location', profile.location);
+      if (profile.websiteUrl) formData.append('websiteUrl', profile.websiteUrl);
+      profile.genres.forEach((g) => formData.append('genres', g));
+      if (Object.keys(profile.socialMediaLinks).length > 0) {
+        formData.append('socialMediaLinks', JSON.stringify(profile.socialMediaLinks));
+      }
+      const result = await createOrUpdateArtistProfileAction(formData);
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -245,11 +248,11 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
           <label className="block mb-1 font-medium">Genres</label>
           <div className="flex flex-wrap gap-2">
             {genreOptions.map((genre) => (
-              <label key={genre._id} className="flex items-center gap-1">
+              <label key={genre.id} className="flex items-center gap-1">
                 <input
                   type="checkbox"
-                  checked={Array.isArray(profile.genres) && profile.genres.includes(genre._id)}
-                  onChange={() => handleGenreChange(genre._id)}
+                  checked={Array.isArray(profile.genres) && profile.genres.includes(genre.id)}
+                  onChange={() => handleGenreChange(genre.id)}
                   className="checkbox checkbox-sm"
                 />
                 <span>{genre.name}</span>
