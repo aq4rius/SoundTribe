@@ -1,6 +1,6 @@
 # SoundTribe — Architecture Decision Document
 
-> **Living document.** Last updated: 2025-07-23.
+> **Living document.** Last updated: 2025-07-24.
 > Read [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) first for product context.
 > All architectural decisions exist to serve the product vision — when they conflict, the product vision wins.
 
@@ -14,20 +14,24 @@ Before any decisions, it's critical to document the **real** current state — n
 
 `web/` is a **fully self-contained Next.js 15 (App Router) application** with zero dependency on the Express server for data operations.
 
-**Completed (Phases 0–3):**
+**Completed (Phases 0–4):**
 - ✅ Prisma 6 + PostgreSQL (Neon) as the database layer
 - ✅ NextAuth v5 with Credentials provider, JWT strategy, httpOnly cookie sessions
 - ✅ Middleware-level route protection (auth.config.ts + middleware.ts)
-- ✅ Server Actions for ALL domains (auth, events, artists, applications, users, genres, notifications, networking)
+- ✅ Server Actions for ALL domains (auth, events, artists, applications, users, genres, notifications, networking, messages)
 - ✅ Zod-validated environment variables (lib/env.ts)
 - ✅ TypeScript types for all domain models (types/) — zero transitional types remain
 - ✅ All TanStack Query hooks removed and replaced with Server Actions
 - ✅ All Axios/fetch calls to Express removed
 - ✅ axios, @tanstack/react-query, socket.io-client uninstalled
+- ✅ **Ably** real-time messaging + notifications (replaces Socket.IO)
+- ✅ Decomposed chat UI: conversation-list, message-thread, message-bubble, message-input, entity-selector
+- ✅ Real-time notification bell (replaces 30s polling)
+- ✅ Express server and legacy client archived to `_legacy/`
 
 **Still pending:**
-- ❌ Real-time messaging (chat) — placeholder page, waiting for Ably integration (Phase 4)
-- ❌ Real-time notification push — using 30s polling as interim solution
+- ❌ File upload wiring in chat (Cloudinary presigned URLs — Phase 5)
+- ❌ Email delivery for password reset / verification tokens
 
 `web/` currently uses:
 - ✅ Next.js 15 with Turbopack
@@ -38,34 +42,31 @@ Before any decisions, it's critical to document the **real** current state — n
 - ✅ **React Hook Form** + **Zod** for forms
 - ✅ **Framer Motion** for animations
 - ✅ **Storybook** for component development
+- ✅ **Ably** for real-time messaging + notifications
 
-### What `server/` actually is
+### What `_legacy/server/` is
 
-A fully working **Express.js + TypeScript + MongoDB (Mongoose)** API hosted on **Render**. It handles:
-- JWT-based auth (bcrypt + jsonwebtoken)
-- All CRUD operations (events, artist profiles, applications, users, genres)
-- Real-time messaging via **Socket.IO**
-- File uploads via **Cloudinary + Multer**
-- Rate limiting via `express-rate-limit`
+The original **Express.js + TypeScript + MongoDB (Mongoose)** API, previously hosted on **Render**. Archived in `_legacy/` after Phase 4. It handled JWT auth, CRUD, Socket.IO messaging, Cloudinary uploads, and rate limiting. **No longer deployed or required.**
 
-### What `client/` is
+### What `_legacy/client/` is
 
-The original **React 18 + Vite + TanStack Query** frontend. The `web/` directory is a port of this to Next.js. `client/` is fully superseded — it only exists for reference.
+The original **React 18 + Vite + TanStack Query** frontend. Archived in `_legacy/` after Phase 4. **No longer deployed or required.**
 
-### The Actual Architecture (as-is, post Phase 3)
+### The Actual Architecture (as-is, post Phase 4)
 
 ```
 Browser
   └── web/ (Next.js 15 — fully self-contained)
         ├── NextAuth v5 (httpOnly cookie JWT sessions)
         ├── Prisma 6 → PostgreSQL (Neon) — ALL domains
-        ├── Server Actions (auth, events, artists, applications, users, genres, notifications, networking)
+        ├── Server Actions (auth, events, artists, applications, users, genres, notifications, networking, messages)
+        ├── Route Handler: /api/ably-auth (token auth for Ably client)
         ├── Middleware (route protection via auth.config.ts)
         ├── Cloudinary (image uploads via presigned URLs)
-        └── Polling (30s interval for notification unread count — interim until Ably)
+        └── Ably (real-time messaging, notifications, typing indicators)
 ```
 
-The Express server (`server/`) is no longer required for any data operations. It remains in the repo for reference only.
+The Express server and legacy client have been archived to `_legacy/`. All traffic flows through Next.js.
 
 ---
 
@@ -106,7 +107,7 @@ Browser
 | **Auth** | ~~Zustand + localStorage JWT~~ | **NextAuth v5** (httpOnly cookie sessions, Credentials + future OAuth) | ✅ Phase 2 |
 | **Database** | ~~MongoDB Atlas (via Express)~~ | **PostgreSQL (Neon serverless)** via **Prisma 6** | ✅ Phase 1 |
 | **Data fetching** | ~~TanStack Query + fetch → Express API~~ | **Server Actions** (reads + mutations) | ✅ Phase 3 |
-| **Real-time** | ~~Socket.IO client → Express Socket.IO server~~ | **Ably** (`@ably/react` hooks, server-side publish) — polling interim | Phase 4 |
+| **Real-time** | ~~Socket.IO client → Express Socket.IO server~~ | **Ably** (custom hooks + server-side publish via Rest SDK) | ✅ Phase 4 |
 | **File uploads** | Express + Multer + Cloudinary | **Cloudinary** (presigned upload URLs via Server Action) | Phase 2 |
 | **UI** | shadcn/ui + Radix UI + Tailwind CSS v4 | Same — no change | Already in place |
 | **Animations** | Framer Motion | Same — no change | Already in place |
@@ -130,29 +131,32 @@ These packages have been removed from `package.json`:
 
 ## B. Folder Structure
 
-### Current Structure (as-is, post Phase 3)
+### Current Structure (as-is, post Phase 4)
 
 ```
 web/src/
 ├── actions/
-│   ├── applications.ts  # Apply, accept/reject, withdraw, get applications
+│   ├── applications.ts  # Apply, accept/reject, withdraw, get applications + Ably notifications
 │   ├── artist-profiles.ts # CRUD + search for artist profiles
 │   ├── auth.ts          # Register, login, logout, forgot/reset password, verify email
 │   ├── events.ts        # CRUD + search + my events
 │   ├── genres.ts        # Get all genres (24h unstable_cache)
+│   ├── messages.ts      # Send, react, mark read, delete, conversations, entity lookup
 │   ├── networking.ts    # Connection requests: send, accept, reject, list
 │   ├── notifications.ts # Get, mark read, delete, unread count
 │   └── users.ts         # Profile update, password change, account settings, onboarding
 ├── app/
 │   ├── (app)/           # Route group: authenticated app shell
 │   │   ├── artists/     # Artist browse + detail
-│   │   ├── chat/        # Placeholder (Phase 4: Ably integration)
+│   │   ├── chat/        # Full chat UI with Ably real-time messaging
 │   │   ├── dashboard/   # Main dashboard + account-settings + edit-profile + notifications
 │   │   ├── events/      # Event browse + detail + create + edit
 │   │   ├── onboarding/  # Multi-step onboarding
 │   │   └── layout.tsx   # App shell layout with Navbar
 │   ├── (auth)/          # Route group: unauthenticated pages
 │   │   └── auth/        # login, register, forgot-password, reset-password, verify-email
+│   ├── api/
+│   │   └── ably-auth/   # Token auth endpoint for Ably client SDK
 │   ├── globals.css
 │   ├── layout.tsx       # Root layout (fonts, metadata, Providers)
 │   └── page.tsx         # Landing page (animated hero)
@@ -160,12 +164,17 @@ web/src/
 │   ├── applications/    # ApplicationForm, ApplicationsList, EventApplication
 │   ├── artists/         # ArtistCard
 │   ├── auth/            # LoginForm, RegisterForm, ResendVerification
+│   ├── chat/            # conversation-list, message-thread, message-bubble, message-input, entity-selector
 │   ├── common/          # ErrorAlert, Pagination, Providers
 │   ├── events/          # EventForm (merged create+edit), EventCard
+│   ├── notifications/   # notification-bell, notification-dropdown
 │   ├── onboarding/      # OnboardingStepper + 7 step components
 │   ├── profile/         # CreateArtistProfile, EditArtistProfile, ProfileSetup
 │   └── ui/              # Navbar, Footer + shadcn components
+├── hooks/
+│   └── use-ably-channel.ts # useAblyChannel<T>, useAblyPresence, getAblyClient singleton
 ├── lib/
+│   ├── ably.ts          # Server-side Ably Rest client, publishToChannel, channelNames
 │   ├── action-utils.ts  # AuthenticatedSession, requireAuth(), hasRole(), withActionHandler()
 │   ├── auth.ts          # NextAuth v5 config
 │   ├── auth.config.ts   # Edge-compatible auth config
@@ -180,9 +189,17 @@ web/src/
 - `hooks/` — All 8 TanStack Query hooks removed (replaced by server actions)
 - `services/` — All 5 service files removed (replaced by server actions)
 - `lib/api.ts` — Axios client removed
-- `components/common/Chat.tsx` — Removed (Phase 4: Ably)
+- `components/common/Chat.tsx` — Removed (rebuilt in Phase 4 as decomposed components)
 - `components/events/create-event-form.tsx` + `edit-event-form.tsx` — Merged into `event-form.tsx`
-- `components/events/send-message-button.tsx` — Removed (Phase 4: Ably)
+- `components/events/send-message-button.tsx` — Removed (replaced by entity-to-entity messaging in Phase 4)
+
+**Added in Phase 4:**
+- `actions/messages.ts` — Full messaging CRUD with Ably publish
+- `app/api/ably-auth/route.ts` — Token auth for Ably client
+- `components/chat/` — 5 focused components (conversation-list, message-thread, message-bubble, message-input, entity-selector)
+- `components/notifications/` — notification-bell, notification-dropdown
+- `hooks/use-ably-channel.ts` — Ably subscription + presence hooks
+- `lib/ably.ts` — Server-side Ably Rest client
 
 ### Target Structure (to-be)
 
@@ -236,7 +253,7 @@ web/src/
 │   ├── applications/
 │   ├── artists/
 │   ├── auth/
-│   ├── chat/                       # RENAMED from common/Chat
+│   ├── chat/                       # 5 decomposed components (conversation-list, message-thread, message-bubble, message-input, entity-selector)
 │   ├── events/
 │   ├── layout/                     # RENAMED from ui/ — Navbar, Footer, Sidebar
 │   ├── notifications/
@@ -383,14 +400,20 @@ Accuracy-audited against actual source files (not guessed).
 
 | Feature | Status | File | Notes |
 |---|---|---|---|
-| Full-page chat UI | 🔴 Placeholder | `app/chat/page.tsx` | "Coming soon" — pending Ably integration (Phase 4) |
-| Send text messages | 🔴 Pending | — | Requires Ably (Phase 4) |
-| Send file attachments | 🔴 Pending | — | Requires Ably (Phase 4) |
-| Message reactions (emoji) | 🔴 Pending | — | Requires Ably (Phase 4) |
-| Read / Delivered / Sent status | 🔴 Pending | — | Requires Ably (Phase 4) |
-| Typing indicators | 🔴 Pending | — | Requires Ably (Phase 4) |
-| Real-time via Ably | 🔴 Pending | — | Phase 4 |
-| Entity-to-entity messaging | 🔴 Pending | — | Phase 4 |
+| Full-page chat UI | ✅ Working | `app/chat/page.tsx` | Two-panel layout, mobile responsive |
+| Conversation list | ✅ Working | `components/chat/conversation-list.tsx` | Entity selector, search, unread badges |
+| Message thread | ✅ Working | `components/chat/message-thread.tsx` | Pagination, date grouping, auto-scroll |
+| Message bubbles | ✅ Working | `components/chat/message-bubble.tsx` | Own/others styling, attachments, reactions |
+| Message input | ✅ Working | `components/chat/message-input.tsx` | Auto-resize, emoji picker, file attach UI |
+| Entity selector | ✅ Working | `components/chat/entity-selector.tsx` | Modal for new conversation |
+| Send text messages | ✅ Working | `actions/messages.ts` | `sendMessageAction` + Ably publish |
+| File attachment display | ✅ Working | `components/chat/message-bubble.tsx` | Image, audio, file download |
+| File attachment upload | 🟡 UI only | `components/chat/message-input.tsx` | TODO(phase-5): Cloudinary presigned URL |
+| Message reactions (emoji) | ✅ Working | `actions/messages.ts` + bubble | Toggle reactions, grouped counts |
+| Read / Delivered / Sent status | ✅ Working | `actions/messages.ts` + bubble | Status icons, Ably read receipts |
+| Typing indicators | ✅ Working | `hooks/use-ably-channel.ts` | Ably presence, debounced updates |
+| Real-time via Ably | ✅ Working | `lib/ably.ts` + `hooks/use-ably-channel.ts` | Server-side publish, client subscribe |
+| Entity-to-entity messaging | ✅ Working | `actions/messages.ts` | ArtistProfile ↔ EventPosting conversations |
 
 ### Notifications
 
@@ -398,8 +421,9 @@ Accuracy-audited against actual source files (not guessed).
 |---|---|---|---|
 | Notification list page | ✅ Working | `dashboard/notifications/page.tsx` + `actions/notifications.ts` | |
 | Mark as read | ✅ Working | `actions/notifications.ts` | |
-| Real-time push | 🟡 Polling | Navbar polls `getUnreadCountAction` every 30s | Ably in Phase 4 |
-| Notification badge in Navbar | ✅ Working | `components/ui/Navbar.tsx` | Red badge with unread count |
+| Real-time push | ✅ Working | `components/notifications/notification-bell.tsx` | Ably channel subscription, instant badge updates |
+| Notification bell in Navbar | ✅ Working | `components/notifications/notification-bell.tsx` | Red badge, dropdown, mark read/all read |
+| Notification dropdown | ✅ Working | `components/notifications/notification-dropdown.tsx` | Last 10, icon per type, click-to-navigate |
 
 ### Genres
 
@@ -494,9 +518,9 @@ _Fix:_ Add `aria-label` to all icon-only interactive elements.
 
 **BUG-020: `ui/Navbar.tsx` and `ui/Footer.tsx` are in `components/ui/`** — the `ui/` directory is reserved for shadcn auto-generated components. Custom layout components belong in `components/layout/`.
 
-**BUG-021: Chat component is 800+ lines** ✅ FIXED Phase 3
+**BUG-021: Chat component is 800+ lines** ✅ FIXED Phase 3 + Phase 4
 `components/common/Chat.tsx` handles conversations list, message thread, socket management, emoji picker, and file upload all in one component.
-_Fix:_ Entire Chat.tsx deleted. Will be rebuilt from scratch as decomposed components (conversation-list, message-thread, message-input) with Ably in Phase 4.
+_Fix:_ Deleted in Phase 3. Rebuilt in Phase 4 as 5 focused components: `conversation-list.tsx`, `message-thread.tsx`, `message-bubble.tsx`, `message-input.tsx`, `entity-selector.tsx`.
 
 **BUG-022: Storybook default stories pollute component stories** — `src/stories/Button.tsx` is the CRA default Button, not a SoundTribe component.
 
@@ -604,43 +628,45 @@ Each phase produces a **shippable, working increment**. No phase leaves the app 
 
 ---
 
-### Phase 4 — Real-time via Ably + Chat (next up)
+### Phase 4 — Real-time via Ably + Chat ✅
 **Goal:** Replace Socket.IO with Ably. Rebuild chat. Live messaging + notification push.
 **Product Vision link:** Real-time is core to the marketplace feel.
 
-Files to **create:**
-- `src/lib/ably.ts` — Server-side Ably client
-- `src/app/api/ably-auth/route.ts` — Token auth endpoint for Ably client SDK
-- `src/hooks/use-ably.ts` — Custom channel subscription hook
-- `src/components/chat/conversation-list.tsx`
-- `src/components/chat/message-thread.tsx`
-- `src/components/chat/message-input.tsx`
+**Delivered:**
+- `src/lib/ably.ts` — Server-side Ably Rest client (singleton, `publishToChannel()`, `channelNames`)
+- `src/app/api/ably-auth/route.ts` — Token auth endpoint with scoped channel capabilities
+- `src/hooks/use-ably-channel.ts` — `useAblyChannel<T>()` subscription hook + `useAblyPresence()` for typing
+- `src/actions/messages.ts` — Full messaging CRUD: send, react, mark read, delete, conversations
+- `src/components/chat/conversation-list.tsx` — Entity selector, search, unread badges, Ably updates
+- `src/components/chat/message-thread.tsx` — Paginated thread, 4 Ably event subscriptions, date grouping
+- `src/components/chat/message-bubble.tsx` — Own/others styling, attachments, reactions, status icons
+- `src/components/chat/message-input.tsx` — Auto-resize, emoji picker, file attach, typing indicators
+- `src/components/chat/entity-selector.tsx` — Modal for new conversation entity selection
+- `src/components/notifications/notification-bell.tsx` — Ably-powered badge + dropdown
+- `src/components/notifications/notification-dropdown.tsx` — Notification list with actions
+- `src/components/ui/Navbar.tsx` — Simplified: 30s polling replaced with NotificationBell component
+- `src/actions/applications.ts` — Updated to publish Ably notifications on create/status-change
+- `_legacy/` — `server/` and `client/` archived with README
 
-Files to **modify:**
-- `src/app/(app)/chat/page.tsx` — Replace placeholder with full chat UI
-- `src/components/ui/Navbar.tsx` — Replace 30s polling with Ably channel subscription
+**Commits:** (pending)
+
+#### Phase 4 Decisions
+
+| Decision | Rationale |
+|---|---|
+| **Ably Rest (server) + Realtime (client)** | Server Actions publish via Rest SDK (no persistent connection). Browser subscribes via Realtime with token auth. |
+| **Custom hooks over `@ably/react`** | `@ably/react` requires `AblyProvider` wrapper. Custom singleton + hooks are simpler and avoid provider nesting. |
+| **Token auth via Route Handler** | `/api/ably-auth` returns scoped token requests. Client SDK auto-refreshes tokens before expiry. |
+| **Entity-to-entity messaging** | Conversations are between ArtistProfile ↔ EventPosting entities, not users. Matches product vision: users can act as multiple entities. |
+| **Channel naming convention** | `conversation:{id}`, `notifications:{userId}`, `presence:{conversationId}` — clear, scoped, and capability-restricted. |
+| **Soft-delete for messages** | `isDeleted` flag preserves conversation integrity. Deleted messages show "This message was deleted" rather than disappearing. |
+| **Server-side Ably publish only** | All Ably publishes happen in Server Actions after DB writes. No client-side publish — ensures data consistency. |
 
 ---
 
-### Phase 5 — Applications Completeness
-**Goal:** Full apply → review → accept/reject → withdraw loop via Server Actions.
-**Product Vision link:** "Completed Connection" is the North Star metric — this is the most direct path to it.
-
-Files to **create:**
-- `hooks/use-withdraw-application.ts`
-
-Files to **modify:**
-- Express `server/src/controllers/applicationController.ts` — Add `DELETE /applications/:id` (artist can only delete own pending application)
-- Express `server/src/routes/applicationRoutes.ts` — Wire the route
-- `components/applications/ApplicationsList.tsx` — Add "Withdraw" button for artist's pending applications
-- `app/dashboard/page.tsx` — Show cleaner applications section with withdraw action
-
-**Commits:** `feat: artist can withdraw pending application`, `fix: application list shows withdraw action`
-
----
-
-### Phase 5 — Applications Completeness
-**Goal:** Full apply → review → accept/reject → withdraw loop via Server Actions.
+### Phase 5 — File Uploads + Chat Polish
+**Goal:** Wire Cloudinary file uploads in chat. Final chat UX polish.
+**Product Vision link:** File sharing (set lists, tech riders, audio demos) is critical for organizer-artist negotiation.
 
 ---
 
@@ -664,17 +690,14 @@ Files to **modify:**
 
 ---
 
-### Phase 10 — Deployment & CI/CD + Express Decommission
-**Goal:** One-command deploy. Express server decommissioned. `server/` and `client/` moved to `_legacy/`.
+### Phase 10 — Deployment & CI/CD
+**Goal:** One-command deploy. CI/CD pipeline.
 
 Files to **create:**
 - `.github/workflows/ci.yml` — Lint + type-check + test on every PR
 - `web/docs/DEPLOYMENT.md` — Vercel + Neon + Cloudinary + Ably setup guide
 
-Files to **delete/archive:**
-- `server/` → `_legacy/server/`
-- `client/` → `_legacy/client/`
-- Remove all transitional dependencies from `web/package.json`: `axios`, `@tanstack/react-query`, `zustand`, `socket.io-client`, `browser-image-compression`
+> Note: Express decommission completed in Phase 4. `server/` and `client/` already archived to `_legacy/`.
 
 ---
 

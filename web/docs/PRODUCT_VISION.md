@@ -98,7 +98,7 @@ The MVP must deliver a complete, working loop for **both primary personas**. Eve
 | Browse & filter artists (by genre, location, instruments) | Organizer discovery loop |
 | Apply to events (message + profile) | The core transaction |
 | Manage applications (organizer accepts/rejects; artist sees status) | Completion of the transaction |
-| Direct messaging (ArtistProfile ↔ EventPosting entity, with Socket.IO real-time) | Trust-building; negotiation |
+| Direct messaging (ArtistProfile ↔ EventPosting entity, with Ably real-time) | Trust-building; negotiation |
 | Artist-to-artist networking (browse artists, connect, message) | Collaboration discovery; community building |
 | Notifications (application received, accepted, rejected, new message) | Closing the feedback loop |
 | User settings (update profile, preferences, notification settings) | Basic account hygiene |
