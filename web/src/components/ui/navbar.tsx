@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export default function Navbar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const user = session?.user;
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -48,17 +49,51 @@ export default function Navbar() {
       </div>
       <div className="flex gap-4 items-center">
         {user?.id && <NotificationBell userId={user.id} />}
-        {user ? (
-          <button
-            className="px-4 py-2 text-sm font-semibold bg-fuchsia-600 hover:bg-fuchsia-700 rounded transition-all"
-            onClick={async () => {
-              await signOut({ redirect: false });
-              window.location.href = '/';
-            }}
-          >
-            Logout
-          </button>
-        ) : (
+
+        {/* Loading skeleton — avoids flicker between auth states */}
+        {status === 'loading' && (
+          <div className="h-9 w-24 rounded bg-white/10 animate-pulse" />
+        )}
+
+        {/* Authenticated — show avatar, username, dashboard link, logout */}
+        {status === 'authenticated' && user && (
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              onClick={() => setMenuOpen(false)}
+            >
+              {user.profileImage ? (
+                <Image
+                  src={user.profileImage}
+                  alt={user.username ?? 'avatar'}
+                  width={32}
+                  height={32}
+                  className="rounded-full object-cover border border-white/20"
+                />
+              ) : (
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-fuchsia-600 text-white text-sm font-bold border border-white/20">
+                  {(user.username ?? user.email ?? 'U')[0].toUpperCase()}
+                </span>
+              )}
+              <span className="hidden md:inline text-sm font-semibold text-white/90 max-w-[100px] truncate">
+                {user.username ?? user.email}
+              </span>
+            </Link>
+            <button
+              className="px-4 py-2 text-sm font-semibold bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-all"
+              onClick={async () => {
+                await signOut({ redirect: false });
+                window.location.href = '/';
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        )}
+
+        {/* Unauthenticated — Login + Register */}
+        {status === 'unauthenticated' && (
           <div className="flex gap-3">
             <Link
               href="/auth/login"
