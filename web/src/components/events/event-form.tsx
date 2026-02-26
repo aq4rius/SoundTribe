@@ -2,12 +2,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import ErrorAlert from '../common/error-alert';
 import { getGenres } from '@/actions/genres';
 import { createEventAction, updateEventAction, getEventByIdAction } from '@/actions/events';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { CheckCircle } from 'lucide-react';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -29,11 +36,14 @@ function SuccessModal({ show, message, onClose }: { show: boolean; message: stri
   if (!show) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-8 max-w-sm w-full text-center border border-fuchsia-400">
-        <h2 className="text-2xl font-bold mb-2 text-fuchsia-700 dark:text-fuchsia-300">Success!</h2>
-        <p className="mb-4 text-zinc-700 dark:text-zinc-200">{message}</p>
-        <button className="btn btn-primary" onClick={onClose}>OK</button>
-      </div>
+      <Card className="max-w-sm w-full text-center">
+        <CardContent className="pt-6 space-y-4">
+          <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto" />
+          <h2 className="text-2xl font-bold">Success!</h2>
+          <p className="text-muted-foreground">{message}</p>
+          <Button onClick={onClose}>OK</Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -45,6 +55,7 @@ interface EventFormProps {
 }
 
 export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [serverFieldErrors, setServerFieldErrors] = useState<Record<string, string[]>>({});
   const [showSuccess, setShowSuccess] = useState(false);
@@ -150,7 +161,7 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
       setTimeout(() => {
         setShowSuccess(false);
         if (onSuccess) onSuccess();
-        else window.location.href = '/dashboard';
+        else router.push('/dashboard');
       }, 1400);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -170,34 +181,31 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
     return null;
   };
 
-  const inputCls = "w-full px-3 py-2 border border-white/20 rounded bg-white/10 text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400 focus:outline-none transition";
-  const labelCls = "block text-sm font-medium mb-1 text-white/80";
-
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <h2 className="text-2xl font-semibold mb-6 text-white">
+        <h2 className="text-2xl font-semibold mb-6">
           {mode === 'edit' ? 'Edit Event' : 'Create New Event'}
         </h2>
         {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
-        <div>
-          <label className={labelCls}>Title</label>
-          <input type="text" {...register('title')} className={inputCls} />
+        <div className="space-y-2">
+          <Label>Title</Label>
+          <Input type="text" {...register('title')} />
           {fieldError('title')}
         </div>
-        <div>
-          <label className={labelCls}>Description</label>
-          <textarea {...register('description')} className={inputCls} rows={4} />
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <Textarea {...register('description')} rows={4} />
           {fieldError('description')}
         </div>
-        <div>
-          <label className={labelCls}>Genres</label>
+        <div className="space-y-2">
+          <Label>Genres</Label>
           {genresLoading ? (
-            <div className="text-white/40">Loading genres...</div>
+            <div className="text-muted-foreground text-sm">Loading genres...</div>
           ) : (
             <div className="space-y-2">
               {genres.map((genre) => (
-                <label key={genre.id} className="flex items-center text-white/80">
+                <label key={genre.id} className="flex items-center text-sm gap-2">
                   <input
                     type="checkbox"
                     value={genre.id}
@@ -207,7 +215,7 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
                       const prev = watch('genres');
                       setValue('genres', checked ? [...prev, genre.id] : prev.filter((id) => id !== genre.id));
                     }}
-                    className="mr-2 accent-fuchsia-500"
+                    className="accent-primary h-4 w-4"
                   />
                   {genre.name}
                 </label>
@@ -216,56 +224,56 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
           )}
           {fieldError('genres')}
         </div>
-        <div>
-          <label className={labelCls}>Required Instruments</label>
-          <input type="text" {...register('requiredInstruments')} className={inputCls} placeholder="Enter instruments separated by commas" />
+        <div className="space-y-2">
+          <Label>Required Instruments</Label>
+          <Input type="text" {...register('requiredInstruments')} placeholder="Enter instruments separated by commas" />
           {fieldError('requiredInstruments')}
         </div>
-        <div>
-          <label className={labelCls}>Location</label>
-          <input type="text" {...register('location')} className={inputCls} />
+        <div className="space-y-2">
+          <Label>Location</Label>
+          <Input type="text" {...register('location')} />
           {fieldError('location')}
         </div>
-        <div>
-          <label className={labelCls}>Event Date</label>
-          <input type="datetime-local" {...register('eventDate')} className={inputCls} />
+        <div className="space-y-2">
+          <Label>Event Date</Label>
+          <Input type="datetime-local" {...register('eventDate')} />
           {fieldError('eventDate')}
         </div>
-        <div>
-          <label className={labelCls}>Duration (hours)</label>
-          <input type="number" {...register('duration', { valueAsNumber: true })} className={inputCls} min="0" />
+        <div className="space-y-2">
+          <Label>Duration (hours)</Label>
+          <Input type="number" {...register('duration', { valueAsNumber: true })} min="0" />
           {fieldError('duration')}
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={labelCls}>Payment Amount</label>
-            <input type="number" {...register('paymentAmount', { valueAsNumber: true })} className={inputCls} min="0" />
+          <div className="space-y-2">
+            <Label>Payment Amount</Label>
+            <Input type="number" {...register('paymentAmount', { valueAsNumber: true })} min="0" />
             {fieldError('paymentAmount')}
           </div>
-          <div>
-            <label className={labelCls}>Payment Type</label>
-            <select {...register('paymentType')} className={inputCls}>
+          <div className="space-y-2">
+            <Label>Payment Type</Label>
+            <select {...register('paymentType')} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
               <option value="fixed">Fixed</option>
               <option value="hourly">Hourly</option>
             </select>
             {fieldError('paymentType')}
           </div>
         </div>
-        <div>
-          <label className={labelCls}>Required Experience (years)</label>
-          <input type="number" {...register('requiredExperience', { valueAsNumber: true })} className={inputCls} min="0" />
+        <div className="space-y-2">
+          <Label>Required Experience (years)</Label>
+          <Input type="number" {...register('requiredExperience', { valueAsNumber: true })} min="0" />
           {fieldError('requiredExperience')}
         </div>
-        <div>
-          <label className={labelCls}>Application Deadline</label>
-          <input type="datetime-local" {...register('applicationDeadline')} className={inputCls} />
+        <div className="space-y-2">
+          <Label>Application Deadline</Label>
+          <Input type="datetime-local" {...register('applicationDeadline')} />
           {fieldError('applicationDeadline')}
         </div>
-        <div className="flex justify-end space-x-4">
-          <button type="button" className="px-4 py-2 text-white/60 hover:text-white transition" onClick={() => (window.location.href = '/dashboard')}>Cancel</button>
-          <button type="submit" className="px-4 py-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded transition" disabled={isSubmitting}>
+        <div className="flex justify-end gap-3 pt-2">
+          <Button type="button" variant="ghost" onClick={() => router.push('/dashboard')}>Cancel</Button>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (mode === 'edit' ? 'Updating...' : 'Creating...') : mode === 'edit' ? 'Update Event' : 'Create Event'}
-          </button>
+          </Button>
         </div>
       </form>
       <SuccessModal
@@ -273,7 +281,7 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
         message={mode === 'edit' ? 'Your event was updated successfully.' : 'Your event was created successfully.'}
         onClose={() => {
           setShowSuccess(false);
-          window.location.href = '/dashboard';
+          router.push('/dashboard');
         }}
       />
     </>

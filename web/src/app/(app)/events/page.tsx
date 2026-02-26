@@ -7,6 +7,10 @@ import Pagination from '@/components/common/pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { EventCardSkeleton } from '@/components/shared/skeletons';
 import { Calendar } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 interface EventFilters {
   search: string;
@@ -116,27 +120,24 @@ export default function EventsPage() {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Filter Sidebar */}
         <div className="w-full md:w-64 flex-shrink-0">
-          <div className="card bg-base-100 p-6 rounded-lg shadow sticky top-4">
-            <h2 className="text-lg font-semibold mb-4">Filters</h2>
-            <div className="space-y-4">
+          <Card className="sticky top-24">
+            <CardContent className="pt-6 space-y-4">
+              <h2 className="text-lg font-semibold">Filters</h2>
               {/* Search Input */}
-              <div className="form-control">
-                <input
+              <div className="space-y-1">
+                <Input
                   type="text"
                   placeholder="Search events..."
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="input input-bordered w-full"
                 />
               </div>
               {/* Genre Filter */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Genres</span>
-                </label>
+              <div className="space-y-1">
+                <Label>Genres</Label>
                 <div className="space-y-1">
                   {genreOptions.map((genre) => (
-                    <label key={genre.id} className="flex items-center gap-2">
+                    <label key={genre.id} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         checked={(filters.genres ?? []).includes(genre.id)}
@@ -147,7 +148,7 @@ export default function EventsPage() {
                             : [...current, genre.id];
                           handleFilterChange('genres', newGenres);
                         }}
-                        className="checkbox checkbox-sm"
+                        className="accent-primary h-4 w-4"
                       />
                       <span>{genre.name}</span>
                     </label>
@@ -155,72 +156,57 @@ export default function EventsPage() {
                 </div>
               </div>
               {/* Location Filter */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Location</span>
-                </label>
-                <input
+              <div className="space-y-1">
+                <Label>Location</Label>
+                <Input
                   type="text"
                   value={filters.location}
                   onChange={(e) => handleFilterChange('location', e.target.value)}
-                  className="input input-bordered w-full"
                   placeholder="Enter location"
                 />
               </div>
               {/* Date Range */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">From Date</span>
-                </label>
-                <input
+              <div className="space-y-1">
+                <Label>From Date</Label>
+                <Input
                   type="date"
                   value={filters.dateFrom}
                   onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                  className="input input-bordered w-full"
                 />
               </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">To Date</span>
-                </label>
-                <input
+              <div className="space-y-1">
+                <Label>To Date</Label>
+                <Input
                   type="date"
                   value={filters.dateTo}
                   onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                  className="input input-bordered w-full"
                 />
               </div>
               {/* Payment Range */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Payment Range</span>
-                </label>
-                <div className="flex space-x-2">
-                  <input
+              <div className="space-y-1">
+                <Label>Payment Range</Label>
+                <div className="flex gap-2">
+                  <Input
                     type="number"
                     value={filters.paymentMin}
                     onChange={(e) => handleFilterChange('paymentMin', e.target.value)}
                     placeholder="Min"
-                    className="input input-bordered w-1/2"
                   />
-                  <input
+                  <Input
                     type="number"
                     value={filters.paymentMax}
                     onChange={(e) => handleFilterChange('paymentMax', e.target.value)}
                     placeholder="Max"
-                    className="input input-bordered w-1/2"
                   />
                 </div>
               </div>
               {/* Payment Type */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Payment Type</span>
-                </label>
+              <div className="space-y-1">
+                <Label>Payment Type</Label>
                 <select
                   value={filters.paymentType}
                   onChange={(e) => handleFilterChange('paymentType', e.target.value)}
-                  className="select select-bordered w-full"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="">All</option>
                   <option value="fixed">Fixed</option>
@@ -228,25 +214,23 @@ export default function EventsPage() {
                 </select>
               </div>
               {/* Status */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Status</span>
-                </label>
+              <div className="space-y-1">
+                <Label>Status</Label>
                 <select
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="select select-bordered w-full"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="">All</option>
                   <option value="open">Open</option>
                   <option value="closed">Closed</option>
                 </select>
               </div>
-              <button onClick={handleResetFilters} className="btn btn-outline btn-sm w-full mt-2">
+              <Button variant="outline" size="sm" className="w-full" onClick={handleResetFilters}>
                 Reset Filters
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
         {/* Events Grid with Pagination */}
         <div className="flex-1">

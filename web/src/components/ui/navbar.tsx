@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { Button } from '@/components/ui/button';
 
 export default function Navbar() {
   const router = useRouter();
@@ -82,8 +83,9 @@ export default function Navbar() {
                 {user.username ?? user.email}
               </span>
             </Link>
-            <button
-              className="px-4 py-2 text-sm font-semibold bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-all"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={async () => {
                 await signOut({ redirect: false });
                 router.refresh();
@@ -91,27 +93,29 @@ export default function Navbar() {
               }}
             >
               Logout
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Unauthenticated — Login + Register */}
         {status === 'unauthenticated' && (
           <div className="flex gap-3">
-            <Link
-              href="/auth/login"
-              className="px-4 py-2 text-sm font-semibold bg-fuchsia-600 hover:bg-fuchsia-700 rounded transition-all"
-              onClick={() => setMenuOpen(false)}
-            >
-              Login
-            </Link>
-            <Link
-              href="/auth/register"
-              className="px-4 py-2 text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 rounded transition-all"
-              onClick={() => setMenuOpen(false)}
-            >
-              Register
-            </Link>
+            <Button size="sm" asChild>
+              <Link
+                href="/auth/login"
+                onClick={() => setMenuOpen(false)}
+              >
+                Login
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href="/auth/register"
+                onClick={() => setMenuOpen(false)}
+              >
+                Register
+              </Link>
+            </Button>
           </div>
         )}
       </div>

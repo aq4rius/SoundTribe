@@ -1,4 +1,4 @@
-// EditProfilePage for SoundTribe - extraordinary, animated, and responsive
+// EditProfilePage for SoundTribe — shadcn/ui powered
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,6 +8,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { updateProfileAction } from '@/actions/users';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { CheckCircle } from 'lucide-react';
 
 const schema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
@@ -79,68 +85,60 @@ export default function EditProfilePage() {
   };
 
   return (
-    <motion.form
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, type: 'spring', bounce: 0.3 }}
-      onSubmit={handleSubmit(onSubmit)}
-      className="max-w-md mx-auto bg-black/70 p-10 rounded-3xl shadow-2xl mt-12 border border-white/20 relative overflow-hidden"
-    >
-      <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-fuchsia-500/30 via-cyan-400/20 to-emerald-400/30 blur-2xl opacity-70 -z-10 animate-pulse" />
-      <h2 className="text-2xl font-bold text-center mb-4 bg-gradient-to-r from-fuchsia-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-lg">
-        Edit Your Profile
-      </h2>
-      {error && (
-        <div className="bg-red-500/20 text-red-400 p-2 rounded text-center mb-2">{error}</div>
-      )}
-      {success && (
-        <div className="bg-emerald-500/20 text-emerald-300 p-2 rounded text-center mb-2 animate-pulse">
-          Profile updated!
-        </div>
-      )}
-      <div className="grid grid-cols-1 gap-5">
-        <div>
-          <label className="block mb-1 text-white/80 font-semibold">Username</label>
-          <input
-            {...register('username')}
-            className="input input-bordered w-full"
-            required
-            minLength={3}
-          />
-          {errors.username && (
-            <p className="text-fuchsia-400 text-sm mt-1">{errors.username.message}</p>
-          )}
-        </div>
-        <div>
-          <label className="block mb-1 text-white/80 font-semibold">First Name</label>
-          <input {...register('firstName')} className="input input-bordered w-full" />
-          {errors.firstName && (
-            <p className="text-fuchsia-400 text-sm mt-1">{errors.firstName.message}</p>
-          )}
-        </div>
-        <div>
-          <label className="block mb-1 text-white/80 font-semibold">Last Name</label>
-          <input {...register('lastName')} className="input input-bordered w-full" />
-          {errors.lastName && (
-            <p className="text-fuchsia-400 text-sm mt-1">{errors.lastName.message}</p>
-          )}
-        </div>
-        <div>
-          <label className="block mb-1 text-white/80 font-semibold">Location</label>
-          <input {...register('location')} className="input input-bordered w-full" />
-          {errors.location && (
-            <p className="text-fuchsia-400 text-sm mt-1">{errors.location.message}</p>
-          )}
-        </div>
-        <div>
-          <label className="block mb-1 text-white/80 font-semibold">Bio</label>
-          <textarea {...register('bio')} className="input input-bordered w-full" rows={3} />
-          {errors.bio && <p className="text-fuchsia-400 text-sm mt-1">{errors.bio.message}</p>}
-        </div>
-      </div>
-      <button type="submit" className="btn btn-primary w-full mt-6" disabled={isLoading}>
-        {isLoading ? 'Saving...' : 'Save Changes'}
-      </button>
-    </motion.form>
+    <div className="min-h-screen bg-background py-12 px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, type: 'spring', bounce: 0.2 }}
+        className="max-w-md mx-auto"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit Your Profile</CardTitle>
+            <CardDescription>Update your basic information below.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive mb-4">{error}</div>
+            )}
+            {success && (
+              <div className="rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-3 text-sm text-emerald-500 flex items-center gap-2 mb-4">
+                <CheckCircle className="h-4 w-4" /> Profile updated! Redirecting...
+              </div>
+            )}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" {...register('username')} />
+                {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input id="firstName" {...register('firstName')} />
+                {errors.firstName && <p className="text-sm text-destructive">{errors.firstName.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input id="lastName" {...register('lastName')} />
+                {errors.lastName && <p className="text-sm text-destructive">{errors.lastName.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input id="location" {...register('location')} />
+                {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea id="bio" {...register('bio')} rows={3} />
+                {errors.bio && <p className="text-sm text-destructive">{errors.bio.message}</p>}
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ export const createArtistProfileSchema = z.object({
   genres: z.array(z.string()).min(1, 'Select at least one genre'),
   instruments: z.array(z.string()).min(1, 'Select at least one instrument'),
   location: z.string().min(1, 'Location is required'),
-  yearsOfExperience: z.coerce.number().int().min(0).max(50).default(0),
+  yearsOfExperience: z.coerce.number().int().min(0).max(50),
   ratePerHour: z.coerce.number().min(0).optional().nullable(),
   websiteUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   socialMediaLinks: z

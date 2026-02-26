@@ -1,15 +1,21 @@
-// Artists Create Page
 'use client';
 
 import CreateArtistProfile from '@/components/profile/create-artist-profile';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function CreateArtistPage() {
   return (
-    <div className="max-w-2xl mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4 text-black">Create Artist Profile</h1>
-      {/* TODO: Add artist profile creation form here */}
-      <div className="bg-white/90 rounded-lg shadow p-6 border border-gray-200 text-black">
-        <CreateArtistProfile />
+    <div className="min-h-screen bg-background py-12">
+      <div className="max-w-2xl mx-auto px-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Create Artist Profile</CardTitle>
+            <CardDescription>Set up your professional artist profile to start connecting with events and organizers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CreateArtistProfile />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

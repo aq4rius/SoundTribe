@@ -7,6 +7,10 @@ import Pagination from '@/components/common/pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ArtistCardSkeleton } from '@/components/shared/skeletons';
 import { Users } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 interface ArtistFilters {
   search: string;
@@ -114,27 +118,24 @@ export default function ArtistsPage() {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Filter Sidebar */}
         <div className="w-full md:w-64 flex-shrink-0">
-          <div className="card bg-base-100 p-6 rounded-lg shadow sticky top-4">
-            <h2 className="text-lg font-semibold mb-4">Filters</h2>
-            <div className="space-y-4">
+          <Card className="sticky top-24">
+            <CardContent className="pt-6 space-y-4">
+              <h2 className="text-lg font-semibold">Filters</h2>
               {/* Search Input */}
-              <div className="form-control">
-                <input
+              <div className="space-y-1">
+                <Input
                   type="text"
                   placeholder="Search artists..."
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="input input-bordered w-full"
                 />
               </div>
               {/* Genre Filter */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Genres</span>
-                </label>
+              <div className="space-y-1">
+                <Label>Genres</Label>
                 <div className="space-y-1">
                   {genreOptions.map((genre) => (
-                    <label key={genre.id} className="flex items-center gap-2">
+                    <label key={genre.id} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         checked={filters.genres.includes(genre.id)}
@@ -144,7 +145,7 @@ export default function ArtistsPage() {
                             : [...filters.genres, genre.id];
                           handleFilterChange('genres', newGenres);
                         }}
-                        className="checkbox checkbox-sm"
+                        className="accent-primary h-4 w-4"
                       />
                       <span>{genre.name}</span>
                     </label>
@@ -152,73 +153,60 @@ export default function ArtistsPage() {
                 </div>
               </div>
               {/* Experience Range */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Minimum Experience (years)</span>
-                </label>
-                <input
+              <div className="space-y-1">
+                <Label>Minimum Experience (years)</Label>
+                <Input
                   type="number"
                   value={filters.experienceMin}
                   onChange={(e) => handleFilterChange('experienceMin', e.target.value)}
-                  className="input input-bordered w-full"
                   min="0"
                 />
               </div>
               {/* Rate Range */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Hourly Rate Range ($)</span>
-                </label>
+              <div className="space-y-1">
+                <Label>Hourly Rate Range ($)</Label>
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="number"
                     value={filters.rateMin}
                     onChange={(e) => handleFilterChange('rateMin', e.target.value)}
-                    className="input input-bordered w-1/2"
                     min="0"
                     placeholder="Min"
                   />
-                  <input
+                  <Input
                     type="number"
                     value={filters.rateMax}
                     onChange={(e) => handleFilterChange('rateMax', e.target.value)}
-                    className="input input-bordered w-1/2"
                     min="0"
                     placeholder="Max"
                   />
                 </div>
               </div>
               {/* Location Filter */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Location</span>
-                </label>
-                <input
+              <div className="space-y-1">
+                <Label>Location</Label>
+                <Input
                   type="text"
                   value={filters.location}
                   onChange={(e) => handleFilterChange('location', e.target.value)}
-                  className="input input-bordered w-full"
                   placeholder="Enter location"
                 />
               </div>
               {/* Instruments Filter */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Instruments</span>
-                </label>
-                <input
+              <div className="space-y-1">
+                <Label>Instruments</Label>
+                <Input
                   type="text"
                   value={filters.instruments}
                   onChange={(e) => handleFilterChange('instruments', e.target.value)}
-                  className="input input-bordered w-full"
                   placeholder="e.g. guitar, drums"
                 />
               </div>
-              <button onClick={handleResetFilters} className="btn btn-outline btn-sm w-full mt-2">
+              <Button variant="outline" size="sm" className="w-full" onClick={handleResetFilters}>
                 Reset Filters
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
         {/* Artists Grid with Pagination */}
         <div className="flex-1">

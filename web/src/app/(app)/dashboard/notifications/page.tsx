@@ -9,7 +9,10 @@ import {
 } from '@/actions/notifications';
 import { updateNotificationPreferencesAction } from '@/actions/users';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Bell } from 'lucide-react';
+import { Bell, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 interface NotificationItem {
   id: string;
@@ -56,9 +59,9 @@ export default function NotificationsPage() {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto py-12 text-center text-lg text-white/80">
+      <div className="max-w-2xl mx-auto py-12 text-center text-lg text-muted-foreground">
         Please{' '}
-        <Link href="/auth/login" className="text-fuchsia-400 underline">
+        <Link href="/auth/login" className="text-primary underline">
           log in
         </Link>{' '}
         to view your notifications.
@@ -67,72 +70,85 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-6 text-white">Notification Center</h1>
-      <NotificationPreferencesSection />
-      <div className="bg-black/80 rounded-lg shadow border border-fuchsia-900 mt-8">
-        <div className="p-4 border-b border-fuchsia-900 text-lg font-semibold text-white flex items-center justify-between">
-          <span>All Notifications</span>
-          {notifications.some((n) => !n.read) && (
-            <button
-              className="text-xs text-fuchsia-400 hover:underline"
-              onClick={handleMarkAllRead}
-            >
-              Mark all as read
-            </button>
-          )}
-        </div>
-        {isLoading ? (
-          <div className="p-6 text-center text-white/60">Loading...</div>
-        ) : notifications.length === 0 ? (
-          <EmptyState
-            icon={<Bell className="h-10 w-10" />}
-            title="No notifications"
-            description="You're all caught up! New notifications will appear here."
-          />
-        ) : (
-          notifications.map((n) => {
-            let href = '#';
-            if (n.type === 'new_message' && n.relatedEntityId) {
-              href = `/chat?messageId=${n.relatedEntityId}`;
-            } else if (
-              (n.type === 'application_submitted' || n.type === 'application_status') &&
-              n.relatedEntityId
-            ) {
-              href = `/events/${n.relatedEntityId}`;
-            } else if (n.relatedEntityType === 'event_posting' && n.relatedEntityId) {
-              href = `/events/${n.relatedEntityId}`;
-            }
-            return (
-              <div
-                key={n.id}
-                className={`flex items-start gap-2 px-4 py-3 border-b last:border-b-0 ${n.read ? 'bg-black' : 'bg-fuchsia-950/40'} cursor-pointer`}
-                onClick={() => {
-                  if (!n.read) handleMarkRead(n.id);
-                  if (href !== '#') window.location.href = href;
-                }}
-              >
-                <div className="flex-1">
-                  <div className="font-medium text-sm text-white">{n.message}</div>
-                  <div className="text-xs text-white/40">
-                    {new Date(n.createdAt).toLocaleString()}
-                  </div>
-                  {!n.read && (
-                    <button
-                      className="text-xs text-blue-400 mr-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMarkRead(n.id);
-                      }}
-                    >
-                      Mark as read
-                    </button>
-                  )}
-                </div>
+    <div className="min-h-screen bg-background py-12 px-4">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold">Notification Center</h1>
+        <NotificationPreferencesSection />
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> All Notifications</CardTitle>
+              {notifications.some((n) => !n.read) && (
+                <Button variant="ghost" size="sm" onClick={handleMarkAllRead}>
+                  Mark all as read
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-6 text-center text-muted-foreground">Loading...</div>
+            ) : notifications.length === 0 ? (
+              <div className="p-6">
+                <EmptyState
+                  icon={<Bell className="h-10 w-10" />}
+                  title="No notifications"
+                  description="You're all caught up! New notifications will appear here."
+                />
               </div>
-            );
-          })
-        )}
+            ) : (
+              <div>
+                {notifications.map((n, idx) => {
+                  let href = '#';
+                  if (n.type === 'new_message' && n.relatedEntityId) {
+                    href = `/chat?messageId=${n.relatedEntityId}`;
+                  } else if (
+                    (n.type === 'application_submitted' || n.type === 'application_status') &&
+                    n.relatedEntityId
+                  ) {
+                    href = `/events/${n.relatedEntityId}`;
+                  } else if (n.relatedEntityType === 'event_posting' && n.relatedEntityId) {
+                    href = `/events/${n.relatedEntityId}`;
+                  }
+                  return (
+                    <div key={n.id}>
+                      <div
+                        className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/50 ${!n.read ? 'bg-muted/30' : ''}`}
+                        onClick={() => {
+                          if (!n.read) handleMarkRead(n.id);
+                          if (href !== '#') window.location.href = href;
+                        }}
+                      >
+                        <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${n.read ? 'bg-transparent' : 'bg-primary'}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm">{n.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(n.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        {!n.read && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs flex-shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkRead(n.id);
+                            }}
+                          >
+                            Mark read
+                          </Button>
+                        )}
+                      </div>
+                      {idx < notifications.length - 1 && <Separator />}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -165,30 +181,31 @@ function NotificationPreferencesSection() {
   };
 
   return (
-    <form
-      onSubmit={handleSave}
-      className="mb-8 p-4 bg-black/70 rounded-lg border border-fuchsia-900"
-    >
-      <h2 className="text-xl font-semibold mb-2 text-fuchsia-300">Notification Preferences</h2>
-      <div className="flex flex-col gap-2 mb-4">
-        <label className="flex items-center gap-2 text-white">
-          <input type="checkbox" checked={email} onChange={(e) => setEmail(e.target.checked)} />
-          Email notifications
-        </label>
-        <label className="flex items-center gap-2 text-white">
-          <input type="checkbox" checked={push} onChange={(e) => setPush(e.target.checked)} />
-          Push notifications
-        </label>
-      </div>
-      <button
-        type="submit"
-        className="px-4 py-2 rounded bg-fuchsia-600 text-white font-bold shadow hover:bg-fuchsia-500 transition disabled:opacity-60"
-        disabled={saving}
-      >
-        {saving ? 'Saving...' : 'Save Preferences'}
-      </button>
-      {success && <div className="mt-2 text-green-400 text-sm">Preferences updated!</div>}
-      {error && <div className="mt-2 text-red-400 text-sm">{error}</div>}
-    </form>
+    <Card>
+      <CardHeader>
+        <CardTitle>Notification Preferences</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={email} onChange={(e) => setEmail(e.target.checked)} className="accent-primary h-4 w-4" />
+              Email notifications
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={push} onChange={(e) => setPush(e.target.checked)} className="accent-primary h-4 w-4" />
+              Push notifications
+            </label>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button type="submit" size="sm" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Preferences'}
+            </Button>
+            {success && <span className="text-sm text-emerald-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Updated!</span>}
+            {error && <span className="text-sm text-destructive">{error}</span>}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
