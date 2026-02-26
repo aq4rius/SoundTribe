@@ -40,8 +40,9 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Exclude Next.js internals, static assets, and well-known files
+  // api/auth must be listed first so NextAuth's own route handler is never
+  // intercepted by this middleware wrapper — Vercel routes it directly.
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|icon.svg|robots.txt|sitemap.xml|opengraph-image).*)',
+    '/((?!api/auth|api|_next/static|_next/image|favicon.ico|icon.svg|robots.txt|sitemap.xml|opengraph-image).*)',
   ],
 };
