@@ -94,7 +94,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // Initial sign-in — populate token from the user object returned by authorize()
       if (user) {
         token.id = user.id;
         token.roles = user.roles;
@@ -103,6 +104,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.username = user.username;
         token.profileImage = user.profileImage ?? null;
       }
+
+      // Session update — re-read user from DB so roles/onboarding changes
+      // are reflected in the JWT without requiring a full re-login.
+      // Triggered by calling `update()` from useSession() on the client.
+      if (trigger === 'update' && token.id) {
+        const freshUser = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            roles: true,
+            onboardingComplete: true,
+            onboardingStep: true,
+            username: true,
+            profileImage: true,
+          },
+        });
+        if (freshUser) {
+          token.roles = freshUser.roles;
+          token.onboardingComplete = freshUser.onboardingComplete;
+          token.onboardingStep = freshUser.onboardingStep;
+          token.username = freshUser.username;
+          token.profileImage = freshUser.profileImage ?? null;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

@@ -46,6 +46,7 @@ interface EventFormProps {
 
 export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) {
   const [error, setError] = useState<string | null>(null);
+  const [serverFieldErrors, setServerFieldErrors] = useState<Record<string, string[]>>({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [genres, setGenres] = useState<{ id: string; name: string }[]>([]);
@@ -118,6 +119,7 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
 
   const onSubmit = async (data: EventFormValues) => {
     setError(null);
+    setServerFieldErrors({});
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -140,6 +142,7 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
 
       if (!result.success) {
         setError(result.error);
+        if (result.fieldErrors) setServerFieldErrors(result.fieldErrors);
         return;
       }
 
@@ -156,33 +159,45 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="text-white/60">Loading...</div>;
+
+  /** Show client-side OR server-side field error. */
+  const fieldError = (name: string) => {
+    const clientErr = errors[name as keyof EventFormValues]?.message;
+    const serverErr = serverFieldErrors[name];
+    if (clientErr) return <span className="text-red-400 text-xs">{clientErr}</span>;
+    if (serverErr) return <span className="text-red-400 text-xs">{serverErr.join(', ')}</span>;
+    return null;
+  };
+
+  const inputCls = "w-full px-3 py-2 border border-white/20 rounded bg-white/10 text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400 focus:outline-none transition";
+  const labelCls = "block text-sm font-medium mb-1 text-white/80";
 
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <h2 className="text-2xl font-semibold mb-6">
+        <h2 className="text-2xl font-semibold mb-6 text-white">
           {mode === 'edit' ? 'Edit Event' : 'Create New Event'}
         </h2>
         {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
         <div>
-          <label className="block text-sm font-medium mb-1">Title</label>
-          <input type="text" {...register('title')} className="w-full px-3 py-2 border rounded" />
-          {errors.title && <span className="text-red-500 text-xs">{errors.title.message}</span>}
+          <label className={labelCls}>Title</label>
+          <input type="text" {...register('title')} className={inputCls} />
+          {fieldError('title')}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea {...register('description')} className="w-full px-3 py-2 border rounded" rows={4} />
-          {errors.description && <span className="text-red-500 text-xs">{errors.description.message}</span>}
+          <label className={labelCls}>Description</label>
+          <textarea {...register('description')} className={inputCls} rows={4} />
+          {fieldError('description')}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Genres</label>
+          <label className={labelCls}>Genres</label>
           {genresLoading ? (
-            <div>Loading genres...</div>
+            <div className="text-white/40">Loading genres...</div>
           ) : (
             <div className="space-y-2">
               {genres.map((genre) => (
-                <label key={genre.id} className="flex items-center">
+                <label key={genre.id} className="flex items-center text-white/80">
                   <input
                     type="checkbox"
                     value={genre.id}
@@ -192,63 +207,63 @@ export default function EventForm({ mode, eventId, onSuccess }: EventFormProps) 
                       const prev = watch('genres');
                       setValue('genres', checked ? [...prev, genre.id] : prev.filter((id) => id !== genre.id));
                     }}
-                    className="mr-2"
+                    className="mr-2 accent-fuchsia-500"
                   />
                   {genre.name}
                 </label>
               ))}
             </div>
           )}
-          {errors.genres && <span className="text-red-500 text-xs">{errors.genres.message}</span>}
+          {fieldError('genres')}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Required Instruments</label>
-          <input type="text" {...register('requiredInstruments')} className="w-full px-3 py-2 border rounded" placeholder="Enter instruments separated by commas" />
-          {errors.requiredInstruments && <span className="text-red-500 text-xs">{errors.requiredInstruments.message}</span>}
+          <label className={labelCls}>Required Instruments</label>
+          <input type="text" {...register('requiredInstruments')} className={inputCls} placeholder="Enter instruments separated by commas" />
+          {fieldError('requiredInstruments')}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Location</label>
-          <input type="text" {...register('location')} className="w-full px-3 py-2 border rounded" />
-          {errors.location && <span className="text-red-500 text-xs">{errors.location.message}</span>}
+          <label className={labelCls}>Location</label>
+          <input type="text" {...register('location')} className={inputCls} />
+          {fieldError('location')}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Event Date</label>
-          <input type="datetime-local" {...register('eventDate')} className="w-full px-3 py-2 border rounded" />
-          {errors.eventDate && <span className="text-red-500 text-xs">{errors.eventDate.message}</span>}
+          <label className={labelCls}>Event Date</label>
+          <input type="datetime-local" {...register('eventDate')} className={inputCls} />
+          {fieldError('eventDate')}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Duration (hours)</label>
-          <input type="number" {...register('duration', { valueAsNumber: true })} className="w-full px-3 py-2 border rounded" min="0" />
-          {errors.duration && <span className="text-red-500 text-xs">{errors.duration.message}</span>}
+          <label className={labelCls}>Duration (hours)</label>
+          <input type="number" {...register('duration', { valueAsNumber: true })} className={inputCls} min="0" />
+          {fieldError('duration')}
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Payment Amount</label>
-            <input type="number" {...register('paymentAmount', { valueAsNumber: true })} className="w-full px-3 py-2 border rounded" min="0" />
-            {errors.paymentAmount && <span className="text-red-500 text-xs">{errors.paymentAmount.message}</span>}
+            <label className={labelCls}>Payment Amount</label>
+            <input type="number" {...register('paymentAmount', { valueAsNumber: true })} className={inputCls} min="0" />
+            {fieldError('paymentAmount')}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Payment Type</label>
-            <select {...register('paymentType')} className="w-full px-3 py-2 border rounded">
+            <label className={labelCls}>Payment Type</label>
+            <select {...register('paymentType')} className={inputCls}>
               <option value="fixed">Fixed</option>
               <option value="hourly">Hourly</option>
             </select>
-            {errors.paymentType && <span className="text-red-500 text-xs">{errors.paymentType.message}</span>}
+            {fieldError('paymentType')}
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Required Experience (years)</label>
-          <input type="number" {...register('requiredExperience', { valueAsNumber: true })} className="w-full px-3 py-2 border rounded" min="0" />
-          {errors.requiredExperience && <span className="text-red-500 text-xs">{errors.requiredExperience.message}</span>}
+          <label className={labelCls}>Required Experience (years)</label>
+          <input type="number" {...register('requiredExperience', { valueAsNumber: true })} className={inputCls} min="0" />
+          {fieldError('requiredExperience')}
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Application Deadline</label>
-          <input type="datetime-local" {...register('applicationDeadline')} className="w-full px-3 py-2 border rounded" />
-          {errors.applicationDeadline && <span className="text-red-500 text-xs">{errors.applicationDeadline.message}</span>}
+          <label className={labelCls}>Application Deadline</label>
+          <input type="datetime-local" {...register('applicationDeadline')} className={inputCls} />
+          {fieldError('applicationDeadline')}
         </div>
         <div className="flex justify-end space-x-4">
-          <button type="button" className="btn btn-ghost" onClick={() => (window.location.href = '/dashboard')}>Cancel</button>
-          <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" disabled={isSubmitting}>
+          <button type="button" className="px-4 py-2 text-white/60 hover:text-white transition" onClick={() => (window.location.href = '/dashboard')}>Cancel</button>
+          <button type="submit" className="px-4 py-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded transition" disabled={isSubmitting}>
             {isSubmitting ? (mode === 'edit' ? 'Updating...' : 'Creating...') : mode === 'edit' ? 'Update Event' : 'Create Event'}
           </button>
         </div>

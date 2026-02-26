@@ -13,6 +13,7 @@ export default function PreferencesStep({
   goBack: () => void;
   onboarding: OnboardingState | null;
   saveOnboarding: (data: Partial<OnboardingState>) => void;
+  [key: string]: unknown;
 }) {
   const [genres, setGenres] = React.useState<string[]>(onboarding?.preferences?.genres || []);
   const [instruments, setInstruments] = React.useState<string[]>(
@@ -43,15 +44,15 @@ export default function PreferencesStep({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900">Music Preferences</h2>
-      <div className="mb-2 text-gray-800">Genres:</div>
+    <div className="bg-white/10 rounded-xl shadow-lg border border-white/10 p-6">
+      <h2 className="text-xl font-semibold mb-4 text-white">Music Preferences</h2>
+      <div className="mb-2 text-white/80">Genres:</div>
       <div className="flex flex-wrap gap-2 mb-4">
         {genreOptions.map((g) => (
           <button
             key={g}
             type="button"
-            className={`px-3 py-1 rounded-full border ${genres.includes(g) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-900'}`}
+            className={`px-3 py-1 rounded-full border transition ${genres.includes(g) ? 'bg-fuchsia-600 text-white border-fuchsia-500' : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'}`}
             onClick={() =>
               setGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]))
             }
@@ -60,13 +61,13 @@ export default function PreferencesStep({
           </button>
         ))}
       </div>
-      <div className="mb-2 text-gray-800">Instruments:</div>
+      <div className="mb-2 text-white/80">Instruments:</div>
       <div className="flex flex-wrap gap-2 mb-4">
         {instrumentOptions.map((i) => (
           <button
             key={i}
             type="button"
-            className={`px-3 py-1 rounded-full border ${instruments.includes(i) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-900'}`}
+            className={`px-3 py-1 rounded-full border transition ${instruments.includes(i) ? 'bg-fuchsia-600 text-white border-fuchsia-500' : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'}`}
             onClick={() =>
               setInstruments((prev) =>
                 prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i],
@@ -77,13 +78,13 @@ export default function PreferencesStep({
           </button>
         ))}
       </div>
-      <div className="mb-2 text-gray-800 flex items-center gap-2">
+      <div className="mb-2 text-white/80 flex items-center gap-2">
         Influences (optional):
-        <span className="text-xs text-gray-500">Artists or bands that inspire you</span>
+        <span className="text-xs text-white/40">Artists or bands that inspire you</span>
       </div>
       <input
         type="text"
-        className="w-full border rounded px-2 py-1 mb-4 text-gray-900 bg-gray-50"
+        className="w-full border border-white/20 rounded px-2 py-1 mb-4 text-white bg-white/5 placeholder-white/40 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
         placeholder="e.g. Radiohead, Daft Punk, Beyoncé"
         value={influences.join(', ')}
         onChange={(e) =>
@@ -95,12 +96,12 @@ export default function PreferencesStep({
           )
         }
       />
-      {error && <div className="text-red-500 mb-2">{error}</div>}
+      {error && <div className="text-red-400 mb-2">{error}</div>}
       <div className="flex justify-between">
-        <button onClick={goBack} className="px-4 py-2 rounded bg-gray-200 text-gray-900">
+        <button onClick={goBack} className="px-4 py-2 rounded bg-white/10 text-white/80 hover:bg-white/20 transition">
           Back
         </button>
-        <button onClick={handleContinue} className="px-4 py-2 rounded bg-indigo-500 text-white">
+        <button onClick={handleContinue} className="px-4 py-2 rounded bg-fuchsia-600 hover:bg-fuchsia-700 text-white transition">
           Continue
         </button>
       </div>

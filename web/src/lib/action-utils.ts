@@ -45,7 +45,9 @@ export async function withActionHandler<T>(
     return { success: true, data };
   } catch (error) {
     if (error instanceof Error) {
-      return { success: false, error: error.message };
+      // Propagate fieldErrors if the error has them (e.g. validation errors)
+      const fieldErrors = (error as Error & { fieldErrors?: Record<string, string[]> }).fieldErrors;
+      return { success: false, error: error.message, ...(fieldErrors && { fieldErrors }) };
     }
     return { success: false, error: 'An unexpected error occurred' };
   }
