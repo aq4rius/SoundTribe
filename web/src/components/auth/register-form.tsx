@@ -3,11 +3,13 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { registerSchema, type RegisterFormValues } from '@/validations/auth';
 import { registerAction } from '@/actions/auth';
 
 export default function RegisterForm() {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -35,9 +37,11 @@ export default function RegisterForm() {
         return;
       }
 
-      // Hard redirect so the browser sends the new session cookie and
-      // SessionProvider initialises with the authenticated state.
-      window.location.href = '/onboarding';
+      // router.refresh() invalidates the RSC cache so Next.js re-reads the
+      // session cookie; SessionProvider then re-fetches /api/auth/session
+      // and updates useSession() — no full page reload needed.
+      router.refresh();
+      router.push('/onboarding');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Registration failed');
     } finally {

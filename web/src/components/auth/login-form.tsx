@@ -3,12 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import ResendVerification from './resend-verification';
 import { loginSchema, type LoginFormValues } from '@/validations/auth';
 import { loginAction } from '@/actions/auth';
 
 export default function LoginForm() {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -34,12 +36,14 @@ export default function LoginForm() {
         return;
       }
 
-      // Hard redirect so the browser sends the new session cookie and
-      // SessionProvider initialises with the authenticated state.
+      // router.refresh() invalidates the RSC cache so Next.js re-reads the
+      // session cookie; SessionProvider then re-fetches /api/auth/session
+      // and updates useSession() — no full page reload needed.
+      router.refresh();
       if (result.data?.onboardingComplete === false) {
-        window.location.href = '/onboarding';
+        router.push('/onboarding');
       } else {
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed');

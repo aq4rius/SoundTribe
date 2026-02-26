@@ -2,10 +2,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export default function Navbar() {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const user = session?.user;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -84,7 +86,8 @@ export default function Navbar() {
               className="px-4 py-2 text-sm font-semibold bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-all"
               onClick={async () => {
                 await signOut({ redirect: false });
-                window.location.href = '/';
+                router.refresh();
+                router.push('/');
               }}
             >
               Logout
