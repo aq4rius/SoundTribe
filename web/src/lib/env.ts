@@ -12,13 +12,13 @@ import { z } from 'zod';
 
 const serverSchema = z.object({
   /** PostgreSQL connection string (Neon). */
-  DATABASE_URL: z.string().url().optional(),
+  DATABASE_URL: z.string().url(),
 
   /** NextAuth secret — min 32 characters. */
-  AUTH_SECRET: z.string().min(32).optional(),
+  AUTH_SECRET: z.string().min(32),
 
   /** Full canonical URL of the app (e.g. https://soundtribe.vercel.app). */
-  NEXTAUTH_URL: z.string().url().optional(),
+  NEXTAUTH_URL: z.string().url(),
 
   /** Cloudinary cloud name. */
   CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),

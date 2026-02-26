@@ -59,13 +59,22 @@ export default function Navbar() {
             Logout
           </button>
         ) : (
-          <Link
-            href="/login"
-            className="px-4 py-2 text-sm font-semibold bg-fuchsia-600 hover:bg-fuchsia-700 rounded transition-all"
-            onClick={() => setMenuOpen(false)}
-          >
-            Login
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              href="/auth/login"
+              className="px-4 py-2 text-sm font-semibold bg-fuchsia-600 hover:bg-fuchsia-700 rounded transition-all"
+              onClick={() => setMenuOpen(false)}
+            >
+              Login
+            </Link>
+            <Link
+              href="/auth/register"
+              className="px-4 py-2 text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 rounded transition-all"
+              onClick={() => setMenuOpen(false)}
+            >
+              Register
+            </Link>
+          </div>
         )}
       </div>
     </nav>
