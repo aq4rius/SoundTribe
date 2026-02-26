@@ -3,14 +3,16 @@
  *
  * Strategy: JWT (stateless, Vercel Edge compatible)
  * Provider: Credentials (email + password)
- * Adapter: PrismaAdapter for user storage
+ *
+ * NOTE: No adapter — Credentials provider requires JWT strategy and is
+ * incompatible with a database adapter for session management. The db
+ * client is still used directly inside the authorize() callback.
  *
  * Password is NEVER included in session, JWT, or any client-facing type.
  */
 
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
@@ -24,8 +26,6 @@ const credentialsSchema = z.object({
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  // KNOWN: `as any` required until @auth/prisma-adapter ships stable types matching next-auth v5 GA
-  adapter: PrismaAdapter(db) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
