@@ -43,11 +43,11 @@ export default function HeroSection() {
         {FLOATING_TAGS.map((tag) => (
           <motion.span
             key={tag.label}
-            className="absolute px-3 py-1 rounded-full border border-white/10 text-white/20 text-xs font-medium bg-white/[0.03] backdrop-blur-[1px] select-none"
+            className="absolute px-3 py-1 rounded-full border border-white/25 text-white/60 text-xs font-medium bg-white/[0.07] backdrop-blur-sm select-none"
             style={{ left: tag.x, top: tag.y }}
             animate={{
               y: [0, -12, 0, 8, 0],
-              opacity: [0.15, 0.35, 0.15, 0.3, 0.15],
+              opacity: [0.5, 0.85, 0.5, 0.75, 0.5],
             }}
             transition={{
               duration: tag.duration,
