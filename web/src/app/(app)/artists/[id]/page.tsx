@@ -1,8 +1,12 @@
 // Artist details page for /artists/[id]
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { MessageSquare } from 'lucide-react';
 import ArtistCard from '@/components/artists/artist-card';
+import { Button } from '@/components/ui/button';
 import { getArtistProfileByIdAction } from '@/actions/artist-profiles';
+import { auth } from '@/lib/auth';
 
 export async function generateMetadata({
   params,
@@ -26,9 +30,10 @@ export async function generateMetadata({
 export default async function ArtistDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (id === 'create') return notFound();
-  const result = await getArtistProfileByIdAction(id);
+  const [result, session] = await Promise.all([getArtistProfileByIdAction(id), auth()]);
   if (!result.success || !result.data) return notFound();
   const artist = result.data;
+  const canMessage = session?.user && session.user.id !== artist.userId;
   return (
     <div className="max-w-2xl mx-auto py-8">
       <div className="mb-6">
@@ -97,12 +102,15 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
         </div>
       </div>
       <div className="flex gap-4 mb-6">
-        {/* Placeholder for Send Message action */}
-        <button className="px-4 py-2 rounded bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold transition">
-          Send Message
-        </button>
+        {canMessage && (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/chat?recipientId=${artist.id}&recipientType=artist_profile`}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Message
+            </Link>
+          </Button>
+        )}
       </div>
-      {/* TODO: Integrate chat and other artist actions here */}
     </div>
   );
 }

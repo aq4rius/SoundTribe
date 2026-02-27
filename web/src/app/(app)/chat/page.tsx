@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useCallback } from 'react';
+import { Suspense, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ConversationList from '@/components/chat/conversation-list';
 import MessageThread from '@/components/chat/message-thread';
@@ -11,11 +11,20 @@ import { ArrowLeft, MessageSquare, Loader2 } from 'lucide-react';
 function ChatContent() {
   const searchParams = useSearchParams();
   const initialConversationId = searchParams.get('conversationId');
+  const recipientId = searchParams.get('recipientId');
 
   const [selectedSender, setSelectedSender] = useState<SenderEntity | null>(null);
   const [selectedConversation, setSelectedConversation] = useState<ConversationItem | null>(null);
   const [showEntitySelector, setShowEntitySelector] = useState(false);
   const [mobileShowThread, setMobileShowThread] = useState(!!initialConversationId);
+
+  // Open entity selector on mount when navigated from an artist/event profile
+  useEffect(() => {
+    if (recipientId && !initialConversationId) {
+      setShowEntitySelector(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelectConversation = useCallback((conversation: ConversationItem) => {
     setSelectedConversation(conversation);
