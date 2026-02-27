@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { updateProfileAction } from '@/actions/users';
+import AvatarUpload from '@/components/profile/avatar-upload';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -107,6 +108,12 @@ export default function EditProfilePage() {
               </div>
             )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="flex justify-center mb-8">
+                <AvatarUpload
+                  currentImage={(user?.profileImage as string | null) ?? null}
+                  username={(user?.username as string) ?? ''}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input id="username" {...register('username')} />
