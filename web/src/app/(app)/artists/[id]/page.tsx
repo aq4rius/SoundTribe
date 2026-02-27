@@ -2,9 +2,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { MessageSquare } from 'lucide-react';
-import ArtistCard from '@/components/artists/artist-card';
+import Image from 'next/image';
+import { MessageSquare, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { getArtistProfileByIdAction } from '@/actions/artist-profiles';
 import { auth } from '@/lib/auth';
 
@@ -34,83 +36,120 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
   if (!result.success || !result.data) return notFound();
   const artist = result.data;
   const canMessage = session?.user && session.user.id !== artist.userId;
+
   return (
-    <div className="max-w-2xl mx-auto py-8">
-      <div className="mb-6">
-        <ArtistCard artist={artist} mode="full" />
-      </div>
-      <div className="bg-black/60 rounded-xl p-6 border border-white/10 mb-6">
-        <h2 className="text-xl font-bold mb-2 text-fuchsia-400">Artist Details</h2>
-        <div className="space-y-2 text-white/90">
-          <div>
-            <span className="font-semibold">Stage Name:</span> {artist.stageName}
+    <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">
+
+      {/* ── Top two-column section ── */}
+      <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-8 md:gap-12">
+
+        {/* LEFT — photo + stats */}
+        <div className="flex flex-col gap-4">
+          <div className="relative aspect-square rounded-xl overflow-hidden">
+            {artist.profileImage ? (
+              <Image
+                src={artist.profileImage}
+                alt={artist.stageName}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 40vw"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-fuchsia-900 to-zinc-900" />
+            )}
           </div>
-          <div>
-            <span className="font-semibold">Biography:</span>{' '}
-            {artist.biography || 'No bio provided.'}
+          {/* Stat pills */}
+          <div className="flex justify-center gap-3">
+            <span className="text-sm font-semibold text-muted-foreground border border-white/10 rounded-full px-4 py-1">
+              0 Followers
+            </span>
+            <span className="text-sm font-semibold text-muted-foreground border border-white/10 rounded-full px-4 py-1">
+              0 Connections
+            </span>
           </div>
+        </div>
+
+        {/* RIGHT — profile info */}
+        <div className="flex flex-col gap-5">
           <div>
-            <span className="font-semibold">Location:</span> {artist.location}
+            <h1 className="text-3xl font-bold">{artist.stageName}</h1>
+            {artist.location && (
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                <MapPin className="h-3.5 w-3.5" />
+                {artist.location}
+              </p>
+            )}
           </div>
-          <div>
-            <span className="font-semibold">Genres:</span>{' '}
-            {Array.isArray(artist.genres)
-              ? artist.genres.map((g: { id: string; name: string }) => g.name).join(', ')
-              : ''}
-          </div>
-          <div>
-            <span className="font-semibold">Instruments:</span>{' '}
-            {Array.isArray(artist.instruments) ? artist.instruments.join(', ') : ''}
-          </div>
-          <div>
-            <span className="font-semibold">Years of Experience:</span> {artist.yearsOfExperience}
-          </div>
-          {artist.websiteUrl && (
+
+          {/* Message button */}
+          {canMessage && (
             <div>
-              <span className="font-semibold">Website:</span>{' '}
-              <a
-                href={artist.websiteUrl}
-                className="text-cyan-400 underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {artist.websiteUrl}
-              </a>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/chat?recipientId=${artist.id}&recipientType=artist_profile`}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Message
+                </Link>
+              </Button>
             </div>
           )}
-          {artist.socialMediaLinks && (
+
+          {/* Skills */}
+          {Array.isArray(artist.instruments) && artist.instruments.length > 0 && (
             <div>
-              <span className="font-semibold">Socials:</span>{' '}
-              {Object.entries(artist.socialMediaLinks).map(([platform, url]) => {
-                if (typeof url !== 'string' || !url) return null;
-                const safeUrl =
-                  url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
-                return (
-                  <a
-                    key={platform}
-                    href={safeUrl}
-                    className="ml-2 text-cyan-400 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {platform}
-                  </a>
-                );
-              })}
+              <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Skills
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {artist.instruments.map((instrument: string) => (
+                  <Badge key={instrument} className="bg-fuchsia-700 text-white">
+                    {instrument}
+                  </Badge>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Genres */}
+          {Array.isArray(artist.genres) && artist.genres.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Genres
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {artist.genres.map((genre: { id: string; name: string }) => (
+                  <Badge key={genre.id} variant="outline">
+                    {genre.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Years of experience */}
+          {artist.yearsOfExperience > 0 && (
+            <p className="text-sm text-muted-foreground">
+              🎯 {artist.yearsOfExperience} years of experience
+            </p>
           )}
         </div>
       </div>
-      <div className="flex gap-4 mb-6">
-        {canMessage && (
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/chat?recipientId=${artist.id}&recipientType=artist_profile`}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Message
-            </Link>
-          </Button>
-        )}
-      </div>
+
+      {/* ── About section ── */}
+      {artist.biography && (
+        <>
+          <Separator />
+          <div>
+            <h2 className="text-lg font-semibold mb-3">About</h2>
+            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+              {artist.biography}
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* TODO: add spotifyTrackUrl field to ArtistProfile model for track embeds */}
+
     </div>
   );
 }
