@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { MessageSquare } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { MessageSquare, Sun, Moon } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { Button } from '@/components/ui/button';
 import { getTotalUnreadCountAction } from '@/actions/messages';
@@ -13,6 +14,7 @@ export default function Navbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const user = session?.user;
+  const { theme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
@@ -24,7 +26,7 @@ export default function Navbar() {
   }, [status]);
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-30 grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-8 py-4 bg-black/60 backdrop-blur-md border-b border-white/10">
+    <nav className="fixed top-0 left-0 w-full z-30 grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-8 py-4 bg-white/80 dark:bg-black/60 backdrop-blur-md border-b border-black/10 dark:border-white/10">
 
       {/* ── Column 1: Logo ── */}
       <Link href="/" className="justify-self-start relative z-30">
@@ -35,18 +37,18 @@ export default function Navbar() {
 
       {/* ── Column 2: Nav links (centered) ── */}
       <div
-        className={`justify-self-center flex-col md:flex-row md:flex gap-6 text-lg font-medium absolute md:static top-16 left-0 w-full md:w-auto bg-black/90 md:bg-transparent p-4 md:p-0 transition-all duration-200 z-20 ${menuOpen ? 'flex' : 'hidden md:flex'}`}
+        className={`justify-self-center flex-col md:flex-row md:flex gap-6 text-lg font-medium absolute md:static top-16 left-0 w-full md:w-auto bg-white/95 dark:bg-black/90 md:bg-transparent md:dark:bg-transparent p-4 md:p-0 transition-all duration-200 z-20 ${menuOpen ? 'flex' : 'hidden md:flex'}`}
       >
         <Link
           href="/artists"
-          className="hover:text-fuchsia-400 transition-colors"
+          className="text-gray-800 dark:text-white hover:text-fuchsia-600 dark:hover:text-fuchsia-400 transition-colors"
           onClick={() => setMenuOpen(false)}
         >
           Artists
         </Link>
         <Link
           href="/events"
-          className="hover:text-cyan-400 transition-colors"
+          className="text-gray-800 dark:text-white hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
           onClick={() => setMenuOpen(false)}
         >
           Events
@@ -54,7 +56,7 @@ export default function Navbar() {
         {user && (
           <Link
             href="/dashboard"
-            className="hover:text-white transition-colors"
+            className="text-gray-800 dark:text-white hover:text-gray-600 dark:hover:text-white transition-colors"
             onClick={() => setMenuOpen(false)}
           >
             Dashboard
@@ -72,6 +74,19 @@ export default function Navbar() {
           aria-label="Toggle navigation menu"
         >
           <span className="material-icons">menu</span>
+        </button>
+
+        {/* Theme toggle */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          aria-label="Toggle theme"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
         </button>
 
         {/* Notification bell */}

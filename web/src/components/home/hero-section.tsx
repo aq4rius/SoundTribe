@@ -28,9 +28,14 @@ export default function HeroSection() {
 
   return (
     <section className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center px-4">
-      {/* CSS gradient background */}
+      {/* CSS gradient background — light mode */}
       <div
-        className="fixed inset-0 z-0 w-full h-full"
+        className="fixed inset-0 z-0 w-full h-full bg-gradient-to-br from-fuchsia-50 via-white to-cyan-50 dark:hidden"
+        aria-hidden="true"
+      />
+      {/* CSS gradient background — dark mode */}
+      <div
+        className="fixed inset-0 z-0 w-full h-full hidden dark:block"
         aria-hidden="true"
         style={{
           background:
@@ -43,7 +48,7 @@ export default function HeroSection() {
         {FLOATING_TAGS.map((tag) => (
           <motion.span
             key={tag.label}
-            className="absolute px-3 py-1 rounded-full border border-white/25 text-white/60 text-xs font-medium bg-white/[0.07] backdrop-blur-sm select-none"
+            className="absolute px-3 py-1 rounded-full border border-black/20 dark:border-white/25 text-gray-500 dark:text-white/60 text-xs font-medium bg-black/[0.04] dark:bg-white/[0.07] backdrop-blur-sm select-none"
             style={{ left: tag.x, top: tag.y }}
             animate={{
               y: [0, -12, 0, 8, 0],
@@ -80,7 +85,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 1 }}
-          className="max-w-2xl text-lg md:text-2xl text-white/80 font-medium"
+          className="max-w-2xl text-lg md:text-2xl text-gray-700 dark:text-white/80 font-medium"
         >
           Connect with artists, musicians and event organizers near you.{' '}
           <br className="hidden sm:block" />
@@ -122,8 +127,8 @@ export default function HeroSection() {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
       >
         <div className="flex flex-col items-center gap-2 animate-bounce">
-          <span className="w-2 h-2 rounded-full bg-white/80" />
-          <span className="w-1 h-6 rounded-full bg-white/40" />
+          <span className="w-2 h-2 rounded-full bg-gray-600 dark:bg-white/80" />
+          <span className="w-1 h-6 rounded-full bg-gray-400 dark:bg-white/40" />
         </div>
       </motion.div>
     </section>
