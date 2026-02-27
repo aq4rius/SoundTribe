@@ -7,18 +7,24 @@ import { getEventsAction } from '@/actions/events';
 
 export default async function Home() {
   const [artistsResult, eventsResult] = await Promise.all([
-    getArtistProfilesAction({ page: 1, limit: 3 }),
+    getArtistProfilesAction({ page: 1, limit: 12 }),
     getEventsAction({ page: 1, limit: 3, status: 'open' }),
   ]);
 
-  const featuredArtists = artistsResult.success ? artistsResult.data.profiles : [];
+  const allArtists = artistsResult.success ? artistsResult.data.profiles : [];
+  const featuredArtists = allArtists.slice(0, 3);
+  const marqueeArtists = allArtists.map((a) => ({
+    id: a.id,
+    stageName: a.stageName,
+    profileImage: a.profileImage ?? null,
+  }));
   const upcomingEvents = eventsResult.success ? eventsResult.data.data : [];
 
   return (
     <main className="relative w-full overflow-x-hidden bg-black text-white">
 
       {/* Section 1: Hero */}
-      <HeroSection />
+      <HeroSection marqueeArtists={marqueeArtists} />
 
       {/* Section 2: Stats bar */}
       <section className="relative z-10 bg-white/5 border-y border-white/10 py-8">
