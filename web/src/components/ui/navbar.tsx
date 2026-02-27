@@ -27,7 +27,7 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 w-full z-30 grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-8 py-4 bg-black/60 backdrop-blur-md border-b border-white/10">
 
       {/* ── Column 1: Logo ── */}
-      <Link href="/" className="justify-self-start">
+      <Link href="/" className="justify-self-start relative z-30">
         <span className="text-2xl font-extrabold bg-gradient-to-r from-fuchsia-500 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
           SoundTribe
         </span>
@@ -35,7 +35,7 @@ export default function Navbar() {
 
       {/* ── Column 2: Nav links (centered) ── */}
       <div
-        className={`flex-col md:flex-row md:flex gap-6 text-lg font-medium absolute md:static top-16 left-0 w-full md:w-auto bg-black/90 md:bg-transparent p-4 md:p-0 transition-all duration-200 ${menuOpen ? 'flex' : 'hidden md:flex'}`}
+        className={`justify-self-center flex-col md:flex-row md:flex gap-6 text-lg font-medium absolute md:static top-16 left-0 w-full md:w-auto bg-black/90 md:bg-transparent p-4 md:p-0 transition-all duration-200 z-20 ${menuOpen ? 'flex' : 'hidden md:flex'}`}
       >
         <Link
           href="/artists"
@@ -63,7 +63,7 @@ export default function Navbar() {
       </div>
 
       {/* ── Column 3: Right actions ── */}
-      <div className="justify-self-end flex items-center gap-3">
+      <div className="justify-self-end flex items-center gap-3 relative z-30">
 
         {/* Hamburger — mobile only */}
         <button
