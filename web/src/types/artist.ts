@@ -24,8 +24,11 @@ export type PrismaArtistProfileCard = Prisma.ArtistProfileGetPayload<{
     location: true;
     profileImage: true;
     instruments: true;
+    biography: true;
+    yearsOfExperience: true;
     ratePerHour: true;
     genres: { select: { id: true; name: true } };
+    user: { select: { username: true; profileImage: true } };
   };
 }>;
 

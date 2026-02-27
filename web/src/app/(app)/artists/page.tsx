@@ -33,8 +33,11 @@ type ArtistResult = {
   location: string | null;
   profileImage: string | null;
   instruments: string[];
+  biography: string | null;
+  yearsOfExperience: number;
   ratePerHour: number | null;
   genres: { id: string; name: string }[];
+  user: { username: string; profileImage: string | null };
 };
 
 export default function ArtistsPage() {
@@ -211,7 +214,7 @@ export default function ArtistsPage() {
         {/* Artists Grid with Pagination */}
         <div className="flex-1">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 9 }).map((_, i) => (
                 <ArtistCardSkeleton key={i} />
               ))}
@@ -223,7 +226,7 @@ export default function ArtistsPage() {
               description="Try adjusting your filters or check back later for new artists."
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {artists.map((artist) => (
                 <ArtistCard key={artist.id} artist={artist} />
               ))}
