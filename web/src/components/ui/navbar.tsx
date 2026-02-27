@@ -1,18 +1,27 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { MessageSquare } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { Button } from '@/components/ui/button';
+import { getTotalUnreadCountAction } from '@/actions/messages';
 
 export default function Navbar() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const user = session?.user;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    getTotalUnreadCountAction().then((result) => {
+      if (result.success) setChatUnreadCount(result.data.count);
+    });
+  }, [status]);
 
   return (
     <nav className="fixed top-0 left-0 w-full z-30 grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-8 py-4 bg-black/60 backdrop-blur-md border-b border-white/10">
@@ -77,8 +86,11 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
           >
             <MessageSquare className="h-5 w-5" />
-            {/* Static unread dot — wire to getConversationsAction total unreadCount when available */}
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+            {chatUnreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">
+                {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+              </span>
+            )}
           </Link>
         )}
 

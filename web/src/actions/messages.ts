@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { requireAuth, withActionHandler } from '@/lib/action-utils';
 import { publishToChannel, channelNames } from '@/lib/ably';
 import { EntityType } from '@prisma/client';
+import type { ActionResult } from '@/types/actions';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -577,5 +578,46 @@ export async function deleteConversationAction(conversationId: string) {
 
     // Cascade delete handles messages
     await db.conversation.delete({ where: { id: conversationId } });
+  });
+}
+
+export async function getTotalUnreadCountAction(): Promise<ActionResult<{ count: number }>> {
+  return withActionHandler(async () => {
+    const auth = await requireAuth();
+    if ('error' in auth) throw new Error(auth.error);
+
+    const [artistProfiles, eventPostings] = await Promise.all([
+      db.artistProfile.findMany({
+        where: { userId: auth.session.user.id },
+        select: { id: true },
+      }),
+      db.eventPosting.findMany({
+        where: { organizerId: auth.session.user.id },
+        select: { id: true },
+      }),
+    ]);
+
+    const myEntityIds = [
+      ...artistProfiles.map((p) => p.id),
+      ...eventPostings.map((e) => e.id),
+    ];
+
+    if (myEntityIds.length === 0) return { count: 0 };
+
+    const count = await db.message.count({
+      where: {
+        senderEntityId: { notIn: myEntityIds },
+        status: { not: 'read' },
+        isDeleted: false,
+        conversation: {
+          OR: [
+            { entity1Id: { in: myEntityIds } },
+            { entity2Id: { in: myEntityIds } },
+          ],
+        },
+      },
+    });
+
+    return { count };
   });
 }
