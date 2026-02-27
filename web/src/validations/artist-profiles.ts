@@ -12,6 +12,12 @@ export const createArtistProfileSchema = z.object({
   yearsOfExperience: z.coerce.number().int().min(0).max(50),
   ratePerHour: z.coerce.number().min(0).optional().nullable(),
   websiteUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  spotifyTrackUrl: z
+    .string()
+    .url('Must be a valid URL')
+    .startsWith('https://open.spotify.com/', 'Must be a Spotify URL (https://open.spotify.com/...)')
+    .optional()
+    .or(z.literal('')),
   socialMediaLinks: z
     .object({
       facebook: z.string().optional().or(z.literal('')),

@@ -140,6 +140,7 @@ export async function createOrUpdateArtistProfileAction(
       ? Number(formData.get('ratePerHour'))
       : null,
     websiteUrl: (formData.get('websiteUrl') as string) || '',
+    spotifyTrackUrl: (formData.get('spotifyTrackUrl') as string) || '',
     socialMediaLinks: formData.get('socialMediaLinks')
       ? JSON.parse(formData.get('socialMediaLinks') as string)
       : {
@@ -181,6 +182,7 @@ export async function createOrUpdateArtistProfileAction(
         yearsOfExperience: parsed.data.yearsOfExperience,
         location: parsed.data.location,
         websiteUrl: parsed.data.websiteUrl || null,
+        spotifyTrackUrl: parsed.data.spotifyTrackUrl || null,
         socialMediaLinks: parsed.data.socialMediaLinks ?? Prisma.JsonNull,
         ratePerHour: parsed.data.ratePerHour ?? null,
         genres: { connect: parsed.data.genres.map((id) => ({ id })) },
@@ -192,6 +194,7 @@ export async function createOrUpdateArtistProfileAction(
         yearsOfExperience: parsed.data.yearsOfExperience,
         location: parsed.data.location,
         websiteUrl: parsed.data.websiteUrl || null,
+        spotifyTrackUrl: parsed.data.spotifyTrackUrl || null,
         socialMediaLinks: parsed.data.socialMediaLinks ?? Prisma.JsonNull,
         ratePerHour: parsed.data.ratePerHour ?? null,
         genres: {

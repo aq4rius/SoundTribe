@@ -20,6 +20,7 @@ interface ProfileForm {
   yearsOfExperience: number;
   location: string;
   websiteUrl: string;
+  spotifyTrackUrl: string;
   socialMediaLinks: Record<string, string>;
   genres: string[]; // genre IDs
 }
@@ -70,6 +71,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
           yearsOfExperience: data.yearsOfExperience || 0,
           location: data.location || '',
           websiteUrl: data.websiteUrl || '',
+          spotifyTrackUrl: data.spotifyTrackUrl || '',
           socialMediaLinks:
             typeof data.socialMediaLinks === 'object' && data.socialMediaLinks
               ? (data.socialMediaLinks as Record<string, string>)
@@ -117,6 +119,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
       formData.append('yearsOfExperience', String(profile.yearsOfExperience));
       formData.append('location', profile.location);
       if (profile.websiteUrl) formData.append('websiteUrl', profile.websiteUrl);
+      if (profile.spotifyTrackUrl) formData.append('spotifyTrackUrl', profile.spotifyTrackUrl);
       profile.genres.forEach((g) => formData.append('genres', g));
       if (Object.keys(profile.socialMediaLinks).length > 0) {
         formData.append('socialMediaLinks', JSON.stringify(profile.socialMediaLinks));
@@ -216,6 +219,17 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             className="input input-bordered w-full"
             placeholder="Website URL"
           />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Spotify Track (optional)</label>
+          <input
+            name="spotifyTrackUrl"
+            value={profile.spotifyTrackUrl || ''}
+            onChange={handleChange}
+            className="input input-bordered w-full"
+            placeholder="https://open.spotify.com/track/..."
+          />
+          <p className="text-xs text-muted-foreground mt-1">Paste a Spotify track URL to embed a preview on your profile</p>
         </div>
         <div>
           <label className="block mb-1 font-medium">Social Media Links</label>

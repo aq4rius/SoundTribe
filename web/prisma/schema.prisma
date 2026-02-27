@@ -141,7 +141,8 @@ model ArtistProfile {
   // availability: { isAvailable: boolean, availableDates?: Date[] }
   availability     Json?   @map("availability")
 
-  ratePerHour Float? @map("rate_per_hour")
+  ratePerHour      Float?  @map("rate_per_hour")
+  spotifyTrackUrl   String? @map("spotify_track_url")
 
   // Relations
   genres       Genre[]        @relation("ArtistProfileGenres")

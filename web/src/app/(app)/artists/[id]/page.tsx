@@ -148,7 +148,20 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
         </>
       )}
 
-      {/* TODO: add spotifyTrackUrl field to ArtistProfile model for track embeds */}
+      {artist.spotifyTrackUrl && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Tracks</h2>
+          <iframe
+            src={artist.spotifyTrackUrl}
+            width="100%"
+            height="152"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            className="rounded-xl border-0"
+            title="Spotify track preview"
+          />
+        </section>
+      )}
 
     </div>
   );

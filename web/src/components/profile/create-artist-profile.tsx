@@ -46,6 +46,7 @@ export default function CreateArtistProfile() {
       yearsOfExperience: 0,
       ratePerHour: null,
       websiteUrl: '',
+      spotifyTrackUrl: '',
       socialMediaLinks: { facebook: '', instagram: '', twitter: '', youtube: '', tiktok: '', other: '' },
     },
   });
@@ -107,6 +108,7 @@ export default function CreateArtistProfile() {
       formData.append('yearsOfExperience', String(data.yearsOfExperience));
       if (data.ratePerHour != null) formData.append('ratePerHour', String(data.ratePerHour));
       if (data.websiteUrl) formData.append('websiteUrl', data.websiteUrl);
+      if (data.spotifyTrackUrl) formData.append('spotifyTrackUrl', data.spotifyTrackUrl);
       if (data.socialMediaLinks) formData.append('socialMediaLinks', JSON.stringify(data.socialMediaLinks));
 
       const result = await createOrUpdateArtistProfileAction(formData);
@@ -238,6 +240,12 @@ export default function CreateArtistProfile() {
             <Label htmlFor="websiteUrl">Website</Label>
             <Input id="websiteUrl" placeholder="https://yoursite.com" {...register('websiteUrl')} />
             {errors.websiteUrl && <p className="text-sm text-destructive">{errors.websiteUrl.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="spotifyTrackUrl">Spotify Track (optional)</Label>
+            <Input id="spotifyTrackUrl" placeholder="https://open.spotify.com/track/..." {...register('spotifyTrackUrl')} />
+            <p className="text-xs text-muted-foreground mt-1">Paste a Spotify track URL to embed a preview on your profile</p>
+            {errors.spotifyTrackUrl && <p className="text-sm text-destructive">{errors.spotifyTrackUrl.message}</p>}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2"><Label htmlFor="facebook">Facebook</Label><Input id="facebook" placeholder="facebook.com/you" {...register('socialMediaLinks.facebook')} /></div>
