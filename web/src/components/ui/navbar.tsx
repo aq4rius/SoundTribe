@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { MessageSquare } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { Button } from '@/components/ui/button';
 
@@ -14,15 +15,16 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-30 flex items-center justify-between px-4 md:px-8 py-4 bg-black/60 backdrop-blur-md border-b border-white/10">
-      <Link href="/">
+    <nav className="fixed top-0 left-0 w-full z-30 grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-8 py-4 bg-black/60 backdrop-blur-md border-b border-white/10">
+
+      {/* ── Column 1: Logo ── */}
+      <Link href="/" className="justify-self-start">
         <span className="text-2xl font-extrabold bg-gradient-to-r from-fuchsia-500 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
           SoundTribe
         </span>
       </Link>
-      <button className="md:hidden ml-auto text-white" onClick={() => setMenuOpen((v) => !v)} aria-label="Toggle navigation menu">
-        <span className="material-icons">menu</span>
-      </button>
+
+      {/* ── Column 2: Nav links (centered) ── */}
       <div
         className={`flex-col md:flex-row md:flex gap-6 text-lg font-medium absolute md:static top-16 left-0 w-full md:w-auto bg-black/90 md:bg-transparent p-4 md:p-0 transition-all duration-200 ${menuOpen ? 'flex' : 'hidden md:flex'}`}
       >
@@ -50,15 +52,42 @@ export default function Navbar() {
           </Link>
         )}
       </div>
-      <div className="flex gap-4 items-center">
+
+      {/* ── Column 3: Right actions ── */}
+      <div className="justify-self-end flex items-center gap-3">
+
+        {/* Hamburger — mobile only */}
+        <button
+          className="md:hidden text-white"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Toggle navigation menu"
+        >
+          <span className="material-icons">menu</span>
+        </button>
+
+        {/* Notification bell */}
         {user?.id && <NotificationBell userId={user.id} />}
+
+        {/* Chat icon — authenticated only */}
+        {status === 'authenticated' && (
+          <Link
+            href="/chat"
+            aria-label="Messages"
+            className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+            onClick={() => setMenuOpen(false)}
+          >
+            <MessageSquare className="h-5 w-5" />
+            {/* Static unread dot — wire to getConversationsAction total unreadCount when available */}
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+          </Link>
+        )}
 
         {/* Loading skeleton — avoids flicker between auth states */}
         {status === 'loading' && (
           <div className="h-9 w-24 rounded bg-white/10 animate-pulse" />
         )}
 
-        {/* Authenticated — show avatar, username, dashboard link, logout */}
+        {/* Authenticated — show avatar, username, logout */}
         {status === 'authenticated' && user && (
           <div className="flex items-center gap-3">
             <Link
