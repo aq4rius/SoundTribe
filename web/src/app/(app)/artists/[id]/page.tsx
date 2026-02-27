@@ -132,6 +132,31 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
             </div>
           )}
 
+          {/* Social links */}
+          {artist.socialMediaLinks && (() => {
+            const links = artist.socialMediaLinks as Record<string, string>;
+            const defined = Object.entries(links).filter(([, v]) => v && v.length > 0);
+            if (defined.length === 0) return null;
+            return (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Links</p>
+                <div className="flex flex-wrap gap-3">
+                  {defined.map(([platform, url]) => (
+                    <a
+                      key={platform}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 text-xs font-medium hover:border-fuchsia-500 hover:text-fuchsia-400 transition-colors capitalize"
+                    >
+                      {platform}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Years of experience */}
           {artist.yearsOfExperience > 0 && (
             <p className="text-sm text-muted-foreground">

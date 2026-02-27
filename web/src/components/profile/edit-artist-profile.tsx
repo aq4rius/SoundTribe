@@ -75,7 +75,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
           socialMediaLinks:
             typeof data.socialMediaLinks === 'object' && data.socialMediaLinks
               ? (data.socialMediaLinks as Record<string, string>)
-              : { facebook: '', instagram: '', twitter: '', youtube: '' },
+              : { instagram: '', youtube: '', facebook: '', twitter: '', soundcloud: '', tiktok: '' },
           genres: Array.isArray(data.genres)
             ? data.genres.map((g: { id: string }) => g.id)
             : [],
@@ -231,32 +231,31 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
           />
           <p className="text-xs text-muted-foreground mt-1">Paste a Spotify track URL to embed a preview on your profile</p>
         </div>
-        <div>
-          <label className="block mb-1 font-medium">Social Media Links</label>
-          <div className="grid grid-cols-2 gap-2">
-            {['facebook', 'instagram', 'twitter', 'youtube', 'tiktok', 'other'].map((platform) => (
+        <div className="space-y-3">
+          <label className="text-sm font-semibold">Social Links <span className="text-muted-foreground font-normal">(optional)</span></label>
+          {[
+            { key: 'instagram', placeholder: 'https://instagram.com/yourprofile' },
+            { key: 'youtube', placeholder: 'https://youtube.com/@yourchannel' },
+            { key: 'soundcloud', placeholder: 'https://soundcloud.com/yourprofile' },
+            { key: 'tiktok', placeholder: 'https://tiktok.com/@yourhandle' },
+            { key: 'facebook', placeholder: 'https://facebook.com/yourprofile' },
+            { key: 'twitter', placeholder: 'https://twitter.com/yourhandle' },
+          ].map(({ key, placeholder }) => (
+            <div key={key} className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-20 capitalize">{key}</span>
               <input
-                key={platform}
-                name={platform}
-                value={profile.socialMediaLinks?.[platform] || ''}
+                type="url"
+                placeholder={placeholder}
+                value={profile.socialMediaLinks?.[key] ?? ''}
                 onChange={(e) =>
                   setProfile((p) =>
-                    p
-                      ? {
-                          ...p,
-                          socialMediaLinks: {
-                            ...p.socialMediaLinks,
-                            [platform]: e.target.value,
-                          },
-                        }
-                      : p,
+                    p ? { ...p, socialMediaLinks: { ...p.socialMediaLinks, [key]: e.target.value } } : p
                   )
                 }
-                className="input input-bordered w-full"
-                placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
+                className="flex-1 rounded-md border border-input bg-transparent px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
         <div>
           <label className="block mb-1 font-medium">Genres</label>

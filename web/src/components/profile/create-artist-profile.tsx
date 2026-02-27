@@ -47,7 +47,7 @@ export default function CreateArtistProfile() {
       ratePerHour: null,
       websiteUrl: '',
       spotifyTrackUrl: '',
-      socialMediaLinks: { facebook: '', instagram: '', twitter: '', youtube: '', tiktok: '', other: '' },
+      socialMediaLinks: { facebook: '', instagram: '', twitter: '', youtube: '', tiktok: '', soundcloud: '' },
     },
   });
 
@@ -252,8 +252,8 @@ export default function CreateArtistProfile() {
             <div className="space-y-2"><Label htmlFor="instagram">Instagram</Label><Input id="instagram" placeholder="@yourhandle" {...register('socialMediaLinks.instagram')} /></div>
             <div className="space-y-2"><Label htmlFor="twitter">Twitter / X</Label><Input id="twitter" placeholder="@yourhandle" {...register('socialMediaLinks.twitter')} /></div>
             <div className="space-y-2"><Label htmlFor="youtube">YouTube</Label><Input id="youtube" placeholder="youtube.com/@you" {...register('socialMediaLinks.youtube')} /></div>
-            <div className="space-y-2"><Label htmlFor="tiktok">TikTok</Label><Input id="tiktok" placeholder="@yourhandle" {...register('socialMediaLinks.tiktok')} /></div>
-            <div className="space-y-2"><Label htmlFor="other">Other</Label><Input id="other" placeholder="Any other link" {...register('socialMediaLinks.other')} /></div>
+            <div className="space-y-2"><Label htmlFor="tiktok">TikTok</Label><Input id="tiktok" placeholder="https://tiktok.com/@yourhandle" {...register('socialMediaLinks.tiktok')} /></div>
+            <div className="space-y-2"><Label htmlFor="soundcloud">SoundCloud</Label><Input id="soundcloud" placeholder="https://soundcloud.com/yourprofile" {...register('socialMediaLinks.soundcloud')} /></div>
           </div>
         </div>
 

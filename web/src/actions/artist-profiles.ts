@@ -144,12 +144,12 @@ export async function createOrUpdateArtistProfileAction(
     socialMediaLinks: formData.get('socialMediaLinks')
       ? JSON.parse(formData.get('socialMediaLinks') as string)
       : {
-          facebook: (formData.get('facebook') as string) || '',
           instagram: (formData.get('instagram') as string) || '',
-          twitter: (formData.get('twitter') as string) || '',
           youtube: (formData.get('youtube') as string) || '',
+          facebook: (formData.get('facebook') as string) || '',
+          twitter: (formData.get('twitter') as string) || '',
+          soundcloud: (formData.get('soundcloud') as string) || '',
           tiktok: (formData.get('tiktok') as string) || '',
-          other: (formData.get('other') as string) || '',
         },
   };
 

@@ -23,12 +23,12 @@ export const createArtistProfileSchema = z.object({
     .or(z.literal('')),
   socialMediaLinks: z
     .object({
-      facebook: z.string().optional().or(z.literal('')),
-      instagram: z.string().optional().or(z.literal('')),
-      twitter: z.string().optional().or(z.literal('')),
-      youtube: z.string().optional().or(z.literal('')),
-      tiktok: z.string().optional().or(z.literal('')),
-      other: z.string().optional().or(z.literal('')),
+      instagram: z.string().url().optional().or(z.literal('')),
+      youtube: z.string().url().optional().or(z.literal('')),
+      facebook: z.string().url().optional().or(z.literal('')),
+      twitter: z.string().url().optional().or(z.literal('')),
+      soundcloud: z.string().url().optional().or(z.literal('')),
+      tiktok: z.string().url().optional().or(z.literal('')),
     })
     .optional(),
 });
