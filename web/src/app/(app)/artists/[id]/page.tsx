@@ -10,6 +10,12 @@ import { Separator } from '@/components/ui/separator';
 import { getArtistProfileByIdAction } from '@/actions/artist-profiles';
 import { auth } from '@/lib/auth';
 
+function toSpotifyEmbedUrl(url: string): string {
+  // Converts https://open.spotify.com/track/ID to https://open.spotify.com/embed/track/ID
+  // Also handles already-converted embed URLs gracefully
+  return url.replace('open.spotify.com/', 'open.spotify.com/embed/');
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -152,7 +158,7 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Tracks</h2>
           <iframe
-            src={artist.spotifyTrackUrl}
+            src={toSpotifyEmbedUrl(artist.spotifyTrackUrl)}
             width="100%"
             height="152"
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"

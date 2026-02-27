@@ -15,7 +15,10 @@ export const createArtistProfileSchema = z.object({
   spotifyTrackUrl: z
     .string()
     .url('Must be a valid URL')
-    .startsWith('https://open.spotify.com/', 'Must be a Spotify URL (https://open.spotify.com/...)')
+    .refine(
+      (val) => val.includes('open.spotify.com/'),
+      'Must be a Spotify URL (https://open.spotify.com/track/...)'
+    )
     .optional()
     .or(z.literal('')),
   socialMediaLinks: z
