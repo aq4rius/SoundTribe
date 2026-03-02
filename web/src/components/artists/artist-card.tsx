@@ -54,7 +54,7 @@ const ArtistCard: FC<ArtistCardProps> = ({ artist, mode = 'compact' }) => {
 
   if (mode === 'full') {
     return (
-      <div className="rounded-xl bg-gradient-to-br from-black/80 to-fuchsia-900/40 shadow-lg p-6 border border-white/10">
+      <div className="rounded-xl bg-gradient-to-br from-white to-fuchsia-50 dark:from-black/80 dark:to-fuchsia-900/40 shadow-lg p-6 border border-border">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-fuchsia-500 to-cyan-400 flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
             {profileImage ? (
@@ -64,11 +64,11 @@ const ArtistCard: FC<ArtistCardProps> = ({ artist, mode = 'compact' }) => {
             )}
           </div>
           <div>
-            <div className="font-bold text-lg text-white">{stageName}</div>
-            {username && <div className="text-sm text-white/60">@{username}</div>}
+            <div className="font-bold text-lg text-foreground">{stageName}</div>
+            {username && <div className="text-sm text-muted-foreground">@{username}</div>}
           </div>
         </div>
-        {biography && <div className="mt-3 text-white/80 text-sm">{biography}</div>}
+        {biography && <div className="mt-3 text-muted-foreground text-sm">{biography}</div>}
       </div>
     );
   }
@@ -78,13 +78,13 @@ const ArtistCard: FC<ArtistCardProps> = ({ artist, mode = 'compact' }) => {
       whileHover={{ scale: 1.02 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
     >
-      <Card className="overflow-hidden hover:shadow-xl hover:shadow-fuchsia-900/20 transition-shadow duration-200">
+      <Card className="overflow-hidden hover:shadow-xl dark:hover:shadow-fuchsia-900/20 transition-shadow duration-200">
         {/* Thumbnail */}
         <div className="relative aspect-[4/3] rounded-t-xl overflow-hidden">
           {profileImage ? (
             <Image src={profileImage} alt={stageName} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-fuchsia-900 to-zinc-900" />
+            <div className="w-full h-full bg-gradient-to-br from-fuchsia-100 to-zinc-200 dark:from-fuchsia-900 dark:to-zinc-900" />
           )}
           {/* Tagline banner */}
           {tagline && (

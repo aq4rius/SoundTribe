@@ -89,15 +89,15 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
                 priority
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-fuchsia-900 to-zinc-900" />
+              <div className="w-full h-full bg-gradient-to-br from-fuchsia-100 to-zinc-200 dark:from-fuchsia-900 dark:to-zinc-900" />
             )}
           </div>
           {/* Stat pills */}
           <div className="flex justify-center gap-3">
-            <span className="text-sm font-semibold text-muted-foreground border border-white/10 rounded-full px-4 py-1">
+            <span className="text-sm font-semibold text-muted-foreground border border-border rounded-full px-4 py-1">
               0 Followers
             </span>
-            <span className="text-sm font-semibold text-muted-foreground border border-white/10 rounded-full px-4 py-1">
+            <span className="text-sm font-semibold text-muted-foreground border border-border rounded-full px-4 py-1">
               0 Connections
             </span>
           </div>
@@ -176,7 +176,7 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 text-xs font-medium transition-colors capitalize ${meta?.color ?? 'hover:text-fuchsia-400 hover:border-fuchsia-500'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs font-medium transition-colors capitalize ${meta?.color ?? 'hover:text-fuchsia-400 hover:border-fuchsia-500'}`}
                         aria-label={platform}
                       >
                         {meta && (
@@ -208,7 +208,7 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
           <Separator />
           <div>
             <h2 className="text-lg font-semibold mb-3">About</h2>
-            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
               {artist.biography}
             </p>
           </div>

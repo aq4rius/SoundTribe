@@ -15,13 +15,13 @@ export default async function Home() {
   const upcomingEvents = eventsResult.success ? eventsResult.data.data : [];
 
   return (
-    <main className="relative w-full overflow-x-hidden bg-black text-white">
+    <main className="relative w-full overflow-x-hidden bg-background text-foreground">
 
       {/* Section 1: Hero */}
       <HeroSection />
 
       {/* Section 2: Stats bar */}
-      <section className="relative z-10 bg-white/5 border-y border-white/10 py-8">
+      <section className="relative z-10 bg-black/5 dark:bg-white/5 border-y border-black/10 dark:border-white/10 py-8">
         <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
             { value: '500+', label: 'Artists' },
@@ -33,7 +33,7 @@ export default async function Home() {
               <p className="text-3xl font-extrabold bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
                 {stat.value}
               </p>
-              <p className="text-sm text-white/60 mt-1">{stat.label}</p>
+              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -44,12 +44,12 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between mb-10">
             <div>
-              <h2 className="text-3xl font-extrabold">Featured Artists</h2>
-              <p className="text-white/60 mt-1">Discover talented musicians near you</p>
+              <h2 className="text-3xl font-extrabold text-foreground">Featured Artists</h2>
+              <p className="text-muted-foreground mt-1">Discover talented musicians near you</p>
             </div>
             <Link
               href="/artists"
-              className="text-sm text-fuchsia-400 hover:text-fuchsia-300 transition-colors"
+              className="text-sm text-fuchsia-600 dark:text-fuchsia-400 hover:text-fuchsia-700 dark:hover:text-fuchsia-300 transition-colors"
             >
               View all &rarr;
             </Link>
@@ -61,7 +61,7 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <p className="text-white/40 text-center py-12">
+            <p className="text-muted-foreground/60 text-center py-12">
               No artists yet &mdash; be the first to join!
             </p>
           )}
@@ -69,16 +69,16 @@ export default async function Home() {
       </section>
 
       {/* Section 4: Upcoming Events */}
-      <section className="relative z-10 py-20 px-4 bg-white/[0.02]">
+      <section className="relative z-10 py-20 px-4 bg-black/[0.02] dark:bg-white/[0.02]">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between mb-10">
             <div>
-              <h2 className="text-3xl font-extrabold">Upcoming Events</h2>
-              <p className="text-white/60 mt-1">Find your next gig or collaboration</p>
+              <h2 className="text-3xl font-extrabold text-foreground">Upcoming Events</h2>
+              <p className="text-muted-foreground mt-1">Find your next gig or collaboration</p>
             </div>
             <Link
               href="/events"
-              className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+              className="text-sm text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors"
             >
               View all &rarr;
             </Link>
@@ -90,7 +90,7 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <p className="text-white/40 text-center py-12">
+            <p className="text-muted-foreground/60 text-center py-12">
               No open events yet &mdash; check back soon!
             </p>
           )}
