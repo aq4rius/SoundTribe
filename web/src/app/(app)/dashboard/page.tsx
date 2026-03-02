@@ -42,6 +42,8 @@ interface DashboardArtistProfile {
   genres: { id: string; name: string }[];
   user: { id: string; username: string; profileImage: string | null };
   profileImage?: string | null;
+  spotifyTrackUrl?: string | null;
+  socialMediaLinks?: Record<string, string> | null;
 }
 
 interface DashboardApplication {
