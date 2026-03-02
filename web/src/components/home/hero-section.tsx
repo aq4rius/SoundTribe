@@ -74,10 +74,10 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 1 }}
-          className="text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg"
+          className="text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg text-gray-900 dark:text-white"
         >
           Find Your{' '}
-          <span className="bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-500 dark:from-fuchsia-400 dark:via-purple-400 dark:to-cyan-400 bg-clip-text text-transparent">
             Musical Tribe
           </span>
         </motion.h1>
@@ -102,7 +102,7 @@ export default function HeroSection() {
               <Button size="lg" asChild>
                 <Link href="/artists">Browse Artists</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" className="border-gray-800 dark:border-white/60 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10" asChild>
                 <Link href="/events">Find Events</Link>
               </Button>
             </div>
@@ -111,7 +111,7 @@ export default function HeroSection() {
               <Button size="lg" asChild>
                 <Link href="/auth/register">Join SoundTribe Free</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" className="border-gray-800 dark:border-white/60 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10" asChild>
                 <Link href="/artists">Browse Artists</Link>
               </Button>
             </div>

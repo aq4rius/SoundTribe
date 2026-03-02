@@ -89,7 +89,11 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
                 priority
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-fuchsia-100 to-zinc-200 dark:from-fuchsia-900 dark:to-zinc-900" />
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-fuchsia-50 to-purple-100 dark:from-fuchsia-950 dark:to-zinc-900">
+                <svg viewBox="0 0 24 24" className="w-24 h-24 text-fuchsia-300 dark:text-fuchsia-700 fill-current" aria-hidden="true">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+              </div>
             )}
           </div>
           {/* Stat pills */}

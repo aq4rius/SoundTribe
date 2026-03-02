@@ -30,7 +30,7 @@ export default async function Home() {
             { value: '1,000+', label: 'Connections Made' },
           ].map((stat) => (
             <div key={stat.label}>
-              <p className="text-3xl font-extrabold bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+              <p className="text-3xl font-extrabold bg-gradient-to-r from-fuchsia-600 to-cyan-600 dark:from-fuchsia-400 dark:to-cyan-400 bg-clip-text text-transparent">
                 {stat.value}
               </p>
               <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
