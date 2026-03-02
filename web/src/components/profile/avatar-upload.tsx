@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 import { Camera, Loader2 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { uploadAvatarAction } from '@/actions/upload';
@@ -12,6 +13,7 @@ interface AvatarUploadProps {
 }
 
 export default function AvatarUpload({ currentImage, username }: AvatarUploadProps) {
+  const { update } = useSession();
   const [imageSrc, setImageSrc] = useState<string | null>(currentImage);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export default function AvatarUpload({ currentImage, username }: AvatarUploadPro
       const result = await uploadAvatarAction(formData);
       if (result.success) {
         setImageSrc(result.data.url);
+        await update({ profileImage: result.data.url });
       } else {
         setError(result.error ?? 'Upload failed');
       }
