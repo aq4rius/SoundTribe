@@ -114,7 +114,7 @@ export default function EventsPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-16 px-4">
-      <h1 className="text-4xl font-extrabold mb-8 bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-emerald-400 bg-clip-text text-transparent">
+      <h1 className="text-4xl font-extrabold mb-8 bg-gradient-to-r from-cyan-600 via-fuchsia-600 to-emerald-600 dark:from-cyan-400 dark:via-fuchsia-500 dark:to-emerald-400 bg-clip-text text-transparent">
         Events
       </h1>
       <div className="flex flex-col md:flex-row gap-6">

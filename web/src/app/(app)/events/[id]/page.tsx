@@ -37,9 +37,9 @@ export default async function EventDetailsPage({ params }: { params: Promise<{ i
         <EventCard event={event} mode="full" />
       </div>
 
-      <div className="bg-black/60 rounded-xl p-6 border border-white/10 mb-6">
-        <h2 className="text-xl font-bold mb-2 text-cyan-300">Event Details</h2>
-        <div className="space-y-2 text-white/90">
+      <div className="bg-black/5 dark:bg-black/60 rounded-xl p-6 border border-border mb-6">
+        <h2 className="text-xl font-bold mb-2 text-cyan-600 dark:text-cyan-300">Event Details</h2>
+        <div className="space-y-2 text-foreground">
           <div>
             <span className="font-semibold">Title:</span> {event.title}
           </div>
