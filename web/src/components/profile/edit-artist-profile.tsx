@@ -29,12 +29,12 @@ function SuccessModal({ show, onClose }: { show: boolean; onClose: () => void })
   if (!show) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-8 max-w-sm w-full text-center border border-fuchsia-400">
+      <div className="bg-background rounded-xl shadow-lg p-8 max-w-sm w-full text-center border border-fuchsia-400">
         <h2 className="text-2xl font-bold mb-2 text-fuchsia-700 dark:text-fuchsia-300">Success!</h2>
         <p className="mb-4 text-zinc-700 dark:text-zinc-200">
           Your artist profile was updated successfully.
         </p>
-        <button className="btn btn-primary" onClick={onClose}>
+        <button className="rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" onClick={onClose}>
           OK
         </button>
       </div>
@@ -154,7 +154,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             name="stageName"
             value={profile.stageName || ''}
             onChange={handleChange}
-            className="input input-bordered w-full"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="Stage Name"
           />
         </div>
@@ -164,7 +164,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             name="biography"
             value={profile.biography || ''}
             onChange={handleChange}
-            className="textarea textarea-bordered w-full"
+            className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="Biography"
           />
         </div>
@@ -174,7 +174,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             name="location"
             value={profile.location || ''}
             onChange={handleChange}
-            className="input input-bordered w-full"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="Location"
           />
         </div>
@@ -194,7 +194,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
                   : p,
               )
             }
-            className="input input-bordered w-full"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="Instruments (comma separated)"
           />
         </div>
@@ -205,7 +205,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             type="number"
             value={profile.yearsOfExperience || ''}
             onChange={handleChange}
-            className="input input-bordered w-full"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="Years of Experience"
             min="0"
           />
@@ -216,7 +216,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             name="websiteUrl"
             value={profile.websiteUrl || ''}
             onChange={handleChange}
-            className="input input-bordered w-full"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="Website URL"
           />
         </div>
@@ -226,7 +226,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
             name="spotifyTrackUrl"
             value={profile.spotifyTrackUrl || ''}
             onChange={handleChange}
-            className="input input-bordered w-full"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="https://open.spotify.com/track/..."
           />
           <p className="text-xs text-muted-foreground mt-1">Paste a Spotify track URL to embed a preview on your profile</p>
@@ -266,7 +266,7 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
                   type="checkbox"
                   checked={Array.isArray(profile.genres) && profile.genres.includes(genre.id)}
                   onChange={() => handleGenreChange(genre.id)}
-                  className="checkbox checkbox-sm"
+                  className="accent-primary h-4 w-4"
                 />
                 <span>{genre.name}</span>
               </label>
@@ -274,10 +274,10 @@ export default function EditArtistProfile({ artistId }: { artistId: string }) {
           </div>
         </div>
         <div className="flex gap-2 justify-end">
-          <button type="button" className="btn btn-ghost" onClick={() => router.push('/dashboard')}>
+          <button type="button" className="rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => router.push('/dashboard')}>
             Cancel
           </button>
-          <button type="submit" className="btn btn-primary" disabled={isLoading}>
+          <button type="submit" className="rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 transition-colors" disabled={isLoading}>
             {isLoading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
