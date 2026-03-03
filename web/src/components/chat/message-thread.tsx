@@ -207,9 +207,9 @@ export default function MessageThread({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/10 bg-white/[0.02]">
+      <div className="px-4 py-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm">
+          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
             {otherEntityType === 'artist_profile' ? '🎤' : '📅'}
           </div>
           <div>
@@ -229,24 +229,24 @@ export default function MessageThread({
       >
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/40" />
           </div>
         ) : (
           <>
             {loadingMore && (
               <div className="text-center py-2">
-                <Loader2 className="h-4 w-4 animate-spin text-white/30 mx-auto" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/40 mx-auto" />
               </div>
             )}
             {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-sm text-white/40">
+              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                 No messages yet. Say hello!
               </div>
             ) : (
               groupedMessages.map(({ date, messages: dayMessages }) => (
                 <div key={date}>
                   <div className="flex items-center justify-center my-4">
-                    <span className="text-xs text-white/30 bg-white/5 px-3 py-1 rounded-full">
+                    <span className="text-xs text-muted-foreground/60 bg-muted px-3 py-1 rounded-full">
                       {date}
                     </span>
                   </div>

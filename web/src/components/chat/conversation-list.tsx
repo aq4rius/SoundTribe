@@ -120,14 +120,14 @@ export default function ConversationList({
   );
 
   return (
-    <div className="flex flex-col h-full border-r border-white/10">
+    <div className="flex flex-col h-full border-r border-border">
       {/* Sender selector */}
-      <div className="p-3 border-b border-white/10">
-        <label className="text-xs font-medium text-white/50 uppercase tracking-wider block mb-1.5">
+      <div className="p-3 border-b border-border">
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">
           Send as
         </label>
         <select
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="w-full bg-muted/50 border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           value={selectedSender?.id ?? ''}
           onChange={(e) => {
             const entity = entities.find((ent) => ent.id === e.target.value);
@@ -144,13 +144,13 @@ export default function ConversationList({
       </div>
 
       {/* Search + New conversation */}
-      <div className="p-3 border-b border-white/10 flex gap-2">
+      <div className="p-3 border-b border-border flex gap-2">
         <div className="flex-1 relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/30" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/50" />
           <input
             type="text"
             placeholder="Search conversations..."
-            className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full bg-muted/50 border border-input rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -169,14 +169,14 @@ export default function ConversationList({
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="h-5 w-5 animate-spin text-white/30" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/40" />
           </div>
         ) : !selectedSender ? (
-          <div className="p-6 text-center text-sm text-white/40">
+          <div className="p-6 text-center text-sm text-muted-foreground">
             Select a profile or event to view conversations.
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-6 text-center text-sm text-white/40">
+          <div className="p-6 text-center text-sm text-muted-foreground">
             No conversations yet. Message an artist or event organizer to get started.
           </div>
         ) : (
@@ -184,13 +184,13 @@ export default function ConversationList({
             <button
               key={conv.id}
               onClick={() => onSelectConversation(conv)}
-              className={`w-full text-left px-4 py-3 border-b border-white/5 transition-colors hover:bg-white/5 ${
-                selectedConversationId === conv.id ? 'bg-white/10' : ''
+              className={`w-full text-left px-4 py-3 border-b border-border/50 transition-colors hover:bg-muted/50 ${
+                selectedConversationId === conv.id ? 'bg-primary/10' : ''
               }`}
             >
               <div className="flex items-center gap-3">
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-lg shrink-0">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-lg shrink-0">
                   {conv.otherEntity.image ? (
                     <Image
                       src={conv.otherEntity.image}
@@ -215,7 +215,7 @@ export default function ConversationList({
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-xs text-white/40 truncate">
+                    <span className="text-xs text-muted-foreground/70 truncate">
                       {conv.lastMessage?.content
                         ? conv.lastMessage.content
                         : conv.lastMessage?.attachmentUrl
@@ -223,7 +223,7 @@ export default function ConversationList({
                           : 'Start a conversation...'}
                     </span>
                     {conv.lastMessageAt && (
-                      <span className="text-xs text-white/30 shrink-0 ml-2">
+                      <span className="text-xs text-muted-foreground/50 shrink-0 ml-2">
                         {formatTime(new Date(conv.lastMessageAt))}
                       </span>
                     )}

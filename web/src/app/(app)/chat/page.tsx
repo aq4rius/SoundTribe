@@ -6,7 +6,8 @@ import ConversationList from '@/components/chat/conversation-list';
 import MessageThread from '@/components/chat/message-thread';
 import EntitySelector from '@/components/chat/entity-selector';
 import type { ConversationItem, SenderEntity } from '@/components/chat/conversation-list';
-import { ArrowLeft, MessageSquare, Loader2 } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Loader2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function ChatContent() {
   const searchParams = useSearchParams();
@@ -42,7 +43,7 @@ function ChatContent() {
 
   return (
     <div className="max-w-6xl mx-auto h-[calc(100vh-5rem)]">
-      <div className="flex h-full border border-white/10 rounded-xl overflow-hidden bg-zinc-900/50">
+      <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
         {/* Conversation list — hidden on mobile when thread is open */}
         <div
           className={`w-full md:w-80 lg:w-96 shrink-0 ${
@@ -67,10 +68,10 @@ function ChatContent() {
           {selectedConversation && selectedSender ? (
             <>
               {/* Mobile back button */}
-              <div className="md:hidden border-b border-white/10 px-3 py-2">
+              <div className="md:hidden border-b border-border px-3 py-2">
                 <button
                   onClick={handleBackToList}
-                  className="flex items-center gap-1 text-sm text-white/60 hover:text-white/80 min-h-[44px] min-w-[44px]"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
                   aria-label="Back to conversations"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -86,12 +87,15 @@ function ChatContent() {
               />
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-white/30">
-              <MessageSquare className="h-12 w-12 mb-4" />
-              <p className="text-lg font-medium">Select a conversation</p>
-              <p className="text-sm mt-1">
-                Choose a conversation from the list or start a new one.
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground px-6 text-center">
+              <MessageSquare className="h-12 w-12 mb-4 opacity-30" />
+              <p className="text-lg font-medium text-foreground">No conversation selected</p>
+              <p className="text-sm mt-1 mb-6 max-w-xs">
+                Pick a conversation from the list, or start a new one by clicking the compose button at the top of the list.
               </p>
+              <Button variant="outline" size="sm" onClick={() => setShowEntitySelector(true)}>
+                <Plus className="h-4 w-4" /> Start a conversation
+              </Button>
             </div>
           )}
         </div>
