@@ -8,7 +8,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navbar />
-      <section id="main-content" className="pt-24 min-h-[80vh]">{children}</section>
+      <section id="main-content" className="pt-24">{children}</section>
       <Footer />
     </>
   );
