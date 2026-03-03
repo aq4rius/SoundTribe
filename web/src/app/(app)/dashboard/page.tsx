@@ -176,7 +176,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/account-settings"><Settings className="h-4 w-4" /> Settings</Link>
+            <Link href="/dashboard/edit-profile"><Settings className="h-4 w-4" /> Settings</Link>
           </Button>
         </div>
 
@@ -229,8 +229,8 @@ export default function DashboardPage() {
             <Link href="/events/create"><Calendar className="h-5 w-5" /><span className="text-xs">Create Event</span></Link>
           </Button>
           <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-            <Link href={artistProfile ? `/artists/edit/${artistProfile.id}` : '/artists/create'}>
-              <Pencil className="h-5 w-5" /><span className="text-xs">{artistProfile ? 'Edit Profile' : 'Create Profile'}</span>
+            <Link href="/dashboard/edit-profile">
+              <User className="h-5 w-5" /><span className="text-xs">My Account</span>
             </Link>
           </Button>
           <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
