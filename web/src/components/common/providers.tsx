@@ -1,9 +1,19 @@
 'use client';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import type { Session } from 'next-auth';
 import { SessionProvider } from 'next-auth/react';
 
-export default function Providers({ children }: { children: ReactNode }) {
+interface ProvidersProps {
+  children: ReactNode;
+  session?: Session | null;
+}
+
+export default function Providers({ children, session }: ProvidersProps) {
+  // Pass the server-side session so the client starts hydrated — no loading flicker.
   // refetchOnWindowFocus: re-syncs session whenever the tab regains focus.
-  // This catches sign-outs in other tabs and keeps the navbar in sync.
-  return <SessionProvider refetchOnWindowFocus={true}>{children}</SessionProvider>;
+  return (
+    <SessionProvider session={session} refetchOnWindowFocus={true}>
+      {children}
+    </SessionProvider>
+  );
 }

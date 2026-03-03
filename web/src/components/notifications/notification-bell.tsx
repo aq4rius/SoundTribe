@@ -17,6 +17,7 @@ export interface NavNotification {
   read: boolean;
   relatedEntityId: string | null;
   relatedEntityType: string | null;
+  relatedConversationId?: string | null;
   createdAt: string | Date;
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { useAblyChannel, useAblyPresence } from '@/hooks/use-ably-channel';
 import {
   getMessagesAction,
@@ -53,10 +54,13 @@ export default function MessageThread({
   const bottomRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
 
+  const { data: session } = useSession();
+
   // Presence (typing indicators)
   const { members, updatePresence } = useAblyPresence(conversationId);
   const typingMembers = members.filter(
-    (m) => m.clientId !== sender.id && (m.data as { typing?: boolean })?.typing,
+    // Ably clientId is set to session.user.id (see /api/ably-auth)
+    (m) => m.clientId !== session?.user?.id && (m.data as { typing?: boolean })?.typing,
   );
   const isOtherTyping = typingMembers.length > 0;
 

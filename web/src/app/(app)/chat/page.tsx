@@ -57,7 +57,8 @@ function ChatContent() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto h-[calc(100vh-5rem)]">
+    <div className="fixed inset-0 top-24 overflow-hidden flex flex-col px-4 pb-4">
+      <div className="max-w-6xl mx-auto w-full h-full">
       <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
         {/* Conversation list — hidden on mobile when thread is open */}
         <div
@@ -114,6 +115,7 @@ function ChatContent() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

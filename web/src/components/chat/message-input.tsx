@@ -76,9 +76,10 @@ export default function MessageInput({
         if (file.type.startsWith('image/')) {
           try {
             fileToUpload = await imageCompression(file, {
-              maxSizeMB: 2,
-              maxWidthOrHeight: 1920,
+              maxSizeMB: 0.5,
+              maxWidthOrHeight: 1280,
               useWebWorker: true,
+              initialQuality: 0.7,
             });
           } catch {
             // compression failed; fall back to original
@@ -145,9 +146,9 @@ export default function MessageInput({
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    // Validate file size (10MB max)
-    if (selected.size > 10 * 1024 * 1024) {
-      alert('File size must be under 10MB');
+    // Validate file size — 20 MB cap before compression
+    if (selected.size > 20 * 1024 * 1024) {
+      alert('File too large. Maximum size is 20 MB before compression.');
       return;
     }
 

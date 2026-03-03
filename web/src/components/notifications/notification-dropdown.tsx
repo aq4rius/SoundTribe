@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import type { NavNotification } from './notification-bell';
 
 interface NotificationDropdownProps {
@@ -12,8 +13,9 @@ interface NotificationDropdownProps {
 }
 
 function notificationHref(n: NavNotification): string {
-  if (n.type === 'new_message' && n.relatedEntityId) {
-    return `/chat?conversationId=${n.relatedEntityId}`;
+  if (n.type === 'new_message') {
+    const id = n.relatedConversationId ?? n.relatedEntityId;
+    if (id) return `/chat?conversationId=${id}`;
   }
   if (
     (n.type === 'application_submitted' || n.type === 'application_status') &&
@@ -48,6 +50,7 @@ export function NotificationDropdown({
   onMarkAllRead,
   onClose,
 }: NotificationDropdownProps) {
+  const router = useRouter();
   return (
     <div className="absolute right-0 mt-2 w-80 bg-black/95 border border-fuchsia-900 rounded shadow-lg z-50 max-h-96 overflow-y-auto">
       {/* Header */}
@@ -91,7 +94,7 @@ export function NotificationDropdown({
               onClick={() => {
                 if (!n.read) onMarkRead(n.id);
                 onClose();
-                if (href !== '#') window.location.href = href;
+                if (href !== '#') router.push(href);
               }}
             >
               <div className="flex-shrink-0">
