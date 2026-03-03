@@ -56,10 +56,21 @@ function ChatContent() {
     setMobileShowThread(false);
   };
 
+  // Prevent page-level scroll while the chat panel is mounted.
+  // The footer behind it is intentionally hidden — this is a full-viewport app page.
+  useEffect(() => {
+    const root = document.documentElement;
+    const prev = root.style.overflow;
+    root.style.overflow = 'hidden';
+    return () => {
+      root.style.overflow = prev;
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 top-24 overflow-hidden flex flex-col px-4 pb-4">
-      <div className="max-w-6xl mx-auto w-full h-full">
-      <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
+    <div className="h-[calc(100vh-6rem)] overflow-hidden px-4 pb-4">
+      <div className="max-w-6xl mx-auto h-full">
+        <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card shadow-sm">
         {/* Conversation list — hidden on mobile when thread is open */}
         <div
           className={`w-full md:w-80 lg:w-96 shrink-0 ${
@@ -115,7 +126,7 @@ function ChatContent() {
             </div>
           )}
         </div>
-      </div>
+        </div>
       </div>
     </div>
   );
@@ -125,8 +136,10 @@ export default function ChatPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-6xl mx-auto h-[calc(100vh-5rem)] flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-white/40" />
+        <div className="h-[calc(100vh-6rem)] overflow-hidden px-4 pb-4">
+          <div className="max-w-6xl mx-auto h-full flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/40" />
+          </div>
         </div>
       }
     >
