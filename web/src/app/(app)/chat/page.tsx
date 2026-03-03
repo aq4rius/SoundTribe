@@ -2,27 +2,42 @@
 
 import { Suspense, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import ConversationList from '@/components/chat/conversation-list';
 import MessageThread from '@/components/chat/message-thread';
-import EntitySelector from '@/components/chat/entity-selector';
 import type { ConversationItem, SenderEntity } from '@/components/chat/conversation-list';
-import { ArrowLeft, MessageSquare, Loader2, Plus } from 'lucide-react';
+import type { EntityType } from '@prisma/client';
+import { ArrowLeft, MessageSquare, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function ChatContent() {
   const searchParams = useSearchParams();
   const initialConversationId = searchParams.get('conversationId');
   const recipientId = searchParams.get('recipientId');
+  const recipientType = searchParams.get('recipientType');
+  const recipientName = searchParams.get('recipientName');
 
   const [selectedSender, setSelectedSender] = useState<SenderEntity | null>(null);
   const [selectedConversation, setSelectedConversation] = useState<ConversationItem | null>(null);
-  const [showEntitySelector, setShowEntitySelector] = useState(false);
   const [mobileShowThread, setMobileShowThread] = useState(!!initialConversationId);
 
-  // Open entity selector on mount when navigated from an artist/event profile
+  // When navigated from an artist profile, auto-open a new conversation thread
   useEffect(() => {
     if (recipientId && !initialConversationId) {
-      setShowEntitySelector(true);
+      const tempConv: ConversationItem = {
+        id: `new-${recipientId}`,
+        otherEntity: {
+          id: recipientId,
+          type: (recipientType ?? 'artist_profile') as EntityType,
+          name: recipientName ? decodeURIComponent(recipientName) : 'Artist',
+          image: null,
+        },
+        lastMessage: null,
+        unreadCount: 0,
+        lastMessageAt: null,
+      };
+      setSelectedConversation(tempConv);
+      setMobileShowThread(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -34,7 +49,7 @@ function ChatContent() {
 
   const handleSelectSender = useCallback((sender: SenderEntity | null) => {
     setSelectedSender(sender);
-    setSelectedConversation(null);
+    // Don't reset selectedConversation — sender is auto-selected once on mount
   }, []);
 
   const handleBackToList = () => {
@@ -53,7 +68,7 @@ function ChatContent() {
           <ConversationList
             selectedConversationId={selectedConversation?.id ?? initialConversationId}
             onSelectConversation={handleSelectConversation}
-            onNewConversation={() => setShowEntitySelector(true)}
+            onNewConversation={() => {}}
             selectedSender={selectedSender}
             onSelectSender={handleSelectSender}
           />
@@ -91,35 +106,15 @@ function ChatContent() {
               <MessageSquare className="h-12 w-12 mb-4 opacity-30" />
               <p className="text-lg font-medium text-foreground">No conversation selected</p>
               <p className="text-sm mt-1 mb-6 max-w-xs">
-                Pick a conversation from the list, or start a new one by clicking the compose button at the top of the list.
+                Pick a conversation from the list, or browse artists to start messaging.
               </p>
-              <Button variant="outline" size="sm" onClick={() => setShowEntitySelector(true)}>
-                <Plus className="h-4 w-4" /> Start a conversation
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/artists">Browse Artists</Link>
               </Button>
             </div>
           )}
         </div>
       </div>
-
-      {/* Entity selector modal for new conversations */}
-      <EntitySelector
-        isOpen={showEntitySelector}
-        onClose={() => setShowEntitySelector(false)}
-        onSelect={(entity) => {
-          // For "new conversation" — create a temporary conversation item
-          // The actual conversation is created on first message send
-          setSelectedConversation({
-            id: `new-${entity.id}`,
-            otherEntity: entity,
-            lastMessage: null,
-            unreadCount: 0,
-            lastMessageAt: null,
-          } as ConversationItem);
-          setShowEntitySelector(false);
-          setMobileShowThread(true);
-        }}
-        title="Who do you want to message?"
-      />
     </div>
   );
 }

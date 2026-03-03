@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import imageCompression from 'browser-image-compression';
 import { sendMessageAction } from '@/actions/messages';
 import { uploadAttachmentAction } from '@/actions/upload';
 import type { SenderEntity } from './conversation-list';
@@ -71,8 +72,21 @@ export default function MessageInput({
 
       if (file) {
         setUploading(true);
+        let fileToUpload: File = file;
+        if (file.type.startsWith('image/')) {
+          try {
+            fileToUpload = await imageCompression(file, {
+              maxSizeMB: 2,
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+            });
+          } catch {
+            // compression failed; fall back to original
+            fileToUpload = file;
+          }
+        }
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', fileToUpload);
         const uploadResult = await uploadAttachmentAction(formData);
         setUploading(false);
         if (!uploadResult.success) {
@@ -84,8 +98,8 @@ export default function MessageInput({
         attachmentType = uploadResult.data.type;
       }
 
-      await sendMessageAction({
-        conversationId,
+      const result = await sendMessageAction({
+        conversationId: conversationId.startsWith('new-') ? undefined : conversationId,
         senderEntityId: sender.id,
         senderEntityType: sender.type,
         receiverEntityId,
@@ -104,6 +118,11 @@ export default function MessageInput({
         clearTimeout(typingTimeoutRef.current);
       }
       onTyping({ typing: false });
+
+      // For new (temporary) conversations, redirect to the real conversation URL
+      if (conversationId.startsWith('new-') && result.success) {
+        window.location.href = `/chat?conversationId=${result.data.conversationId}`;
+      }
     } finally {
       setSending(false);
       textareaRef.current?.focus();
@@ -140,18 +159,18 @@ export default function MessageInput({
   const canSend = (content.trim().length > 0 || file) && !isOverLimit && !sending && !uploading;
 
   return (
-    <div className="border-t border-white/10 bg-white/[0.02]">
+    <div className="border-t border-border bg-card">
       {/* File preview */}
       {file && (
         <div className="px-4 pt-3 flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg text-sm">
-            <Paperclip className="h-3.5 w-3.5 text-white/40" />
-            <span className="text-white/60 max-w-[200px] truncate">{file.name}</span>
-            {uploading && <Loader2 className="h-3.5 w-3.5 text-white/40 animate-spin" />}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg text-sm">
+            <Paperclip className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <span className="text-foreground/70 max-w-[200px] truncate">{file.name}</span>
+            {uploading && <Loader2 className="h-3.5 w-3.5 text-muted-foreground/50 animate-spin" />}
             <button
               onClick={() => setFile(null)}
               disabled={uploading}
-              className="text-white/40 hover:text-white/70 ml-1 disabled:opacity-30"
+              className="text-muted-foreground hover:text-foreground ml-1 disabled:opacity-30"
             >
               ×
             </button>
@@ -162,12 +181,12 @@ export default function MessageInput({
       {/* Emoji picker */}
       {showEmoji && (
         <div className="px-4 pt-3">
-          <div className="grid grid-cols-8 gap-1 p-2 bg-zinc-800 border border-white/10 rounded-lg">
+          <div className="grid grid-cols-8 gap-1 p-2 bg-card border border-border rounded-lg">
             {EMOJI_GRID.map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleEmojiClick(emoji)}
-                className="text-xl p-1 hover:bg-white/10 rounded transition-colors"
+                className="text-xl p-1 hover:bg-muted/50 rounded transition-colors"
               >
                 {emoji}
               </button>
@@ -184,7 +203,7 @@ export default function MessageInput({
           className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${
             showEmoji
               ? 'bg-primary/20 text-primary'
-              : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
           }`}
           aria-label="Toggle emoji picker"
         >
@@ -194,7 +213,7 @@ export default function MessageInput({
         {/* File attachment button */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Attach file"
         >
           <Paperclip className="h-5 w-5" />
@@ -219,7 +238,7 @@ export default function MessageInput({
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 max-h-32"
+            className="w-full bg-muted/50 border border-input rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 max-h-32"
             style={{
               height: 'auto',
               minHeight: '40px',
@@ -233,7 +252,7 @@ export default function MessageInput({
           {charCount > MAX_CHARS * 0.9 && (
             <span
               className={`absolute bottom-1 right-2 text-[10px] ${
-                isOverLimit ? 'text-red-400' : 'text-white/30'
+                isOverLimit ? 'text-red-400' : 'text-muted-foreground/40'
               }`}
             >
               {charCount}/{MAX_CHARS}

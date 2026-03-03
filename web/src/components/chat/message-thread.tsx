@@ -62,6 +62,11 @@ export default function MessageThread({
 
   // Load initial messages (last page)
   const loadMessages = useCallback(async () => {
+    // New (temporary) conversations have no messages yet — skip the DB fetch
+    if (conversationId.startsWith('new-')) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     isInitialLoad.current = true;
 
@@ -92,7 +97,7 @@ export default function MessageThread({
 
   // Mark messages as read on mount and when conversationId changes
   useEffect(() => {
-    if (conversationId && sender.id) {
+    if (conversationId && sender.id && !conversationId.startsWith('new-')) {
       markMessagesReadAction(conversationId, sender.id);
     }
   }, [conversationId, sender.id]);

@@ -123,7 +123,7 @@ export default async function ArtistDetailsPage({ params }: { params: Promise<{ 
           {canMessage && (
             <div>
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/chat?recipientId=${artist.id}&recipientType=artist_profile`}>
+                <Link href={`/chat?recipientId=${artist.id}&recipientType=artist_profile&recipientName=${encodeURIComponent(artist.stageName)}`}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Message
                 </Link>

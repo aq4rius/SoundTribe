@@ -9,7 +9,7 @@ import {
   getMyEntitiesAction,
 } from '@/actions/messages';
 import { EntityType } from '@prisma/client';
-import { Loader2, MessageSquarePlus, Search } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 
 interface ConversationItem {
   id: string;
@@ -47,29 +47,27 @@ interface ConversationListProps {
 export default function ConversationList({
   selectedConversationId,
   onSelectConversation,
-  onNewConversation,
+  // onNewConversation is kept in the interface for API compatibility
   selectedSender,
   onSelectSender,
 }: ConversationListProps) {
   const { data: session } = useSession();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  const [entities, setEntities] = useState<SenderEntity[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Load user's entities on mount
+  // Auto-select the user's first entity on mount
   useEffect(() => {
-    async function loadEntities() {
+    async function autoSelectSender() {
       const result = await getMyEntitiesAction();
       if (result.success) {
-        const all = [...result.data.artistProfiles, ...result.data.eventPostings];
-        setEntities(all);
-        if (all.length === 1) {
-          onSelectSender(all[0]);
-        }
+        const { artistProfiles, eventPostings } = result.data;
+        onSelectSender(artistProfiles[0] ?? eventPostings[0] ?? null);
+      } else {
+        onSelectSender(null);
       }
     }
-    loadEntities();
+    autoSelectSender();
   }, [onSelectSender]);
 
   // Load conversations when sender changes
@@ -121,31 +119,9 @@ export default function ConversationList({
 
   return (
     <div className="flex flex-col h-full border-r border-border">
-      {/* Sender selector */}
+      {/* Search */}
       <div className="p-3 border-b border-border">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">
-          Send as
-        </label>
-        <select
-          className="w-full bg-muted/50 border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-          value={selectedSender?.id ?? ''}
-          onChange={(e) => {
-            const entity = entities.find((ent) => ent.id === e.target.value);
-            onSelectSender(entity ?? null);
-          }}
-        >
-          <option value="">Select profile or event...</option>
-          {entities.map((ent) => (
-            <option key={ent.id} value={ent.id}>
-              {ent.type === 'artist_profile' ? '🎤' : '📅'} {ent.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Search + New conversation */}
-      <div className="p-3 border-b border-border flex gap-2">
-        <div className="flex-1 relative">
+        <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/50" />
           <input
             type="text"
@@ -155,14 +131,6 @@ export default function ConversationList({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button
-          onClick={onNewConversation}
-          disabled={!selectedSender}
-          className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary disabled:opacity-30 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label="New conversation"
-        >
-          <MessageSquarePlus className="h-5 w-5" />
-        </button>
       </div>
 
       {/* Conversation list */}
@@ -173,7 +141,8 @@ export default function ConversationList({
           </div>
         ) : !selectedSender ? (
           <div className="p-6 text-center text-sm text-muted-foreground">
-            Select a profile or event to view conversations.
+            <p className="font-medium text-foreground mb-1">No profile found</p>
+            <p>Create an artist profile to start messaging.</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground">
